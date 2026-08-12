@@ -1,0 +1,74 @@
+<h1>
+    پیام‌ها
+</h1>
+
+<ul>
+
+    {% for conversation in conversations %}
+
+        <li>
+
+            <a href="{% url 'chat_view' conversation.id %}">
+
+                <strong>
+                    {% if conversation.participant_1 == request.user %}
+
+                        {{ conversation.participant_2.get_full_name|default:conversation.participant_2.username }}
+
+                    {% else %}
+
+                        {{ conversation.participant_1.get_full_name|default:conversation.participant_1.username }}
+
+                    {% endif %}
+                </strong>
+                {% if conversation.unread_count > 0 %}
+
+                    <span>
+                        🔴 {{ conversation.unread_count }}
+                    </span>
+
+                {% endif %}
+
+            </a>
+
+            <br>
+
+            {% if conversation.last_message %}
+
+                {% if conversation.last_message.text %}
+
+                    {{ conversation.last_message.text|truncatechars:40 }}
+
+                {% elif conversation.last_message.file %}
+
+                    📎 فایل پیوست
+
+                {% endif %}
+
+            {% else %}
+
+                هنوز پیامی ارسال نشده است.
+
+            {% endif %}
+
+            {% if conversation.last_message_at %}
+
+                <br>
+
+                <small>
+                    {{ conversation.last_message_at|date:"Y/m/d H:i" }}
+                </small>
+
+            {% endif %}
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            هنوز گفت‌وگویی وجود ندارد.
+        </li>
+
+    {% endfor %}
+
+</ul>

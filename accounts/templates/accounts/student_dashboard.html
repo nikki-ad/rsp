@@ -1,0 +1,316 @@
+<h1>
+    داشبورد دانش‌آموز
+</h1>
+
+
+<p>
+    سلام {{ student.user.get_full_name }}
+</p>
+
+
+<a href="{% url 'notification_list' %}">
+    🔔 اعلان‌ها
+
+    {% if unread_notification_count > 0 %}
+        ({{ unread_notification_count }})
+    {% endif %}
+</a>
+
+
+<br>
+
+<a href="{% url 'conversation_list' %}">
+    💬 پیام‌ها
+</a>
+
+
+<br>
+
+<a href="{% url 'online_class_list' %}">
+    🖥️ کلاس‌های آنلاین من
+</a>
+
+
+<br>
+
+<a href="{% url 'weekly_reservation' %}">
+    🍱 رزرو غذای هفتگی
+</a>
+
+
+{% if cafeteria_reservation %}
+
+    <p>
+        <strong>
+            وضعیت رزرو غذا:
+        </strong>
+
+        {% if cafeteria_reservation.payment_status == "paid" %}
+
+            🟢 پرداخت تأیید شده
+
+        {% elif cafeteria_reservation.payment_status == "receipt_pending" %}
+
+            🟡 فیش ارسال شده و در انتظار بررسی است
+
+        {% elif cafeteria_reservation.payment_status == "rejected" %}
+
+            🔴 فیش واریزی رد شده است
+
+            <br>
+
+            <a href="{% url 'cafeteria_upload_receipt' cafeteria_reservation.id %}">
+                🧾 ارسال مجدد فیش
+            </a>
+
+        {% else %}
+
+            ⚪ پرداخت انجام نشده
+
+        {% endif %}
+    </p>
+
+{% endif %}
+
+
+
+<h2>
+    📄 کارنامه‌های من
+</h2>
+
+
+<ul>
+
+    {% for report_card in report_cards %}
+
+        <li>
+
+            <strong>
+                {{ report_card.title }}
+            </strong>
+
+            <br>
+
+            <a href="{{ report_card.file.url }}" target="_blank">
+                دانلود کارنامه PDF
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            هنوز کارنامه‌ای برای شما ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+
+
+{% if enrollment %}
+
+    <h2>
+        کلاس من:
+        {{ enrollment.classroom.name }}
+    </h2>
+
+{% else %}
+
+    <p>
+        هنوز کلاسی برای شما ثبت نشده است.
+    </p>
+
+{% endif %}
+
+
+
+<h2>
+    معلم‌های کلاس من
+</h2>
+
+
+<ul>
+
+    {% for assignment in teachers %}
+
+        <li>
+
+            {{ assignment.teacher.user.first_name }}
+            {{ assignment.teacher.user.last_name }}
+
+            <a href="{% url 'start_conversation' assignment.teacher.user.id %}">
+                💬 ارسال پیام
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            هنوز معلمی برای این کلاس ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+
+
+<h2>
+    مطالب آموزشی
+</h2>
+
+
+<ul>
+
+{% for material in materials %}
+
+    <li>
+
+        <strong>
+            {{ material.title }}
+        </strong>
+
+        <br>
+
+        نوع:
+        {{ material.get_content_type_display }}
+
+
+        {% if material.content_type == "text" %}
+
+            <p>
+                {{ material.content }}
+            </p>
+
+        {% elif material.content_type == "file" %}
+
+            <p>
+                <a href="{{ material.file.url }}">
+                    دریافت فایل
+                </a>
+            </p>
+
+        {% elif material.content_type == "link" %}
+
+            <p>
+                <a href="{{ material.link }}" target="_blank">
+                    مشاهده لینک
+                </a>
+            </p>
+
+        {% endif %}
+
+    </li>
+
+{% empty %}
+
+    <li>
+        هنوز مطلبی برای شما ثبت نشده است.
+    </li>
+
+{% endfor %}
+
+</ul>
+
+
+
+<h2>
+    تکالیف من
+</h2>
+
+
+<ul>
+
+{% for item in assignment_items %}
+
+{% with assignment=item.assignment submission=item.submission %}
+
+    <li>
+
+        <strong>
+            {{ assignment.title }}
+        </strong>
+
+        <br>
+
+        {{ assignment.description }}
+
+
+        {% if assignment.file %}
+
+            <br>
+
+            <a href="{{ assignment.file.url }}">
+                دریافت فایل تکلیف
+            </a>
+
+        {% endif %}
+
+
+        <br>
+
+
+        {% if assignment.id in submitted_assignment_ids %}
+
+            <span style="color:green;">
+                ✅ پاسخ ارسال شده
+            </span>
+
+            <br>
+
+            <a href="{% url 'submit_assignment' assignment.id %}">
+                ویرایش پاسخ
+            </a>
+
+
+            {% if submission and submission.evaluation %}
+
+                <p>
+                    <strong>
+                        ارزیابی معلم:
+                    </strong>
+
+                    {{ submission.get_evaluation_display }}
+                </p>
+
+
+                {% if submission.teacher_feedback %}
+
+                    <p>
+                        <strong>
+                            بازخورد معلم:
+                        </strong>
+
+                        {{ submission.teacher_feedback }}
+                    </p>
+
+                {% endif %}
+
+            {% endif %}
+
+
+        {% else %}
+
+            <a href="{% url 'submit_assignment' assignment.id %}">
+                ارسال پاسخ
+            </a>
+
+        {% endif %}
+
+    </li>
+
+{% endwith %}
+
+
+{% empty %}
+
+    <li>
+        هنوز تکلیفی برای شما ثبت نشده است.
+    </li>
+
+{% endfor %}
+
+</ul>

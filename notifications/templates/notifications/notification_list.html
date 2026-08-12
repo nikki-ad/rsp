@@ -1,0 +1,57 @@
+<h1>
+    🔔 اعلان‌های من
+</h1>
+
+<p>
+    اعلان‌های خوانده‌نشده:
+    {{ unread_count }}
+</p>
+
+<hr>
+
+<ul>
+
+    {% for notification in notifications %}
+
+        <li>
+
+            {% if not notification.is_read %}
+                🔴
+            {% endif %}
+
+            <strong>
+                {{ notification.title }}
+            </strong>
+
+            <br>
+
+            {% if notification.message %}
+                {{ notification.message }}
+                <br>
+            {% endif %}
+
+            <small>
+                {{ notification.created_at|date:"Y/m/d H:i" }}
+            </small>
+
+            {% if notification.url %}
+                <br>
+
+                <a href="{% url 'open_notification' notification.id %}">
+                    مشاهده
+                </a>
+            {% endif %}
+
+        </li>
+
+        <hr>
+
+    {% empty %}
+
+        <li>
+            هنوز اعلانی برای شما وجود ندارد.
+        </li>
+
+    {% endfor %}
+
+</ul>

@@ -1,0 +1,36 @@
+<h1>
+    پرداخت رزرو غذای هفتگی
+</h1>
+
+<h2>
+    {{ reservation.week.title }}
+</h2>
+
+<p>
+    <strong>مبلغ قابل پرداخت:</strong>
+    {{ reservation.final_amount }} تومان
+</p>
+
+<hr>
+
+<h3>
+    روش پرداخت را انتخاب کنید
+</h3>
+
+
+<a href="#">
+    💳 پرداخت آنلاین با زرین‌پال
+</a>
+
+<br><br>
+
+<a href="{% url 'cafeteria_upload_receipt' reservation.id %}">
+    🧾 واریز بانکی و ارسال تصویر فیش
+</a>
+
+
+<br><br>
+
+<a href="{% url 'weekly_reservation' %}">
+    بازگشت و اصلاح انتخاب غذاها
+</a>

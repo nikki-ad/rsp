@@ -1,0 +1,22 @@
+<h1>
+    ارسال پاسخ برای:
+    {{ assignment.title }}
+</h1>
+
+
+<p>
+    {{ assignment.description }}
+</p>
+
+
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        ارسال پاسخ
+    </button>
+
+</form>

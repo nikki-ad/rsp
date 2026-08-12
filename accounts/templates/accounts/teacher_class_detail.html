@@ -1,0 +1,166 @@
+<h1>
+    {{ classroom.name }}
+</h1>
+
+
+<a href="{% url 'create_assignment' classroom.id %}">
+    افزودن تکلیف
+</a>
+
+
+<a href="{% url 'create_material' classroom.id %}">
+    افزودن مطلب آموزشی
+</a>
+
+
+<p>
+    این صفحه کلاس معلم است.
+</p>
+
+
+
+<h2>دانش‌آموزان کلاس</h2>
+
+
+<ul>
+    {% for enrollment in students %}
+
+        <li>
+
+            {{ enrollment.student.user.first_name }}
+            {{ enrollment.student.user.last_name }}
+
+            <a href="{% url 'start_conversation' enrollment.student.user.id %}">
+                💬 پیام
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            دانش‌آموزی در این کلاس ثبت نشده است.
+        </li>
+
+    {% endfor %}
+</ul>
+
+
+
+<h2>مطالب آموزشی</h2>
+
+
+<ul>
+    {% for material in materials %}
+
+        <li>
+
+            <strong>
+                {{ material.title }}
+            </strong>
+
+            <br>
+
+            نوع:
+            {{ material.get_content_type_display }}
+
+
+            {% if material.content_type == "text" %}
+
+                <p>
+                    {{ material.content }}
+                </p>
+
+            {% elif material.content_type == "file" %}
+
+                <p>
+                    <a href="{{ material.file.url }}">
+                        دریافت فایل
+                    </a>
+                </p>
+
+            {% elif material.content_type == "link" %}
+
+                <p>
+                    <a href="{{ material.link }}" target="_blank">
+                        مشاهده لینک
+                    </a>
+                </p>
+
+            {% endif %}
+
+
+            <br>
+
+            <a href="{% url 'delete_material' material.id %}">
+                🗑 حذف مطلب
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            هنوز مطلبی برای این کلاس ثبت نشده است.
+        </li>
+
+    {% endfor %}
+</ul>
+
+
+
+<h2>
+    تکالیف
+</h2>
+
+
+<ul>
+
+{% for assignment in assignments %}
+
+    <li>
+
+        <strong>
+            {{ assignment.title }}
+        </strong>
+
+        <br>
+
+        {{ assignment.description }}
+
+
+        {% if assignment.file %}
+
+            <br>
+
+            <a href="{{ assignment.file.url }}">
+                دریافت فایل تکلیف
+            </a>
+
+        {% endif %}
+
+
+        <br>
+
+        <a href="{% url 'assignment_submissions' assignment.id %}">
+            مشاهده پاسخ‌ها
+        </a>
+
+
+        <br>
+
+        <a href="{% url 'delete_assignment' assignment.id %}">
+            🗑 حذف تکلیف
+        </a>
+
+    </li>
+
+{% empty %}
+
+    <li>
+        هنوز تکلیفی ثبت نشده است.
+    </li>
+
+{% endfor %}
+
+</ul>

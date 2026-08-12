@@ -1,0 +1,56 @@
+<h1>
+    داشبورد معلم
+</h1>
+
+
+<a href="{% url 'notification_list' %}">
+    🔔 اعلان‌ها
+
+    {% if unread_notification_count > 0 %}
+        ({{ unread_notification_count }})
+    {% endif %}
+</a>
+
+
+<br>
+
+
+<a href="{% url 'conversation_list' %}">
+    💬 پیام‌ها
+</a>
+
+
+<br>
+
+
+<a href="{% url 'online_class_list' %}">
+    🖥️ کلاس‌های آنلاین من
+</a>
+
+
+<h2>
+    کلاس‌های من
+</h2>
+
+
+<ul>
+
+    {% for classroom in classrooms %}
+
+        <li>
+
+            <a href="{% url 'teacher_class_detail' classroom.id %}">
+                {{ classroom.name }}
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            هیچ کلاسی برای شما ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>

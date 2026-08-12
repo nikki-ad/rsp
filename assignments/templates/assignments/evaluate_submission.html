@@ -1,0 +1,27 @@
+<h1>
+    ارزیابی پاسخ تکلیف
+</h1>
+
+<p>
+    دانش‌آموز:
+    {{ submission.student }}
+</p>
+
+<p>
+    تکلیف:
+    {{ submission.assignment.title }}
+</p>
+
+<hr>
+
+<form method="post">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        ثبت ارزیابی
+    </button>
+
+</form>

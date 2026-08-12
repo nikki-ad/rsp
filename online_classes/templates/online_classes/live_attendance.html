@@ -1,0 +1,55 @@
+<h1>
+    حضور زنده کلاس
+</h1>
+
+<h2>
+    {{ online_class.title }}
+</h2>
+
+<p>
+    این صفحه وضعیت حضور همین لحظه در BigBlueButton را نشان می‌دهد.
+</p>
+
+<hr>
+
+
+<h3>
+    دانش‌آموزان کلاس
+</h3>
+
+<ul>
+
+    {% for row in attendance_rows %}
+
+        <li>
+
+            {{ row.student.user.get_full_name }}
+
+            {% if row.is_present %}
+
+                🟢 حاضر
+
+            {% else %}
+
+                🔴 غایب
+
+            {% endif %}
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            دانش‌آموزی برای این کلاس ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+
+<hr>
+
+<a href="">
+    تازه‌سازی وضعیت حضور
+</a>

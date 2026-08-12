@@ -1,0 +1,73 @@
+<h1>
+    گفت‌وگو
+</h1>
+
+<p>
+    {% if conversation.participant_1 == request.user %}
+        با
+        {{ conversation.participant_2.get_full_name|default:conversation.participant_2.username }}
+    {% else %}
+        با
+        {{ conversation.participant_1.get_full_name|default:conversation.participant_1.username }}
+    {% endif %}
+</p>
+
+<hr>
+
+<div>
+
+    {% for message in messages %}
+
+        <div>
+
+            <strong>
+                {% if message.sender == request.user %}
+                    من
+                {% else %}
+                    {{ message.sender.get_full_name|default:message.sender.username }}
+                {% endif %}
+            </strong>
+
+            {% if message.text %}
+                <p>
+                    {{ message.text }}
+                </p>
+            {% endif %}
+
+            {% if message.file %}
+                <p>
+                    <a href="{{ message.file.url }}">
+                        دریافت فایل
+                    </a>
+                </p>
+            {% endif %}
+
+            <small>
+                {{ message.created_at }}
+            </small>
+
+        </div>
+
+        <hr>
+
+    {% empty %}
+
+        <p>
+            هنوز پیامی در این گفت‌وگو وجود ندارد.
+        </p>
+
+    {% endfor %}
+
+</div>
+
+<form method="post" enctype="multipart/form-data">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        ارسال پیام
+    </button>
+
+</form>

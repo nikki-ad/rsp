@@ -1,0 +1,42 @@
+<h1>
+    کلاس‌های آنلاین من
+</h1>
+
+
+<ul>
+
+    {% for online_class in online_classes %}
+
+        <li>
+
+            <strong>
+                {{ online_class.title }}
+            </strong>
+
+            <br>
+
+            سال تحصیلی:
+            {{ online_class.academic_year.title }}
+
+            <br>
+
+            پلتفرم:
+            {{ online_class.get_provider_display }}
+
+            <br>
+
+            <a href="{% url 'join_online_class' online_class.id %}">
+                ورود به کلاس آنلاین
+            </a>
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            هنوز کلاس آنلاین فعالی برای شما ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>

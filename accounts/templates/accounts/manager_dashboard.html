@@ -1,0 +1,114 @@
+<h1>
+    داشبورد مدیر
+</h1>
+
+
+<a href="{% url 'notification_list' %}">
+    🔔 اعلان‌ها
+
+    {% if unread_notification_count > 0 %}
+        ({{ unread_notification_count }})
+    {% endif %}
+</a>
+
+<hr>
+
+<p>
+    تعداد دانش‌آموزان:
+    {{ student_count }}
+</p>
+
+<p>
+    تعداد معلمان:
+    {{ teacher_count }}
+</p>
+
+<p>
+    تعداد کلاس‌ها:
+    {{ classroom_count }}
+</p>
+
+<p>
+    تعداد مطالب آموزشی:
+    {{ material_count }}
+</p>
+
+<p>
+    تعداد تکالیف:
+    {{ assignment_count }}
+</p>
+
+<p>
+    تعداد گفتگوها:
+    {{ conversation_count }}
+</p>
+
+
+
+<hr>
+
+<h2>
+    دسترسی‌های مدیریتی
+</h2>
+
+<ul>
+
+    <li>
+        <a href="/admin/accounts/studentprofile/">
+            👩‍🎓 مدیریت دانش‌آموزان
+        </a>
+    </li>
+
+    <li>
+        <a href="/admin/accounts/teacherprofile/">
+            👩‍🏫 مدیریت معلمان
+        </a>
+    </li>
+
+    <li>
+        <a href="/admin/academic/classroom/">
+            🏫 مدیریت کلاس‌ها
+        </a>
+    </li>
+
+    <li>
+        <a href="{% url 'conversation_list' %}">
+            💬 مشاهده پیام‌ها
+        </a>
+    </li>
+
+    <li>
+        <a href="{% url 'user_list_for_messaging' %}">
+            ✉️ شروع گفت‌وگوی جدید
+        </a>
+    </li>
+
+    <li>
+        🍽 رزرو غذا
+        <small>
+            در حال ساخت
+        </small>
+    </li>
+
+    <li>
+        🔔 اعلان‌ها
+        <small>
+            در حال ساخت
+        </small>
+    </li>
+
+    <li>
+        🎥 کلاس‌های آنلاین
+        <small>
+            در حال ساخت
+        </small>
+    </li>
+
+    <li>
+        📄 کارنامه و گزارش‌ها
+        <small>
+            در حال ساخت
+        </small>
+    </li>
+
+</ul>

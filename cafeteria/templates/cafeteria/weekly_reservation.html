@@ -1,0 +1,48 @@
+<h1>
+    رزرو غذای هفتگی
+</h1>
+
+<h2>
+    {{ week.title }}
+</h2>
+
+<p>
+    غذاهایی که می‌خواهید دریافت کنید انتخاب کنید.
+    انتخاب‌های این صفحه مربوط به کل هفته هستند.
+</p>
+
+<hr>
+
+
+<form method="post">
+
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <button type="submit">
+        ثبت رزرو هفتگی
+    </button>
+
+</form>
+
+
+<br>
+
+<a href="{% url 'student_dashboard' %}">
+    بازگشت به داشبورد
+</a>
+
+{% if reservation %}
+
+    <hr>
+
+    <p>
+        <strong>
+            مبلغ کل رزرو این هفته:
+        </strong>
+
+        {{ reservation.total_price }} تومان
+    </p>
+
+{% endif %}

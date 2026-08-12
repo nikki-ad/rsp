@@ -1,0 +1,69 @@
+<h1>
+    پاسخ‌های تکلیف:
+    {{ assignment.title }}
+</h1>
+
+
+{% for submission in submissions %}
+
+    <hr>
+
+    <h3>
+        {{ submission.student }}
+    </h3>
+
+
+    {% if submission.answer_text %}
+
+        <p>
+            {{ submission.answer_text }}
+        </p>
+
+    {% endif %}
+
+
+    {% if submission.file %}
+
+        <a href="{{ submission.file.url }}">
+            دریافت فایل پاسخ
+        </a>
+
+        <br>
+
+    {% endif %}
+
+
+    {% if submission.evaluation %}
+
+        <p>
+            <strong>ارزیابی فعلی:</strong>
+            {{ submission.get_evaluation_display }}
+        </p>
+
+        {% if submission.teacher_feedback %}
+            <p>
+                <strong>بازخورد معلم:</strong>
+                {{ submission.teacher_feedback }}
+            </p>
+        {% endif %}
+
+        <a href="{% url 'evaluate_submission' submission.id %}">
+            ویرایش ارزیابی
+        </a>
+
+    {% else %}
+
+        <a href="{% url 'evaluate_submission' submission.id %}">
+            ارزیابی پاسخ
+        </a>
+
+    {% endif %}
+
+
+{% empty %}
+
+    <p>
+        هنوز پاسخی ارسال نشده است.
+    </p>
+
+{% endfor %}
