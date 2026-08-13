@@ -38,6 +38,50 @@
 </a>
 
 
+
+<h2>
+    📢 اطلاعیه‌های مدرسه
+</h2>
+
+
+{% if announcements %}
+
+    <ul>
+
+        {% for announcement in announcements %}
+
+            <li>
+
+                <strong>
+                    {{ announcement.title }}
+                </strong>
+
+                <br>
+
+                {{ announcement.message }}
+
+                <br>
+
+                <small>
+                    {{ announcement.publish_at|date:"Y/m/d H:i" }}
+                </small>
+
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+{% else %}
+
+    <p>
+        اطلاعیه جدیدی برای شما وجود ندارد.
+    </p>
+
+{% endif %}
+
+
+
 {% if cafeteria_reservation %}
 
     <p>

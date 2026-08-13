@@ -18,6 +18,12 @@ from django.urls import reverse
 from notifications import constants as notification_constants
 from notifications.services import create_notification
 from reports.models import StudentReportCard
+from django.db.models import Q
+from django.utils import timezone
+from notifications.models import Announcement
+
+
+
 
 
 
@@ -109,12 +115,24 @@ def teacher_dashboard(request):
         recipient=request.user,
         is_read=False,
     ).count()
+
+
+    announcements = Announcement.objects.filter(
+        is_active=True,
+        publish_at__lte=timezone.now(),
+    ).filter(
+        Q(audience=Announcement.Audience.ALL)
+        | Q(audience=Announcement.Audience.TEACHERS)
+    ).order_by("-publish_at")
+
+
     return render(
         request,
         "accounts/teacher_dashboard.html",
         {
             "classrooms": classrooms,
             "unread_notification_count": unread_notification_count,
+            "announcements": announcements,
         }
     )
 
@@ -267,6 +285,19 @@ def student_dashboard(request):
         is_active=True,
     ).order_by("-created_at")
 
+
+    announcements = Announcement.objects.filter(
+        is_active=True,
+        publish_at__lte=timezone.now(),
+    ).filter(
+        Q(audience=Announcement.Audience.ALL)
+        | Q(audience=Announcement.Audience.STUDENTS)
+        | Q(
+            audience=Announcement.Audience.CLASSROOM,
+            classroom=enrollment.classroom if enrollment else None,
+        )
+    ).order_by("-publish_at")
+
     return render(
         request,
         "accounts/student_dashboard.html",
@@ -282,6 +313,7 @@ def student_dashboard(request):
             "assignment_items": assignment_items,
             "cafeteria_reservation": cafeteria_reservation,
             "report_cards": report_cards,
+            "announcements": announcements,
         }
     )
 
