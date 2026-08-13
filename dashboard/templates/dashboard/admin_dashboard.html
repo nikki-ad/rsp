@@ -104,3 +104,35 @@
     </li>
 
 </ul>
+
+<hr>
+
+<h2>
+    📚 آرشیو سال‌های تحصیلی
+</h2>
+
+{% if archived_years %}
+
+    <ul>
+
+        {% for year in archived_years %}
+
+            <li>
+
+                <a href="{% url 'academic_year_archive' year.id %}">
+                    سال تحصیلی {{ year.title }}
+                </a>
+
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+{% else %}
+
+    <p>
+        هنوز سال تحصیلی آرشیوشده‌ای وجود ندارد.
+    </p>
+
+{% endif %}

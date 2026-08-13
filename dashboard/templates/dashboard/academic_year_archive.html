@@ -1,0 +1,117 @@
+<h1>
+    آرشیو سال تحصیلی {{ academic_year.title }}
+</h1>
+
+<p>
+    وضعیت:
+    <strong>
+        {{ academic_year.get_status_display }}
+    </strong>
+</p>
+
+<a href="{% url 'admin_dashboard' %}">
+    ← بازگشت به داشبورد مدیریت
+</a>
+
+<hr>
+
+
+<h2>
+    🏫 کلاس‌ها
+</h2>
+
+<ul>
+
+    {% for classroom in classrooms %}
+
+        <li>
+            {{ classroom.grade.title }}
+            -
+            {{ classroom.name }}
+        </li>
+
+    {% empty %}
+
+        <li>
+            کلاسی برای این سال ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+
+<hr>
+
+
+<h2>
+    👧 دانش‌آموزان
+</h2>
+
+<ul>
+
+    {% for enrollment in enrollments %}
+
+        <li>
+
+            <strong>
+                {{ enrollment.student.user.get_full_name }}
+            </strong>
+
+            |
+
+            پایه:
+            {{ enrollment.classroom.grade.title }}
+
+            |
+
+            کلاس:
+            {{ enrollment.classroom.name }}
+
+            |
+
+            وضعیت ثبت‌نام:
+
+            {% if enrollment.is_active %}
+                فعال
+            {% else %}
+                غیرفعال
+            {% endif %}
+
+        </li>
+
+    {% empty %}
+
+        <li>
+            دانش‌آموزی برای این سال تحصیلی ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>
+
+
+<hr>
+
+
+<h2>
+    👩‍🏫 معلمان
+</h2>
+
+<ul>
+
+    {% for teacher in teachers %}
+
+        <li>
+            {{ teacher.user.get_full_name }}
+        </li>
+
+    {% empty %}
+
+        <li>
+            معلمی برای این سال تحصیلی ثبت نشده است.
+        </li>
+
+    {% endfor %}
+
+</ul>

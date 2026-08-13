@@ -54,6 +54,11 @@ def admin_dashboard(request):
             is_active=True,
         ).count()
 
+
+        archived_years = AcademicYear.objects.filter(
+            status=AcademicYear.Status.ARCHIVED,
+        ).order_by("-title")
+
     context = {
         "active_year": active_year,
         "student_count": student_count,
@@ -71,10 +76,73 @@ def admin_dashboard(request):
             if active_year
             else 0
         ),
+        "archived_years": archived_years,
     }
 
     return render(
         request,
         "dashboard/admin_dashboard.html",
         context,
+    )
+
+@login_required
+def academic_year_archive(request, year_id):
+
+    if not request.user.is_staff:
+        return render(
+            request,
+            "dashboard/access_denied.html",
+        )
+
+    academic_year = AcademicYear.objects.get(
+        id=year_id,
+    )
+
+    enrollments = (
+        academic_year.enrollments
+        .select_related(
+            "student__user",
+            "classroom",
+            "classroom__grade",
+        )
+        .order_by(
+            "classroom__grade__order",
+            "classroom__name",
+            "student__user__last_name",
+        )
+    )
+
+    teachers = (
+        TeacherProfile.objects.filter(
+            class_assignments__classroom__academic_year=academic_year,
+        )
+        .distinct()
+        .order_by(
+            "user__last_name",
+            "user__first_name",
+        )
+    )
+
+    classrooms = (
+        Classroom.objects.filter(
+            academic_year=academic_year,
+        )
+        .select_related(
+            "grade",
+        )
+        .order_by(
+            "grade__order",
+            "name",
+        )
+    )
+
+    return render(
+        request,
+        "dashboard/academic_year_archive.html",
+        {
+            "academic_year": academic_year,
+            "enrollments": enrollments,
+            "teachers": teachers,
+            "classrooms": classrooms,
+        },
     )

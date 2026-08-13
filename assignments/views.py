@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
-from academic.models import Classroom
+from academic.models import AcademicYear, Classroom
 from .models import Assignment, AssignmentSubmission
 from .forms import (
     AssignmentCreateForm,
@@ -23,6 +23,7 @@ def create_assignment(request, classroom_id):
         Classroom,
         id=classroom_id,
         teacher_assignments__teacher=teacher,
+        academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     if request.method == "POST":
@@ -91,7 +92,9 @@ def submit_assignment(request, assignment_id):
     assignment = get_object_or_404(
         Assignment,
         id=assignment_id,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
         classroom__enrollments__student=student,
+        classroom__enrollments__academic_year__status=AcademicYear.Status.ACTIVE,
         classroom__enrollments__is_active=True,
     )
 
@@ -172,6 +175,7 @@ def assignment_submissions(request, assignment_id):
         Assignment,
         id=assignment_id,
         teacher=teacher,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     submissions = assignment.submissions.all()
@@ -195,6 +199,7 @@ def evaluate_submission(request, submission_id):
         AssignmentSubmission,
         id=submission_id,
         assignment__teacher=teacher,
+        assignment__classroom__academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     if request.method == "POST":
@@ -259,6 +264,7 @@ def delete_assignment(request, assignment_id):
         Assignment,
         id=assignment_id,
         teacher=teacher,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     if request.method == "POST":

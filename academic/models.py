@@ -1,6 +1,6 @@
 from django.db import models
 from accounts.models import *
-
+from django.core.exceptions import ValidationError
 from core.models import BaseModel
 
 
@@ -51,6 +51,14 @@ class AcademicYear(BaseModel):
         verbose_name = "سال تحصیلی"
         verbose_name_plural = "سالهای تحصیلی"
         ordering = ["-title"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["status"],
+                condition=models.Q(status="active"),
+                name="unique_active_academic_year",
+            ),
+        ]
 
         
 
@@ -189,6 +197,23 @@ class Enrollment(BaseModel):
         verbose_name="فعال",
     )
 
+    def clean(self):
+        super().clean()
+
+        if (
+            self.classroom_id
+            and self.academic_year_id
+            and self.classroom.academic_year_id != self.academic_year_id
+        ):
+
+            raise ValidationError(
+                {
+                    "classroom": (
+                        "کلاس انتخاب‌شده متعلق به "
+                        "سال تحصیلی انتخاب‌شده نیست."
+                    )
+                }
+            )
     class Meta:
         verbose_name = "ثبت‌نام"
         verbose_name_plural = "ثبت‌نام‌ها"

@@ -110,8 +110,10 @@ def teacher_dashboard(request):
     teacher = request.user.teacher_profile
 
     classrooms = Classroom.objects.filter(
-        teacher_assignments__teacher=teacher
-    )
+        teacher_assignments__teacher=teacher,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+    ).distinct()
+
     unread_notification_count = Notification.objects.filter(
         recipient=request.user,
         is_read=False,
@@ -144,9 +146,11 @@ def teacher_class_detail(request, classroom_id):
 
     teacher = request.user.teacher_profile
 
-    classroom = Classroom.objects.get(
+    classroom = get_object_or_404(
+        Classroom,
         id=classroom_id,
         teacher_assignments__teacher=teacher,
+        academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     students = classroom.enrollments.filter(
@@ -171,9 +175,11 @@ def create_material(request, classroom_id):
 
     teacher = request.user.teacher_profile
 
-    classroom = Classroom.objects.get(
+    classroom = get_object_or_404(
+        Classroom,
         id=classroom_id,
         teacher_assignments__teacher=teacher,
+        academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     if request.method == "POST":
@@ -227,6 +233,10 @@ def student_dashboard(request):
     enrollment = Enrollment.objects.filter(
         student=student,
         is_active=True,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+    ).select_related(
+        "academic_year",
+        "classroom",
     ).first()
 
     teachers = []
@@ -239,6 +249,8 @@ def student_dashboard(request):
     materials = []
     assignments = []
     submitted_assignment_ids = set()
+    student_submissions = {}
+    assignment_items = []
 
     if enrollment:
         classroom = enrollment.classroom
@@ -381,6 +393,7 @@ def delete_material(request, material_id):
 
     classroom = material.classrooms.filter(
         teacher_assignments__teacher=teacher,
+        academic_year__status=AcademicYear.Status.ACTIVE,
     ).first()
 
     if classroom is None:

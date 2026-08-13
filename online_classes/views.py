@@ -9,6 +9,10 @@ from .services import (
     build_bbb_join_url,
     get_bbb_live_attendees,
 )
+from academic.models import AcademicYear
+
+
+
 
 @login_required
 def online_class_list(request):
@@ -22,6 +26,7 @@ def online_class_list(request):
         online_classes = OnlineClass.objects.filter(
             students=user.student_profile,
             is_active=True,
+            academic_year__status=AcademicYear.Status.ACTIVE,
         ).select_related(
             "academic_year",
             "bbb_configuration",
@@ -32,6 +37,7 @@ def online_class_list(request):
         online_classes = OnlineClass.objects.filter(
             teachers=user.teacher_profile,
             is_active=True,
+            academic_year__status=AcademicYear.Status.ACTIVE,
         ).select_related(
             "academic_year",
             "bbb_configuration",
@@ -54,6 +60,7 @@ def join_online_class(request, class_id):
         OnlineClass,
         id=class_id,
         is_active=True,
+        academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     user = request.user
@@ -124,6 +131,7 @@ def live_attendance(request, class_id):
         id=class_id,
         provider="bbb",
         is_active=True,
+        academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
     if not request.user.is_staff:
