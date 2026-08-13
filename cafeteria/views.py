@@ -172,3 +172,61 @@ def upload_receipt(request, reservation_id):
             "form": form,
         },
     )
+
+
+@login_required
+def pending_receipts(request):
+
+    if not request.user.is_staff:
+        return redirect("student_dashboard")
+
+    reservations = (
+        CafeteriaReservation.objects.filter(
+            payment_status="receipt_pending",
+        )
+        .select_related(
+            "student__user",
+            "week",
+        )
+        .order_by("-created_at")
+    )
+
+    return render(
+        request,
+        "cafeteria/pending_receipts.html",
+        {
+            "reservations": reservations,
+        },
+    )
+
+
+@login_required
+def review_receipt(request, reservation_id, action):
+
+    if not request.user.is_staff:
+        return redirect("student_dashboard")
+
+    reservation = get_object_or_404(
+        CafeteriaReservation,
+        id=reservation_id,
+        payment_status="receipt_pending",
+    )
+
+    if request.method == "POST":
+
+        if action == "approve":
+            reservation.payment_status = "paid"
+
+        elif action == "reject":
+            reservation.payment_status = "rejected"
+
+        else:
+            return redirect("cafeteria_pending_receipts")
+
+        reservation.save(
+            update_fields=["payment_status"]
+        )
+
+    return redirect(
+        "cafeteria_pending_receipts"
+    )

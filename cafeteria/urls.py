@@ -25,5 +25,19 @@ urlpatterns = [
     ),
 
 
+    path(
+        "pending-receipts/",
+        views.pending_receipts,
+        name="cafeteria_pending_receipts",
+    ),
+
+
+    path(
+        "reservation/<uuid:reservation_id>/review/<str:action>/",
+        views.review_receipt,
+        name="cafeteria_review_receipt",
+    ),
+
+
 
 ]

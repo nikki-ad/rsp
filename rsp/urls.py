@@ -28,7 +28,8 @@ urlpatterns = [
     path("notifications/",include("notifications.urls"), ),
     path("materials/", include("materials.urls")),
     path("cafeteria/",include("cafeteria.urls"),),
-path("online-classes/",include("online_classes.urls"),),
+    path("online-classes/",include("online_classes.urls"),),
+    path("dashboard/",include("dashboard.urls"),),
 
 
 

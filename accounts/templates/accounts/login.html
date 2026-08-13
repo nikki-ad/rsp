@@ -1,0 +1,49 @@
+<h1>
+    ورود به سامانه
+</h1>
+
+{% if error %}
+
+    <p style="color: red;">
+        {{ error }}
+    </p>
+
+{% endif %}
+
+<form method="post">
+
+    {% csrf_token %}
+
+    <p>
+        <label>
+            نام کاربری
+        </label>
+
+        <br>
+
+        <input
+            type="text"
+            name="username"
+            required
+        >
+    </p>
+
+    <p>
+        <label>
+            رمز عبور
+        </label>
+
+        <br>
+
+        <input
+            type="password"
+            name="password"
+            required
+        >
+    </p>
+
+    <button type="submit">
+        ورود
+    </button>
+
+</form>

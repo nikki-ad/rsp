@@ -1,0 +1,76 @@
+<h1>
+    فیش‌های در انتظار بررسی
+</h1>
+
+{% if reservations %}
+
+    <ul>
+
+        {% for reservation in reservations %}
+
+            <li>
+
+                <strong>
+                    {{ reservation.student.user.get_full_name }}
+                </strong>
+
+                <br>
+
+                هفته:
+                {{ reservation.week.title }}
+
+                <br>
+
+                مبلغ:
+                {{ reservation.final_amount }} تومان
+
+                <br>
+
+                {% if reservation.receipt_image %}
+
+                    <a href="{{ reservation.receipt_image.url }}" target="_blank">
+                        مشاهده تصویر فیش
+                    </a>
+
+                {% endif %}
+
+                            <br><br>
+
+            <form
+                method="post"
+                action="{% url 'cafeteria_review_receipt' reservation.id 'approve' %}"
+                style="display:inline;"
+            >
+                {% csrf_token %}
+
+                <button type="submit">
+                    ✅ تأیید فیش
+                </button>
+            </form>
+
+
+            <form
+                method="post"
+                action="{% url 'cafeteria_review_receipt' reservation.id 'reject' %}"
+                style="display:inline;"
+            >
+                {% csrf_token %}
+
+                <button type="submit">
+                    ❌ رد فیش
+                </button>
+            </form>
+
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+{% else %}
+
+    <p>
+        فیشی در انتظار بررسی وجود ندارد.
+    </p>
+
+{% endif %}

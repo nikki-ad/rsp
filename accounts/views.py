@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render , get_object_or_404
 from django.http import JsonResponse
@@ -404,5 +405,47 @@ def delete_material(request, material_id):
         {
             "material": material,
             "classroom": classroom,
+        },
+    )
+
+
+def user_login(request):
+
+    error = None
+
+    if request.method == "POST":
+
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password,
+        )
+
+        if user is not None:
+
+            login(request, user)
+
+            if user.is_superuser or user.is_staff:
+                return redirect("admin_dashboard")
+
+            if hasattr(user, "teacher_profile"):
+                return redirect("teacher_dashboard")
+
+            if hasattr(user, "student_profile"):
+                return redirect("student_dashboard")
+
+            error = "برای این حساب نقش مشخصی تعریف نشده است."
+
+        else:
+            error = "نام کاربری یا رمز عبور اشتباه است."
+
+    return render(
+        request,
+        "accounts/login.html",
+        {
+            "error": error,
         },
     )

@@ -1,0 +1,106 @@
+<h1>
+    داشبورد مدیریت
+</h1>
+
+
+{% if active_year %}
+
+    <p>
+        <strong>
+            سال تحصیلی فعال:
+        </strong>
+
+        {{ active_year.title }}
+    </p>
+
+{% else %}
+
+    <p>
+        ⚠️ هیچ سال تحصیلی فعالی تعریف نشده است.
+    </p>
+
+{% endif %}
+
+
+<hr>
+
+
+<h2>
+    آمار کلی
+</h2>
+
+
+<ul>
+
+    <li>
+        👧 تعداد دانش‌آموزان:
+        {{ student_count }}
+    </li>
+
+    <li>
+        👩‍🏫 تعداد معلمان:
+        {{ teacher_count }}
+    </li>
+
+    <li>
+        🏫 تعداد کلاس‌ها:
+        {{ classroom_count }}
+    </li>
+
+    <li>
+        🖥️ کلاس‌های آنلاین فعال:
+        {{ online_class_count }}
+    </li>
+
+    <li>
+        🧾 فیش‌های در انتظار بررسی:
+
+        <a href="{% url 'cafeteria_pending_receipts' %}">
+            {{ pending_receipt_count }}
+        </a>
+    </li>
+
+</ul>
+
+
+<hr>
+
+
+<h2>
+    اقدامات مدیریتی
+</h2>
+
+
+<ul>
+
+    <li>
+        <a href="{% url 'cafeteria_pending_receipts' %}">
+            🧾 بررسی فیش‌های در انتظار
+        </a>
+    </li>
+
+    <li>
+        <a href="/admin/online_classes/onlineclass/">
+            🖥️ مدیریت کلاس‌های آنلاین
+        </a>
+    </li>
+
+    <li>
+        <a href="/admin/notifications/announcement/">
+            📢 مدیریت اطلاعیه‌های مدرسه
+        </a>
+    </li>
+
+    <li>
+        <a href="/admin/reports/studentreportcard/">
+            📄 مدیریت کارنامه‌های دانش‌آموزان
+        </a>
+    </li>
+
+    <li>
+        <a href="/admin/">
+            ⚙️ ورود به پنل کامل Django Admin
+        </a>
+    </li>
+
+</ul>

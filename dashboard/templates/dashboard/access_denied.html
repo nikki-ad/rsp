@@ -1,0 +1,28 @@
+<h1>
+    دسترسی غیرمجاز
+</h1>
+
+<p>
+    شما اجازه مشاهده داشبورد مدیریت را ندارید.
+</p>
+
+
+{% if user.student_profile %}
+
+    <a href="{% url 'student_dashboard' %}">
+        ← بازگشت به داشبورد دانش‌آموز
+    </a>
+
+{% elif user.teacher_profile %}
+
+    <a href="{% url 'teacher_dashboard' %}">
+        ← بازگشت به داشبورد معلم
+    </a>
+
+{% else %}
+
+    <a href="{% url 'user_login' %}">
+        ← بازگشت به صفحه ورود
+    </a>
+
+{% endif %}
