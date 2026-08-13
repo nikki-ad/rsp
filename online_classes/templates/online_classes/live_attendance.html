@@ -6,50 +6,65 @@
     {{ online_class.title }}
 </h2>
 
-<p>
-    این صفحه وضعیت حضور همین لحظه در BigBlueButton را نشان می‌دهد.
-</p>
 
-<hr>
+{% if attendance_error %}
 
+    <p style="color: red;">
+        ⚠️ {{ attendance_error }}
+    </p>
 
-<h3>
-    دانش‌آموزان کلاس
-</h3>
+    <p>
+        وضعیت حضور دانش‌آموزان در حال حاضر قابل تشخیص نیست.
+        چند لحظه بعد دوباره تلاش کنید.
+    </p>
 
-<ul>
+{% else %}
 
-    {% for row in attendance_rows %}
+    <p>
+        این صفحه وضعیت حضور همین لحظه در BigBlueButton را نشان می‌دهد.
+    </p>
 
-        <li>
+    <hr>
 
-            {{ row.student.user.get_full_name }}
+    <h3>
+        دانش‌آموزان کلاس
+    </h3>
 
-            {% if row.is_present %}
+    <ul>
 
-                🟢 حاضر
+        {% for row in attendance_rows %}
 
-            {% else %}
+            <li>
 
-                🔴 غایب
+                {{ row.student.user.get_full_name }}
 
-            {% endif %}
+                {% if row.is_present %}
 
-        </li>
+                    🟢 حاضر
 
-    {% empty %}
+                {% else %}
 
-        <li>
-            دانش‌آموزی برای این کلاس ثبت نشده است.
-        </li>
+                    🔴 غایب
 
-    {% endfor %}
+                {% endif %}
 
-</ul>
+            </li>
+
+        {% empty %}
+
+            <li>
+                دانش‌آموزی برای این کلاس ثبت نشده است.
+            </li>
+
+        {% endfor %}
+
+    </ul>
+
+{% endif %}
 
 
 <hr>
 
 <a href="">
-    تازه‌سازی وضعیت حضور
+    🔄 تازه‌سازی وضعیت حضور
 </a>

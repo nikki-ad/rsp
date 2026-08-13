@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-
+import requests
 from .models import OnlineClass
 from django.shortcuts import get_object_or_404, redirect
 from .services import create_bbb_meeting, build_bbb_join_url
@@ -129,9 +129,24 @@ def live_attendance(request, class_id):
     if not request.user.is_staff:
         return redirect("online_class_list")
 
-    attendees = get_bbb_live_attendees(
-        online_class
-    )
+    try:
+
+        attendees = get_bbb_live_attendees(
+            online_class
+        )
+
+        attendance_error = None
+
+    except (
+        requests.RequestException,
+        ValueError,
+    ):
+
+        attendees = []
+        attendance_error = (
+            "در حال حاضر امکان دریافت وضعیت زنده "
+            "از BigBlueButton وجود ندارد."
+        )
 
     present_user_ids = {
         attendee["user_id"]
@@ -163,5 +178,6 @@ def live_attendance(request, class_id):
             "online_class": online_class,
             "attendance_rows": attendance_rows,
             "attendees": attendees,
+            "attendance_error": attendance_error,
         },
     )
