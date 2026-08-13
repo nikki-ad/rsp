@@ -9,7 +9,7 @@ from .forms import (
     AssignmentEvaluationForm,
 )
 from django.urls import reverse
-
+from activitylog.utils import log_activity
 from notifications import constants as notification_constants
 from notifications.services import create_notification
 
@@ -40,6 +40,15 @@ def create_assignment(request, classroom_id):
             assignment.classroom = classroom
 
             assignment.save()
+
+            log_activity(
+                request,
+                action="assignment_created",
+                description=(
+                    f"تکلیف «{assignment.title}» "
+                    f"برای کلاس {classroom} توسط معلم ایجاد شد."
+                ),
+            )
 
             active_enrollments = classroom.enrollments.filter(
                 is_active=True,
@@ -110,6 +119,15 @@ def submit_assignment(request, assignment_id):
                 submission.save()
             else:
                 form.save()
+
+            log_activity(
+                request,
+                action="assignment_submission",
+                description=(
+                    f"پاسخ تکلیف «{assignment.title}» "
+                    f"توسط {student.user.get_full_name()} ثبت یا ویرایش شد."
+                ),
+            )
 
             teacher_user = assignment.teacher.user
 
@@ -189,6 +207,17 @@ def evaluate_submission(request, submission_id):
         if form.is_valid():
 
             form.save()
+
+            log_activity(
+                request,
+                action="assignment_evaluation",
+                description=(
+                    f"تکلیف «{submission.assignment.title}» "
+                    f"برای {submission.student.user.get_full_name()} "
+                    f"توسط معلم ارزیابی شد."
+                ),
+            )
+
             student_user = submission.student.user
             create_notification(
                 recipient=student_user,
@@ -234,8 +263,18 @@ def delete_assignment(request, assignment_id):
 
     if request.method == "POST":
         classroom_id = assignment.classroom.id
+        assignment_title = assignment.title
 
         assignment.delete()
+
+        log_activity(
+            request,
+            action="assignment_deleted",
+            description=(
+                f"تکلیف «{assignment_title}» "
+                f"توسط معلم حذف شد."
+            ),
+        )
 
         return redirect(
             "teacher_class_detail",

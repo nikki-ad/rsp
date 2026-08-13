@@ -22,7 +22,7 @@ from reports.models import StudentReportCard
 from django.db.models import Q
 from django.utils import timezone
 from notifications.models import Announcement
-
+from activitylog.utils import log_activity
 
 
 
@@ -427,6 +427,11 @@ def user_login(request):
         if user is not None:
 
             login(request, user)
+            log_activity(
+                request,
+                action="login",
+                description="ورود موفق به سامانه",
+            )
 
             if user.is_superuser or user.is_staff:
                 return redirect("admin_dashboard")

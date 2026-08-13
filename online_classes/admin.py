@@ -7,6 +7,7 @@ from .models import (
 from accounts.models import StudentProfile, TeacherProfile
 from django.urls import reverse
 from django.utils.html import format_html
+from activitylog.utils import log_activity
 
 
 @admin.register(BBBConfiguration)
@@ -53,6 +54,32 @@ class OnlineClassAdmin(admin.ModelAdmin):
         "students",
         "teachers",
     )
+
+    def save_model(self, request, obj, form, change):
+
+        super().save_model(
+            request,
+            obj,
+            form,
+            change,
+        )
+
+        if change:
+            action = "online_class_updated"
+            description = (
+                f"کلاس آنلاین «{obj.title}» ویرایش شد."
+            )
+        else:
+            action = "online_class_created"
+            description = (
+                f"کلاس آنلاین «{obj.title}» ایجاد شد."
+            )
+
+        log_activity(
+            request,
+            action=action,
+            description=description,
+        )
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
 
@@ -132,3 +159,42 @@ class OnlineClassAdmin(admin.ModelAdmin):
             '<a href="{}">مشاهده حضور زنده</a>',
             url,
         )
+
+
+    def delete_model(self, request, obj):
+
+        title = obj.title
+
+        super().delete_model(
+            request,
+            obj,
+        )
+
+        log_activity(
+            request,
+            action="online_class_deleted",
+            description=f"کلاس آنلاین «{title}» حذف شد.",
+        )
+
+
+    def delete_queryset(self, request, queryset):
+
+        titles = list(
+            queryset.values_list(
+                "title",
+                flat=True,
+            )
+        )
+
+        super().delete_queryset(
+            request,
+            queryset,
+        )
+
+        for title in titles:
+
+            log_activity(
+                request,
+                action="online_class_deleted",
+                description=f"کلاس آنلاین «{title}» حذف شد.",
+            )

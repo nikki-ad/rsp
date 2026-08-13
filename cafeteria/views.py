@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
+from activitylog.utils import log_activity
 from .forms import (
     CafeteriaWeeklyReservationForm,
     CafeteriaReceiptUploadForm,
@@ -155,6 +156,14 @@ def upload_receipt(request, reservation_id):
             reservation.payment_status = "receipt_pending"
 
             reservation.save()
+            log_activity(
+                request,
+                action="cafeteria_receipt_uploaded",
+                description=(
+                    f"فیش غذای {student.user.get_full_name()} "
+                    f"به مبلغ {reservation.final_amount} تومان ارسال شد."
+                ),
+            )
 
             return redirect("student_dashboard")
 
@@ -214,17 +223,44 @@ def review_receipt(request, reservation_id, action):
 
     if request.method == "POST":
 
+        student_name = reservation.student.user.get_full_name()
+        amount = reservation.final_amount
+
         if action == "approve":
+
             reservation.payment_status = "paid"
 
+            log_action = "cafeteria_receipt_approved"
+
+            log_description = (
+                f"فیش غذای {student_name} "
+                f"به مبلغ {amount} تومان تأیید شد."
+            )
+
         elif action == "reject":
+
             reservation.payment_status = "rejected"
 
+            log_action = "cafeteria_receipt_rejected"
+
+            log_description = (
+                f"فیش غذای {student_name} "
+                f"به مبلغ {amount} تومان رد شد."
+            )
+
         else:
-            return redirect("cafeteria_pending_receipts")
+            return redirect(
+                "cafeteria_pending_receipts"
+            )
 
         reservation.save(
             update_fields=["payment_status"]
+        )
+
+        log_activity(
+            request,
+            action=log_action,
+            description=log_description,
         )
 
     return redirect(
