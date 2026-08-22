@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 
 from accounts.models import TeacherProfile
@@ -82,6 +83,7 @@ def academic_year_archive(request, year_id):
 
     academic_year = get_object_or_404(AcademicYear, id=year_id)
 
+    query = (request.GET.get("q") or "").strip()
     enrollments = (
         academic_year.enrollments.select_related(
             "student__user",
@@ -93,6 +95,11 @@ def academic_year_archive(request, year_id):
             "student__user__last_name",
         )
     )
+    if query:
+        enrollments = enrollments.filter(
+            Q(student__user__first_name__icontains=query)
+            | Q(student__user__last_name__icontains=query)
+        )
 
     teachers = (
         TeacherProfile.objects.filter(
@@ -116,5 +123,6 @@ def academic_year_archive(request, year_id):
             "enrollments": enrollments,
             "teachers": teachers,
             "classrooms": classrooms,
+            "query": query,
         },
     )

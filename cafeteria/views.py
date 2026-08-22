@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models import Q
 
 from activitylog.utils import log_activity
 from .forms import (
@@ -196,6 +197,7 @@ def pending_receipts(request):
 
         return redirect("user_login")
 
+    query = (request.GET.get("q") or "").strip()
     reservations = (
         CafeteriaReservation.objects.filter(
             payment_status="receipt_pending",
@@ -206,12 +208,18 @@ def pending_receipts(request):
         )
         .order_by("-created_at")
     )
+    if query:
+        reservations = reservations.filter(
+            Q(student__user__first_name__icontains=query)
+            | Q(student__user__last_name__icontains=query)
+        )
 
     return render(
         request,
         "cafeteria/pending_receipts.html",
         {
             "reservations": reservations,
+            "query": query,
         },
     )
 

@@ -3,6 +3,10 @@
 {% block title %}پیام‌ها | RSP{% endblock %}
 
 {% block content %}
+<div class="filter-bar">
+    <a class="btn {% if channel == 'general' %}btn-primary{% else %}btn-ghost{% endif %}" href="{% url 'conversation_list' %}?channel=general">پیام‌های مدرسه</a>
+    <a class="btn {% if channel == 'language' %}btn-primary{% else %}btn-ghost{% endif %}" href="{% url 'conversation_list' %}?channel=language">پیام‌های واحد زبان</a>
+</div>
 <div class="page-header">
     <div>
         <h1>پیام‌ها</h1>

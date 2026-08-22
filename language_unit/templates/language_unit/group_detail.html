@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ group.title }} | واحد زبان{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ group.title }}</h1><p>{{ group.academic_year }}</p></div>
+<div class="page-header-actions"><a class="btn btn-primary" href="{% url 'create_language_material' group.id %}">مطلب جدید</a>
+<a class="btn btn-primary" href="{% url 'create_language_assignment' group.id %}">تکلیف جدید</a></div></div>
+<section class="dashboard-section"><h2>دانش‌آموزان گروه</h2>
+<form class="filter-bar" method="get"><input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس نام یا نام خانوادگی"><button class="btn btn-primary">جستجو</button></form>
+<div class="announcement-list">{% for student in students %}<div class="list-card"><strong>{{ student.user.get_full_name|default:student.user.username }}</strong>
+<div class="card-actions"><a href="{% url 'start_language_conversation' student.user.id %}">پیام واحد زبان</a></div></div>
+{% empty %}<div class="empty-state">دانش‌آموزی یافت نشد.</div>{% endfor %}</div></section>
+<section class="dashboard-section"><h2>مطالب منتشرشده</h2><div class="announcement-list">{% for item in materials %}<div class="list-card"><strong>{{ item.title }}</strong></div>{% empty %}<p>مطلبی نیست.</p>{% endfor %}</div></section>
+<section class="dashboard-section"><h2>تکالیف منتشرشده</h2><div class="announcement-list">{% for item in assignments %}<div class="list-card"><strong>{{ item.title }}</strong><span>{{ item.submissions.count }} پاسخ</span></div>{% empty %}<p>تکلیفی نیست.</p>{% endfor %}</div></section>
+{% endblock %}

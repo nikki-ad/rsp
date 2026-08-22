@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}واحد زبان معلم | RSP{% endblock %}
+{% block content %}
+<div class="dashboard-header"><h1>🌐 واحد زبان</h1><p>مدیریت گروه‌ها، مطالب و تکالیف زبان</p></div>
+<section class="dashboard-section"><h2>گروه‌های زبان من</h2><div class="class-grid">
+{% for group in groups %}<a class="class-card" href="{% url 'language_group_detail' group.id %}">
+<span>{{ group.academic_year }}</span><strong>{{ group.title }}</strong><small>{{ group.students.count }} دانش‌آموز</small>
+</a>{% empty %}<p>هنوز گروه زبانی به شما اختصاص داده نشده است.</p>{% endfor %}
+</div></section>
+{% endblock %}

@@ -31,6 +31,10 @@
 
 <section class="dashboard-section">
     <h2>دانش‌آموزان</h2>
+    <form class="filter-bar" method="get">
+        <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس نام یا نام خانوادگی">
+        <button class="btn btn-primary" type="submit">جستجو</button>
+    </form>
     {% if enrollments %}
         <div class="table-wrap">
             <table class="data-table">

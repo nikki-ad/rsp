@@ -49,6 +49,9 @@
                 <a href="{% url 'announcement_list' %}" class="{% if 'announcement' in url_name %}active{% endif %}">
                     اطلاعیه‌ها
                 </a>
+                <a href="{% url 'manage_language_groups' %}" class="{% if 'language_group' in url_name or url_name == 'manage_language_groups' %}active{% endif %}">
+                    واحد زبان
+                </a>
 
                 <div class="menu-title">گزارش‌ها</div>
                 <a href="{% url 'report_card_list' %}" class="{% if 'report_card' in url_name %}active{% endif %}">کارنامه‌ها</a>
@@ -69,6 +72,9 @@
                 <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' or url_name == 'live_attendance' %}active{% endif %}">
                     کلاس آنلاین
                 </a>
+                <a href="{% url 'teacher_language_dashboard' %}" class="{% if 'language' in url_name %}active{% endif %}">
+                    واحد زبان
+                </a>
 
             {% elif user.role == "student" %}
                 <a href="{% url 'student_dashboard' %}" class="{% if url_name == 'student_dashboard' %}active{% endif %}">
@@ -80,6 +86,9 @@
                 <a href="{% url 'student_dashboard' %}#materials">مطالب آموزشی</a>
                 <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' %}active{% endif %}">
                     کلاس آنلاین
+                </a>
+                <a href="{% url 'student_language_dashboard' %}" class="{% if 'language' in url_name %}active{% endif %}">
+                    واحد زبان
                 </a>
 
                 <div class="menu-title">خدمات</div>

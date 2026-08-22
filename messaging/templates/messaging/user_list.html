@@ -13,6 +13,11 @@
     </div>
 </div>
 
+<form class="filter-bar" method="get">
+    <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس نام یا نام خانوادگی">
+    <button class="btn btn-primary" type="submit">جستجو</button>
+</form>
+
 <div class="announcement-list">
     {% for user_item in users %}
         <div class="list-card">

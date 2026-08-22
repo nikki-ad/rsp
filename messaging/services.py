@@ -4,7 +4,7 @@ from django.db.models import Q
 from .models import Conversation
 
 
-def get_or_create_conversation(user_1, user_2):
+def get_or_create_conversation(user_1, user_2, channel=Conversation.Channel.GENERAL):
 
     if user_1 == user_2:
         raise ValidationError(
@@ -21,7 +21,7 @@ def get_or_create_conversation(user_1, user_2):
             participant_1=user_2,
             participant_2=user_1,
         )
-    ).first()
+    ).filter(channel=channel).first()
 
     if existing_conversation:
         return existing_conversation, False
@@ -34,6 +34,7 @@ def get_or_create_conversation(user_1, user_2):
     conversation = Conversation.objects.create(
         participant_1=participants[0],
         participant_2=participants[1],
+        channel=channel,
     )
 
     return conversation, True

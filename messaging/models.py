@@ -9,6 +9,15 @@ from django.db.models import Q
 
 class Conversation(BaseModel):
 
+    class Channel(models.TextChoices):
+        GENERAL = "general", "پیام‌های مدرسه"
+        LANGUAGE = "language", "واحد زبان"
+
+    channel = models.CharField(
+        max_length=20, choices=Channel.choices, default=Channel.GENERAL,
+        verbose_name="بخش گفتگو",
+    )
+
     participant_1 = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -58,7 +67,7 @@ class Conversation(BaseModel):
                     participant_1=self.participant_2,
                     participant_2=self.participant_1,
                 )
-            ).exclude(
+            ).filter(channel=self.channel).exclude(
                 pk=self.pk
             )
 
@@ -87,6 +96,12 @@ class Conversation(BaseModel):
     class Meta:
         verbose_name = "گفتگو"
         verbose_name_plural = "گفتگوها"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("participant_1", "participant_2", "channel"),
+                name="unique_conversation_participants_channel",
+            )
+        ]
 
     def __str__(self):
         return (

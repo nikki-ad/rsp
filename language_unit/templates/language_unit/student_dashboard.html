@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}واحد زبان | RSP{% endblock %}
+{% block content %}
+<div class="dashboard-header"><h1>🌐 واحد زبان</h1><p>مطالب، تکالیف و پیام‌های واحد زبان شما</p></div>
+
+<section class="dashboard-section">
+  <h2>گروه و معلمان زبان من</h2>
+  <div class="announcement-list">
+    {% for group in groups %}
+      <div class="announcement-card">
+        <strong>{{ group.title }}</strong><p>{{ group.academic_year }}</p>
+        {% for teacher in group.teachers.all %}
+          <div>{{ teacher.user.get_full_name|default:teacher.user.username }} —
+            <a href="{% url 'start_language_conversation' teacher.user.id %}">💬 پیام مخصوص واحد زبان</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% empty %}<div class="empty-state">هنوز در گروه زبان فعالی عضو نشده‌اید.</div>{% endfor %}
+  </div>
+</section>
+
+<section class="dashboard-section" id="language-materials"><h2>📚 مطالب زبان</h2>
+  <div class="announcement-list">
+  {% for material in materials %}<div class="announcement-card"><strong>{{ material.title }}</strong>
+    <small>{{ material.group.title }} | {{ material.teacher }}</small>
+    {% if material.content_type == 'text' %}<p>{{ material.content }}</p>
+    {% elif material.content_type == 'file' %}<a href="{{ material.file.url }}">دریافت فایل</a>
+    {% elif material.content_type == 'link' %}<a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
+  </div>{% empty %}<p>هنوز مطلبی ثبت نشده است.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="dashboard-section" id="language-assignments"><h2>✍️ تکالیف زبان</h2>
+  <div class="announcement-list">
+  {% for item in assignment_items %}<div class="announcement-card"><strong>{{ item.assignment.title }}</strong>
+    <p>{{ item.assignment.description }}</p>
+    {% if item.assignment.file %}<a href="{{ item.assignment.file.url }}">دریافت فایل تکلیف</a><br>{% endif %}
+    {% if item.submission %}<span class="badge badge-success">پاسخ ارسال شده</span>{% endif %}
+    <a href="{% url 'submit_language_assignment' item.assignment.id %}">{% if item.submission %}ویرایش پاسخ{% else %}ارسال پاسخ{% endif %}</a>
+  </div>{% empty %}<p>هنوز تکلیفی ثبت نشده است.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.shortcuts import render
 
 from .models import Notification
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
 
 @login_required
 def notification_list(request):
@@ -46,4 +47,13 @@ def open_notification(request, notification_id):
     if notification.url:
         return redirect(notification.url)
 
+    return redirect("notification_list")
+
+
+@login_required
+def delete_all_notifications(request):
+    if request.method != "POST":
+        return redirect("notification_list")
+    deleted_count, _ = Notification.objects.filter(recipient=request.user).delete()
+    messages.success(request, f"{deleted_count} اعلان حذف شد.")
     return redirect("notification_list")

@@ -22,6 +22,11 @@ urlpatterns = [
         views.start_conversation,
         name="start_conversation",
     ),
+    path(
+        "language/start/<uuid:user_id>/",
+        views.start_language_conversation,
+        name="start_language_conversation",
+    ),
 
 
     path(
