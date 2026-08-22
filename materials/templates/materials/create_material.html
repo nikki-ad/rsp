@@ -1,15 +1,31 @@
-<h1>
-    ایجاد مطلب آموزشی
-</h1>
+{% extends "base.html" %}
 
-<form method="post" enctype="multipart/form-data">
+{% block title %}ایجاد مطلب آموزشی | RSP{% endblock %}
 
-    {% csrf_token %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>ایجاد مطلب آموزشی</h1>
+        <p>مطلب برای کلاس‌های فعال شما منتشر می‌شود.</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">بازگشت</a>
+    </div>
+</div>
 
-    {{ form.as_p }}
-
-    <button type="submit">
-        ثبت مطلب آموزشی
-    </button>
-
-</form>
+<div class="card form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <p {% if field.name == "classrooms" %}class="checkbox-list"{% endif %}>
+                {{ field.label_tag }}
+                {{ field }}
+                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                {{ field.errors }}
+            </p>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">ثبت مطلب آموزشی</button>
+    </form>
+</div>
+{% endblock %}

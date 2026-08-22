@@ -9,6 +9,7 @@ from .services import (
     build_bbb_join_url,
     get_bbb_live_attendees,
 )
+from accounts.choices import Role
 from academic.models import AcademicYear
 
 
@@ -42,6 +43,18 @@ def online_class_list(request):
             "academic_year",
             "bbb_configuration",
         ).distinct()
+
+    elif user.is_superuser or user.role in [
+        Role.SUPER_ADMIN,
+        Role.SCHOOL_MANAGER,
+    ]:
+        online_classes = OnlineClass.objects.filter(
+            is_active=True,
+            academic_year__status=AcademicYear.Status.ACTIVE,
+        ).select_related(
+            "academic_year",
+            "bbb_configuration",
+        )
 
     return render(
         request,
@@ -83,6 +96,12 @@ def join_online_class(request, class_id):
         ).exists():
             return redirect("online_class_list")
 
+        role = "moderator"
+
+    elif user.is_superuser or user.role in [
+        Role.SUPER_ADMIN,
+        Role.SCHOOL_MANAGER,
+    ]:
         role = "moderator"
 
     else:
@@ -134,7 +153,14 @@ def live_attendance(request, class_id):
         academic_year__status=AcademicYear.Status.ACTIVE,
     )
 
-    if not request.user.is_staff:
+    if not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or request.user.role in [
+            Role.SUPER_ADMIN,
+            Role.SCHOOL_MANAGER,
+        ]
+    ):
         return redirect("online_class_list")
 
     try:

@@ -1,32 +1,86 @@
-<h1>
-    داشبورد معلم
-</h1>
+{% extends "base.html" %}
 
 
-<a href="{% url 'notification_list' %}">
-    🔔 اعلان‌ها
-
-    {% if unread_notification_count > 0 %}
-        ({{ unread_notification_count }})
-    {% endif %}
-</a>
+{% block title %}
+داشبورد معلم | RSP
+{% endblock %}
 
 
-<br>
+
+{% block content %}
 
 
-<a href="{% url 'conversation_list' %}">
-    💬 پیام‌ها
-</a>
+
+<div class="dashboard-header">
 
 
-<br>
+    <h1>
+        داشبورد معلم
+    </h1>
 
 
-<a href="{% url 'online_class_list' %}">
-    🖥️ کلاس‌های آنلاین من
-</a>
+    <p>
+        مدیریت کلاس‌ها، ارتباط با دانش‌آموزان و فعالیت‌های آموزشی
+    </p>
 
+
+</div>
+
+
+
+
+
+<div class="dashboard-section">
+
+
+    <h2>
+        دسترسی سریع
+    </h2>
+
+
+
+    <div class="action-list">
+
+
+        <a href="{% url 'notification_list' %}">
+
+            🔔 اعلان‌ها
+
+            {% if unread_notification_count > 0 %}
+                ({{ unread_notification_count }})
+            {% endif %}
+
+        </a>
+
+
+
+        <a href="{% url 'conversation_list' %}">
+
+            💬 پیام‌ها
+
+        </a>
+
+
+
+
+        <a href="{% url 'online_class_list' %}">
+
+            🖥️ کلاس‌های آنلاین من
+
+        </a>
+
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+<div class="dashboard-section">
 
 
 <h2>
@@ -34,67 +88,130 @@
 </h2>
 
 
+
 {% if announcements %}
 
-    <ul>
 
-        {% for announcement in announcements %}
 
-            <li>
+<div class="announcement-list">
 
-                <strong>
-                    {{ announcement.title }}
-                </strong>
 
-                <br>
+{% for announcement in announcements %}
 
-                {{ announcement.message }}
 
-                <br>
 
-                <small>
-                    {{ announcement.publish_at|date:"Y/m/d H:i" }}
-                </small>
+<div class="announcement-card">
 
-            </li>
 
-        {% endfor %}
+    <strong>
+        {{ announcement.title }}
+    </strong>
 
-    </ul>
+
+    <p>
+        {{ announcement.message }}
+    </p>
+
+
+    <small>
+
+        {{ announcement.publish_at|date:"Y/m/d H:i" }}
+
+    </small>
+
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
 
 {% else %}
 
-    <p>
-        اطلاعیه جدیدی برای شما وجود ندارد.
-    </p>
+
+<p>
+    اطلاعیه جدیدی برای شما وجود ندارد.
+</p>
+
 
 {% endif %}
 
 
+</div>
+
+
+
+
+
+
+
+<div class="dashboard-section">
+
 
 <h2>
-    کلاس‌های من
+    🏫 کلاس‌های من
 </h2>
 
 
-<ul>
 
-    {% for classroom in classrooms %}
+<div class="class-grid">
 
-        <li>
 
-            <a href="{% url 'teacher_class_detail' classroom.id %}">
-                {{ classroom.name }}
-            </a>
 
-        </li>
+{% for classroom in classrooms %}
 
-    {% empty %}
 
-        <li>
-            هیچ کلاسی برای شما ثبت نشده است.
-        </li>
 
-    {% endfor %}
+<a class="class-card"
+href="{% url 'teacher_class_detail' classroom.id %}">
 
-</ul>
+
+    <span>
+        کلاس
+    </span>
+
+
+    <strong>
+        {{ classroom.name }}
+    </strong>
+
+
+
+</a>
+
+
+
+
+{% empty %}
+
+
+
+<p>
+    هیچ کلاسی برای شما ثبت نشده است.
+</p>
+
+
+
+{% endfor %}
+
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+{% endblock %}

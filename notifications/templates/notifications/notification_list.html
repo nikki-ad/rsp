@@ -1,57 +1,45 @@
-<h1>
-    🔔 اعلان‌های من
-</h1>
+{% extends "base.html" %}
 
-<p>
-    اعلان‌های خوانده‌نشده:
-    {{ unread_count }}
-</p>
+{% block title %}اعلان‌ها | RSP{% endblock %}
 
-<hr>
-
-<ul>
-
-    {% for notification in notifications %}
-
-        <li>
-
-            {% if not notification.is_read %}
-                🔴
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>اعلان‌های من</h1>
+        <p>
+            {% if unread_count %}
+                {{ unread_count }} اعلان خوانده‌نشده دارید.
+            {% else %}
+                همه اعلان‌ها خوانده شده‌اند.
             {% endif %}
+        </p>
+    </div>
+</div>
 
-            <strong>
-                {{ notification.title }}
-            </strong>
-
-            <br>
+<div class="announcement-list">
+    {% for notification in notifications %}
+        <div class="list-card">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+                <strong>{{ notification.title }}</strong>
+                {% if not notification.is_read %}
+                    <span class="badge badge-danger">جدید</span>
+                {% endif %}
+            </div>
 
             {% if notification.message %}
-                {{ notification.message }}
-                <br>
+                <p>{{ notification.message }}</p>
             {% endif %}
 
-            <small>
-                {{ notification.created_at|date:"Y/m/d H:i" }}
-            </small>
+            <small>{{ notification.created_at|date:"Y/m/d H:i" }}</small>
 
             {% if notification.url %}
-                <br>
-
-                <a href="{% url 'open_notification' notification.id %}">
-                    مشاهده
-                </a>
+                <div class="card-actions">
+                    <a class="btn btn-secondary" href="{% url 'open_notification' notification.id %}">مشاهده</a>
+                </div>
             {% endif %}
-
-        </li>
-
-        <hr>
-
+        </div>
     {% empty %}
-
-        <li>
-            هنوز اعلانی برای شما وجود ندارد.
-        </li>
-
+        <div class="empty-state">هنوز اعلانی برای شما وجود ندارد.</div>
     {% endfor %}
-
-</ul>
+</div>
+{% endblock %}

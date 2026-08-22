@@ -1,28 +1,23 @@
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render , get_object_or_404
-from django.http import JsonResponse
-from .forms import StudentCreateForm, TeacherCreateForm
-from academic.models import *
-from materials.forms import EducationalMaterialCreateForm
-from materials.models import EducationalMaterial
-from django.contrib.auth import get_user_model
-from notifications.models import Notification
-from academic.models import Classroom
-from materials.models import EducationalMaterial
-from assignments.models import Assignment
-from messaging.models import Conversation
-from django.http import HttpResponseForbidden
-from .choices import Role
+from django.http import HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from notifications import constants as notification_constants
-from notifications.services import create_notification
-from reports.models import StudentReportCard
 from django.db.models import Q
 from django.utils import timezone
-from notifications.models import Announcement
+
+from academic.models import AcademicYear, Classroom, Enrollment
 from activitylog.utils import log_activity
+from materials.forms import EducationalMaterialCreateForm
+from materials.models import EducationalMaterial
+from notifications import constants as notification_constants
+from notifications.models import Announcement, Notification
+from notifications.services import create_notification
+from reports.models import StudentReportCard
+
+from .forms import ProfileForm, StudentSelfProfileForm, TeacherSelfProfileForm
+from .permissions import post_login_redirect_name
 
 
 
@@ -30,55 +25,58 @@ from activitylog.utils import log_activity
 
 User = get_user_model()
 
+
 @login_required
-def create_student(request):
+def profile(request):
+    extra_form = None
+    extra_instance = None
+    if hasattr(request.user, "student_profile"):
+        extra_instance = request.user.student_profile
+    elif hasattr(request.user, "teacher_profile"):
+        extra_instance = request.user.teacher_profile
+
     if request.method == "POST":
-        form = StudentCreateForm(request.POST)
-
-        if form.is_valid():
-            user = form.save()
-
-            messages.success(
-                request,
-                f"دانش‌آموز {user.get_full_name()} با موفقیت ثبت شد."
+        form = ProfileForm(
+            request.POST,
+            request.FILES,
+            instance=request.user,
+        )
+        if extra_instance and hasattr(request.user, "student_profile"):
+            extra_form = StudentSelfProfileForm(
+                request.POST,
+                instance=extra_instance,
+            )
+        elif extra_instance:
+            extra_form = TeacherSelfProfileForm(
+                request.POST,
+                instance=extra_instance,
             )
 
-            return redirect("create_student")
-
-    else:
-        form = StudentCreateForm()
-
-    return render(
-        request,
-        "accounts/create_student.html",
-        {
-            "form": form,
-        }
-    )
-
-
-
-def create_teacher(request):
-
-    if request.method == "POST":
-        form = TeacherCreateForm(request.POST)
-
-        if form.is_valid():
+        extra_valid = extra_form.is_valid() if extra_form else True
+        if form.is_valid() and extra_valid:
             form.save()
-            return redirect("create_teacher")
-
+            if extra_form:
+                extra_form.save()
+            messages.success(request, "پروفایل شما ذخیره شد.")
+            return redirect("profile")
     else:
-        form = TeacherCreateForm()
+        form = ProfileForm(instance=request.user)
+        if extra_instance and hasattr(request.user, "student_profile"):
+            extra_form = StudentSelfProfileForm(instance=extra_instance)
+        elif extra_instance:
+            extra_form = TeacherSelfProfileForm(instance=extra_instance)
 
     return render(
         request,
-        "accounts/create_teacher.html",
+        "accounts/profile.html",
         {
             "form": form,
-        }
+            "extra_form": extra_form,
+        },
     )
 
 
+@login_required
 def load_classrooms(request):
     academic_year_id = request.GET.get("academic_year")
 
@@ -106,6 +104,8 @@ def load_classrooms(request):
 
 @login_required
 def teacher_dashboard(request):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
 
     teacher = request.user.teacher_profile
 
@@ -143,6 +143,8 @@ def teacher_dashboard(request):
 
 @login_required
 def teacher_class_detail(request, classroom_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
 
     teacher = request.user.teacher_profile
 
@@ -172,6 +174,8 @@ def teacher_class_detail(request, classroom_id):
 
 @login_required
 def create_material(request, classroom_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
 
     teacher = request.user.teacher_profile
 
@@ -183,7 +187,12 @@ def create_material(request, classroom_id):
     )
 
     if request.method == "POST":
-        form = EducationalMaterialCreateForm(request.POST, request.FILES)
+        form = EducationalMaterialCreateForm(
+            request.POST,
+            request.FILES,
+            teacher=teacher,
+            hide_classrooms=True,
+        )
 
         if form.is_valid():
             material = form.save(commit=False)
@@ -214,7 +223,10 @@ def create_material(request, classroom_id):
             )
 
     else:
-        form = EducationalMaterialCreateForm()
+        form = EducationalMaterialCreateForm(
+            teacher=teacher,
+            hide_classrooms=True,
+        )
 
     return render(
         request,
@@ -227,6 +239,8 @@ def create_material(request, classroom_id):
 
 @login_required
 def student_dashboard(request):
+    if not hasattr(request.user, "student_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
 
     student = request.user.student_profile
 
@@ -333,55 +347,13 @@ def student_dashboard(request):
 
 @login_required
 def manager_dashboard(request):
-
-    if not (
-        request.user.is_superuser
-        or request.user.role in [
-            Role.SUPER_ADMIN,
-            Role.SCHOOL_MANAGER,
-        ]
-    ):
-        return HttpResponseForbidden(
-            "شما اجازه دسترسی به این صفحه را ندارید."
-        )
-    
-    unread_notification_count = Notification.objects.filter(
-        recipient=request.user,
-        is_read=False,
-    ).count()
-
-    context = {
-        "student_count": User.objects.filter(
-            role=Role.STUDENT,
-            is_active=True,
-        ).count(),
-
-        "teacher_count": User.objects.filter(
-            role=Role.TEACHER,
-            is_active=True,
-        ).count(),
-
-        "classroom_count": Classroom.objects.count(),
-
-        "material_count": EducationalMaterial.objects.count(),
-
-        "assignment_count": Assignment.objects.count(),
-
-        "conversation_count": Conversation.objects.count(),
-
-        "unread_notification_count": unread_notification_count,
-    }
-
-
-    return render(
-        request,
-        "accounts/manager_dashboard.html",
-        context,
-    )
+    return redirect("admin_dashboard")
 
 
 @login_required
 def delete_material(request, material_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
 
     teacher = request.user.teacher_profile
 
@@ -445,17 +417,7 @@ def user_login(request):
                 action="login",
                 description="ورود موفق به سامانه",
             )
-
-            if user.is_superuser or user.is_staff:
-                return redirect("admin_dashboard")
-
-            if hasattr(user, "teacher_profile"):
-                return redirect("teacher_dashboard")
-
-            if hasattr(user, "student_profile"):
-                return redirect("student_dashboard")
-
-            error = "برای این حساب نقش مشخصی تعریف نشده است."
+            return redirect(post_login_redirect_name(user))
 
         else:
             error = "نام کاربری یا رمز عبور اشتباه است."

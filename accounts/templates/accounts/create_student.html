@@ -1,34 +1,35 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>ثبت دانش‌آموز</title>
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}ثبت دانش‌آموز | RSP{% endblock %}
 
-<h1>ثبت دانش‌آموز جدید</h1>
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>ثبت دانش‌آموز جدید</h1>
+        <p>دانش‌آموز در سال تحصیلی فعال ثبت‌نام می‌شود.</p>
+    </div>
+</div>
 
-<form method="post">
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-    <button type="submit">
-        ثبت دانش‌آموز
-    </button>
-</form>
+<div class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ثبت دانش‌آموز</button>
+    </form>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
     const academicYearField = document.getElementById("id_academic_year");
     const classroomField = document.getElementById("id_classroom");
 
+    if (!academicYearField || !classroomField) {
+        return;
+    }
+
     academicYearField.addEventListener("change", function () {
-
         const yearId = this.value;
-
         classroomField.innerHTML = '<option value="">---------</option>';
 
         if (!yearId) {
@@ -38,24 +39,14 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(`/accounts/load-classrooms/?academic_year=${yearId}`)
             .then(response => response.json())
             .then(data => {
-
                 data.classrooms.forEach(function (classroom) {
-
                     const option = document.createElement("option");
-
                     option.value = classroom.id;
                     option.textContent = classroom.name;
-
                     classroomField.appendChild(option);
-
                 });
-
             });
-
     });
-
 });
 </script>
-
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}پایه‌ها | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>پایه‌های تحصیلی</h1>
+        <p>ترتیب نمایش در لیست کلاس‌ها استفاده می‌شود.</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'grade_create' %}">پایه جدید</a>
+    </div>
+</div>
+
+{% if grades %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>کد</th>
+                <th>عنوان</th>
+                <th>ترتیب</th>
+                <th>کلاس‌ها</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grade in grades %}
+                <tr>
+                    <td>{{ grade.code }}</td>
+                    <td>{{ grade.title }}</td>
+                    <td>{{ grade.order }}</td>
+                    <td>{{ grade.classroom_count }}</td>
+                    <td>
+                        <a href="{% url 'grade_edit' grade.id %}">ویرایش</a>
+                        · <a href="{% url 'grade_delete' grade.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">پایه‌ای ثبت نشده است.</div>
+{% endif %}
+{% endblock %}

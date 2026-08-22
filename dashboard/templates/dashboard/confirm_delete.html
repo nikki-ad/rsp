@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}حذف | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>حذف رکورد</h1>
+        <p>این عملیات قابل بازگشت نیست.</p>
+    </div>
+</div>
+
+<div class="card confirm-card">
+    <p>آیا از حذف «{{ object_label }}» مطمئن هستید؟</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="confirm-actions">
+            <button class="btn btn-danger" type="submit">حذف</button>
+            <a class="btn btn-ghost" href="{{ back_url }}">انصراف</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

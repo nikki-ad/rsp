@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from core.models import BaseModel
 from .choices import Role
@@ -28,6 +29,18 @@ class CustomUser(AbstractUser):
         verbose_name="نقش",
     )
 
+    avatar = models.ImageField(
+        upload_to="avatars/%Y/%m/",
+        blank=True,
+        null=True,
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=["jpg", "jpeg", "png", "webp"],
+            ),
+        ],
+        verbose_name="عکس پروفایل",
+    )
+
     class Meta:
         verbose_name = "کاربر"
         verbose_name_plural = "کاربران"
@@ -37,6 +50,21 @@ class CustomUser(AbstractUser):
         if full_name:
             return full_name
         return self.username
+
+    @property
+    def is_school_admin(self) -> bool:
+        return self.is_superuser or self.role in (
+            Role.SUPER_ADMIN,
+            Role.SCHOOL_MANAGER,
+        )
+
+    @property
+    def avatar_initial(self) -> str:
+        if self.first_name:
+            return self.first_name[0]
+        if self.username:
+            return self.username[0].upper()
+        return "?"
 
 
 class StudentProfile(BaseModel):
@@ -64,11 +92,13 @@ class StudentProfile(BaseModel):
 
     guardian_name = models.CharField(
         max_length=100,
+        blank=True,
         verbose_name="نام ولی",
     )
 
     guardian_phone = models.CharField(
         max_length=20,
+        blank=True,
         verbose_name="شماره تماس ولی",
     )
 
@@ -121,7 +151,7 @@ class TeacherProfile(BaseModel):
         verbose_name_plural = "پروفایل‌های معلم"
 
     def __str__(self):
-        return self.user.get_full_name()
+        return self.user.get_full_name() or self.user.username
 
 
 

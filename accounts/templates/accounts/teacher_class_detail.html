@@ -1,166 +1,98 @@
-<h1>
-    {{ classroom.name }}
-</h1>
-
-
-<a href="{% url 'create_assignment' classroom.id %}">
-    افزودن تکلیف
-</a>
-
-
-<a href="{% url 'create_material' classroom.id %}">
-    افزودن مطلب آموزشی
-</a>
-
-
-<p>
-    این صفحه کلاس معلم است.
-</p>
-
-
-
-<h2>دانش‌آموزان کلاس</h2>
-
-
-<ul>
-    {% for enrollment in students %}
-
-        <li>
-
-            {{ enrollment.student.user.first_name }}
-            {{ enrollment.student.user.last_name }}
-
-            <a href="{% url 'start_conversation' enrollment.student.user.id %}">
-                💬 پیام
-            </a>
-
-        </li>
-
-    {% empty %}
-
-        <li>
-            دانش‌آموزی در این کلاس ثبت نشده است.
-        </li>
-
-    {% endfor %}
-</ul>
-
-
-
-<h2>مطالب آموزشی</h2>
-
-
-<ul>
-    {% for material in materials %}
-
-        <li>
-
-            <strong>
-                {{ material.title }}
-            </strong>
-
-            <br>
-
-            نوع:
-            {{ material.get_content_type_display }}
-
-
-            {% if material.content_type == "text" %}
-
-                <p>
-                    {{ material.content }}
-                </p>
-
-            {% elif material.content_type == "file" %}
-
-                <p>
-                    <a href="{{ material.file.url }}">
-                        دریافت فایل
-                    </a>
-                </p>
-
-            {% elif material.content_type == "link" %}
-
-                <p>
-                    <a href="{{ material.link }}" target="_blank">
-                        مشاهده لینک
-                    </a>
-                </p>
-
-            {% endif %}
-
-
-            <br>
-
-            <a href="{% url 'delete_material' material.id %}">
-                🗑 حذف مطلب
-            </a>
-
-        </li>
-
-    {% empty %}
-
-        <li>
-            هنوز مطلبی برای این کلاس ثبت نشده است.
-        </li>
-
-    {% endfor %}
-</ul>
-
-
-
-<h2>
-    تکالیف
-</h2>
-
-
-<ul>
-
-{% for assignment in assignments %}
-
-    <li>
-
-        <strong>
-            {{ assignment.title }}
-        </strong>
-
-        <br>
-
-        {{ assignment.description }}
-
-
-        {% if assignment.file %}
-
-            <br>
-
-            <a href="{{ assignment.file.url }}">
-                دریافت فایل تکلیف
-            </a>
-
-        {% endif %}
-
-
-        <br>
-
-        <a href="{% url 'assignment_submissions' assignment.id %}">
-            مشاهده پاسخ‌ها
-        </a>
-
-
-        <br>
-
-        <a href="{% url 'delete_assignment' assignment.id %}">
-            🗑 حذف تکلیف
-        </a>
-
-    </li>
-
-{% empty %}
-
-    <li>
-        هنوز تکلیفی ثبت نشده است.
-    </li>
-
-{% endfor %}
-
-</ul>
+{% extends "base.html" %}
+
+{% block title %}{{ classroom.name }} | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ classroom.name }}</h1>
+        <p>مدیریت دانش‌آموزان، مطالب و تکالیف این کلاس</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'create_assignment' classroom.id %}">افزودن تکلیف</a>
+        <a class="btn btn-secondary" href="{% url 'create_class_material' classroom.id %}">افزودن مطلب</a>
+        <a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">بازگشت</a>
+    </div>
+</div>
+
+<section class="dashboard-section">
+    <h2>دانش‌آموزان کلاس</h2>
+    {% if students %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>نام</th>
+                        <th>اقدام</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in students %}
+                        <tr>
+                            <td>
+                                {{ enrollment.student.user.first_name }}
+                                {{ enrollment.student.user.last_name }}
+                            </td>
+                            <td>
+                                <a class="btn btn-ghost" href="{% url 'start_conversation' enrollment.student.user.id %}">ارسال پیام</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">دانش‌آموزی در این کلاس ثبت نشده است.</div>
+    {% endif %}
+</section>
+
+<section class="dashboard-section">
+    <h2>مطالب آموزشی</h2>
+    <div class="announcement-list">
+        {% for material in materials %}
+            <div class="list-card">
+                <strong>{{ material.title }}</strong>
+                <div class="meta-row">
+                    <span class="badge badge-primary">{{ material.get_content_type_display }}</span>
+                </div>
+
+                {% if material.content_type == "text" %}
+                    <p>{{ material.content }}</p>
+                {% elif material.content_type == "file" and material.file %}
+                    <a href="{{ material.file.url }}">دریافت فایل</a>
+                {% elif material.content_type == "link" %}
+                    <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
+                {% endif %}
+
+                <div class="card-actions">
+                    <a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز مطلبی برای این کلاس ثبت نشده است.</div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="dashboard-section">
+    <h2>تکالیف</h2>
+    <div class="announcement-list">
+        {% for assignment in assignments %}
+            <div class="list-card">
+                <strong>{{ assignment.title }}</strong>
+                <p>{{ assignment.description }}</p>
+
+                <div class="card-actions">
+                    {% if assignment.file %}
+                        <a class="btn btn-ghost" href="{{ assignment.file.url }}">فایل تکلیف</a>
+                    {% endif %}
+                    <a class="btn btn-secondary" href="{% url 'assignment_submissions' assignment.id %}">مشاهده پاسخ‌ها</a>
+                    <a class="btn btn-ghost" href="{% url 'delete_assignment' assignment.id %}">حذف تکلیف</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز تکلیفی ثبت نشده است.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

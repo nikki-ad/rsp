@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}اطلاعیه‌ها | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>اطلاعیه‌های مدرسه</h1>
+        <p>ارسال اطلاعیه برای همه، معلمان، دانش‌آموزان یا یک کلاس</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'announcement_create' %}">اطلاعیه جدید</a>
+    </div>
+</div>
+
+{% if announcements %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>مخاطب</th>
+                <th>زمان انتشار</th>
+                <th>وضعیت</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in announcements %}
+                <tr>
+                    <td>{{ item.title }}</td>
+                    <td>
+                        {{ item.get_audience_display }}
+                        {% if item.classroom %} — {{ item.classroom }}{% endif %}
+                    </td>
+                    <td>{{ item.publish_at }}</td>
+                    <td>
+                        {% if item.is_active %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-muted">غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'announcement_edit' item.id %}">ویرایش</a>
+                        · <a href="{% url 'announcement_delete' item.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">اطلاعیه‌ای ثبت نشده است.</div>
+{% endif %}
+{% endblock %}

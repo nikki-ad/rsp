@@ -1,74 +1,54 @@
-<h1>
-    پیام‌ها
-</h1>
+{% extends "base.html" %}
 
-<ul>
+{% block title %}پیام‌ها | RSP{% endblock %}
 
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>پیام‌ها</h1>
+        <p>گفت‌وگوهای شما با معلمان، دانش‌آموزان و مدیریت</p>
+    </div>
+    <div class="page-header-actions">
+        {% if request.user.is_superuser or request.user.role == "super_admin" or request.user.role == "school_manager" %}
+            <a class="btn btn-primary" href="{% url 'user_list_for_messaging' %}">گفت‌وگوی جدید</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="announcement-list">
     {% for conversation in conversations %}
-
-        <li>
-
-            <a href="{% url 'chat_view' conversation.id %}">
-
+        <a class="list-card" href="{% url 'chat_view' conversation.id %}" style="text-decoration:none;color:inherit;display:block;">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
                 <strong>
                     {% if conversation.participant_1 == request.user %}
-
                         {{ conversation.participant_2.get_full_name|default:conversation.participant_2.username }}
-
                     {% else %}
-
                         {{ conversation.participant_1.get_full_name|default:conversation.participant_1.username }}
-
                     {% endif %}
                 </strong>
                 {% if conversation.unread_count > 0 %}
-
-                    <span>
-                        🔴 {{ conversation.unread_count }}
-                    </span>
-
+                    <span class="badge badge-danger">{{ conversation.unread_count }} خوانده‌نشده</span>
                 {% endif %}
+            </div>
 
-            </a>
-
-            <br>
-
-            {% if conversation.last_message %}
-
-                {% if conversation.last_message.text %}
-
-                    {{ conversation.last_message.text|truncatechars:40 }}
-
-                {% elif conversation.last_message.file %}
-
-                    📎 فایل پیوست
-
+            <p>
+                {% if conversation.last_message %}
+                    {% if conversation.last_message.text %}
+                        {{ conversation.last_message.text|truncatechars:60 }}
+                    {% elif conversation.last_message.file %}
+                        فایل پیوست
+                    {% endif %}
+                {% else %}
+                    هنوز پیامی ارسال نشده است.
                 {% endif %}
-
-            {% else %}
-
-                هنوز پیامی ارسال نشده است.
-
-            {% endif %}
+            </p>
 
             {% if conversation.last_message_at %}
-
-                <br>
-
-                <small>
-                    {{ conversation.last_message_at|date:"Y/m/d H:i" }}
-                </small>
-
+                <small>{{ conversation.last_message_at|date:"Y/m/d H:i" }}</small>
             {% endif %}
-
-        </li>
-
+        </a>
     {% empty %}
-
-        <li>
-            هنوز گفت‌وگویی وجود ندارد.
-        </li>
-
+        <div class="empty-state">هنوز گفت‌وگویی وجود ندارد.</div>
     {% endfor %}
-
-</ul>
+</div>
+{% endblock %}

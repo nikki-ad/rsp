@@ -12,12 +12,29 @@ from django.urls import reverse
 from activitylog.utils import log_activity
 from notifications import constants as notification_constants
 from notifications.services import create_notification
+from django.http import FileResponse, HttpResponseForbidden
+
+
+def _teacher_or_denied(request):
+    if not hasattr(request.user, "teacher_profile"):
+        return None, render(request, "dashboard/access_denied.html", status=403)
+    return request.user.teacher_profile, None
+
+
+def _student_or_forbidden(request):
+    if not hasattr(request.user, "student_profile"):
+        return None, HttpResponseForbidden(
+            "شما اجازه دسترسی به این صفحه را ندارید."
+        )
+    return request.user.student_profile, None
 
 
 @login_required
 def create_assignment(request, classroom_id):
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
 
-    teacher = request.user.teacher_profile
 
     classroom = get_object_or_404(
         Classroom,
@@ -86,8 +103,10 @@ def create_assignment(request, classroom_id):
 
 @login_required
 def submit_assignment(request, assignment_id):
+    student, forbidden = _student_or_forbidden(request)
+    if forbidden:
+        return forbidden
 
-    student = request.user.student_profile
 
     assignment = get_object_or_404(
         Assignment,
@@ -168,8 +187,10 @@ def submit_assignment(request, assignment_id):
 
 @login_required
 def assignment_submissions(request, assignment_id):
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
 
-    teacher = request.user.teacher_profile
 
     assignment = get_object_or_404(
         Assignment,
@@ -192,8 +213,10 @@ def assignment_submissions(request, assignment_id):
 
 @login_required
 def evaluate_submission(request, submission_id):
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
 
-    teacher = request.user.teacher_profile
 
     submission = get_object_or_404(
         AssignmentSubmission,
@@ -257,8 +280,10 @@ def evaluate_submission(request, submission_id):
 
 @login_required
 def delete_assignment(request, assignment_id):
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
 
-    teacher = request.user.teacher_profile
 
     assignment = get_object_or_404(
         Assignment,
@@ -293,4 +318,58 @@ def delete_assignment(request, assignment_id):
         {
             "assignment": assignment,
         },
+    )
+
+@login_required
+def download_assignment_file(request, assignment_id):
+
+    student, forbidden = _student_or_forbidden(request)
+    if forbidden:
+        return forbidden
+
+
+    assignment = get_object_or_404(
+        Assignment,
+        id=assignment_id,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
+        classroom__enrollments__student=student,
+        classroom__enrollments__is_active=True,
+    )
+
+    if not assignment.file:
+        return HttpResponseForbidden(
+            "فایلی برای این تکلیف وجود ندارد."
+        )
+
+    return FileResponse(
+        assignment.file.open("rb"),
+        as_attachment=True,
+        filename=assignment.file.name.split("/")[-1],
+    )
+
+
+@login_required
+def download_submission_file(request, submission_id):
+
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
+
+
+    submission = get_object_or_404(
+        AssignmentSubmission,
+        id=submission_id,
+        assignment__teacher=teacher,
+        assignment__classroom__academic_year__status=AcademicYear.Status.ACTIVE,
+    )
+
+    if not submission.file:
+        return HttpResponseForbidden(
+            "فایلی برای این پاسخ وجود ندارد."
+        )
+
+    return FileResponse(
+        submission.file.open("rb"),
+        as_attachment=True,
+        filename=submission.file.name.split("/")[-1],
     )

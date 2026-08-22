@@ -1,16 +1,24 @@
-<h1>
-    افزودن تکلیف برای کلاس {{ classroom.name }}
-</h1>
+{% extends "base.html" %}
 
+{% block title %}افزودن تکلیف | RSP{% endblock %}
 
-<form method="post" enctype="multipart/form-data">
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>افزودن تکلیف</h1>
+        <p>برای کلاس {{ classroom.name }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'teacher_class_detail' classroom.id %}">بازگشت</a>
+    </div>
+</div>
 
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-    <button type="submit">
-        ثبت تکلیف
-    </button>
-
-</form>
+<div class="card form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ثبت تکلیف</button>
+    </form>
+</div>
+{% endblock %}

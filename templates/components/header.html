@@ -1,0 +1,31 @@
+<header class="top-header">
+    <div class="header-user">
+        <button class="menu-toggle" type="button" data-sidebar-toggle>منو</button>
+
+        <a class="user-avatar" href="{% url 'profile' %}">
+            {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name|default:user.username }}">
+            {% else %}
+                {{ user.avatar_initial }}
+            {% endif %}
+        </a>
+
+        <div class="user-info">
+            <strong>{{ user.get_full_name|default:user.username }}</strong>
+            <span>{{ user.get_role_display }}</span>
+        </div>
+    </div>
+
+    <div class="header-actions">
+        <a href="{% url 'profile' %}">پروفایل</a>
+        {% if user.is_school_admin %}
+            <a href="{% url 'user_list_for_messaging' %}">گفت‌وگوی جدید</a>
+        {% endif %}
+        <a href="{% url 'notification_list' %}">
+            اعلان‌ها
+            {% if unread_notification_count %}
+                <span class="notif-count">{{ unread_notification_count }}</span>
+            {% endif %}
+        </a>
+    </div>
+</header>

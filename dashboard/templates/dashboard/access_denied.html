@@ -1,28 +1,20 @@
-<h1>
-    دسترسی غیرمجاز
-</h1>
+{% extends "base.html" %}
 
-<p>
-    شما اجازه مشاهده داشبورد مدیریت را ندارید.
-</p>
+{% block title %}دسترسی غیرمجاز | RSP{% endblock %}
 
+{% block content %}
+<div class="card confirm-card">
+    <h1>دسترسی غیرمجاز</h1>
+    <p>شما اجازه مشاهده این صفحه را ندارید.</p>
 
-{% if user.student_profile %}
-
-    <a href="{% url 'student_dashboard' %}">
-        ← بازگشت به داشبورد دانش‌آموز
-    </a>
-
-{% elif user.teacher_profile %}
-
-    <a href="{% url 'teacher_dashboard' %}">
-        ← بازگشت به داشبورد معلم
-    </a>
-
-{% else %}
-
-    <a href="{% url 'user_login' %}">
-        ← بازگشت به صفحه ورود
-    </a>
-
-{% endif %}
+    {% if user.role == "student" %}
+        <a class="btn btn-primary" href="{% url 'student_dashboard' %}">بازگشت به داشبورد دانش‌آموز</a>
+    {% elif user.role == "teacher" %}
+        <a class="btn btn-primary" href="{% url 'teacher_dashboard' %}">بازگشت به داشبورد معلم</a>
+    {% elif user.is_school_admin %}
+        <a class="btn btn-primary" href="{% url 'admin_dashboard' %}">بازگشت به داشبورد مدیریت</a>
+    {% else %}
+        <a class="btn btn-primary" href="{% url 'profile' %}">بازگشت به پروفایل</a>
+    {% endif %}
+</div>
+{% endblock %}

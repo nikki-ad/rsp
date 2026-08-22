@@ -1,27 +1,21 @@
-<h1>
-    ارزیابی پاسخ تکلیف
-</h1>
+{% extends "base.html" %}
 
-<p>
-    دانش‌آموز:
-    {{ submission.student }}
-</p>
+{% block title %}ارزیابی پاسخ | RSP{% endblock %}
 
-<p>
-    تکلیف:
-    {{ submission.assignment.title }}
-</p>
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>ارزیابی پاسخ تکلیف</h1>
+        <p>{{ submission.assignment.title }} — {{ submission.student }}</p>
+    </div>
+</div>
 
-<hr>
-
-<form method="post">
-
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-    <button type="submit">
-        ثبت ارزیابی
-    </button>
-
-</form>
+<div class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ثبت ارزیابی</button>
+    </form>
+</div>
+{% endblock %}

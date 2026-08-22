@@ -36,4 +36,20 @@ urlpatterns = [
         name="delete_assignment",
     ),
 
+    path(
+        "<uuid:assignment_id>/download/",
+        views.download_assignment_file,
+        name="download_assignment_file",
+    ),
+
+
+    path(
+        "submission/<uuid:submission_id>/download/",
+        views.download_submission_file,
+        name="download_submission_file",
+    ),
+
+
+
+
 ]

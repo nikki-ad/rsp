@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}تنظیمات BBB | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>سرویس‌های BigBlueButton</h1>
+        <p>آدرس API و کلید محرمانه هر سرویس</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'bbb_config_create' %}">سرویس جدید</a>
+    </div>
+</div>
+
+{% if configs %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>نام</th>
+                <th>آدرس API</th>
+                <th>وضعیت</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in configs %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.api_url }}</td>
+                    <td>
+                        {% if item.is_active %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-muted">غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'bbb_config_edit' item.id %}">ویرایش</a>
+                        · <a href="{% url 'bbb_config_delete' item.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">سرویسی ثبت نشده است.</div>
+{% endif %}
+{% endblock %}

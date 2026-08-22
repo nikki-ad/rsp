@@ -1,76 +1,44 @@
-<h1>
-    فیش‌های در انتظار بررسی
-</h1>
+{% extends "base.html" %}
+
+{% block title %}فیش‌های در انتظار | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>فیش‌های در انتظار بررسی</h1>
+        <p>تأیید یا رد فیش‌های واریزی رزرو غذا</p>
+    </div>
+</div>
 
 {% if reservations %}
-
-    <ul>
-
+    <div class="announcement-list">
         {% for reservation in reservations %}
+            <div class="list-card">
+                <strong>{{ reservation.student.user.get_full_name }}</strong>
+                <div class="meta-row">
+                    <span>هفته: {{ reservation.week.title }}</span>
+                    <span>مبلغ: {{ reservation.final_amount }} تومان</span>
+                </div>
 
-            <li>
+                <div class="card-actions">
+                    {% if reservation.receipt_image %}
+                        <a class="btn btn-ghost" href="{{ reservation.receipt_image.url }}" target="_blank" rel="noopener">مشاهده فیش</a>
+                    {% endif %}
 
-                <strong>
-                    {{ reservation.student.user.get_full_name }}
-                </strong>
+                    <form class="inline-form" method="post" action="{% url 'cafeteria_review_receipt' reservation.id 'approve' %}">
+                        {% csrf_token %}
+                        <button class="btn btn-success" type="submit">تأیید فیش</button>
+                    </form>
 
-                <br>
-
-                هفته:
-                {{ reservation.week.title }}
-
-                <br>
-
-                مبلغ:
-                {{ reservation.final_amount }} تومان
-
-                <br>
-
-                {% if reservation.receipt_image %}
-
-                    <a href="{{ reservation.receipt_image.url }}" target="_blank">
-                        مشاهده تصویر فیش
-                    </a>
-
-                {% endif %}
-
-                            <br><br>
-
-            <form
-                method="post"
-                action="{% url 'cafeteria_review_receipt' reservation.id 'approve' %}"
-                style="display:inline;"
-            >
-                {% csrf_token %}
-
-                <button type="submit">
-                    ✅ تأیید فیش
-                </button>
-            </form>
-
-
-            <form
-                method="post"
-                action="{% url 'cafeteria_review_receipt' reservation.id 'reject' %}"
-                style="display:inline;"
-            >
-                {% csrf_token %}
-
-                <button type="submit">
-                    ❌ رد فیش
-                </button>
-            </form>
-
-            </li>
-
+                    <form class="inline-form" method="post" action="{% url 'cafeteria_review_receipt' reservation.id 'reject' %}">
+                        {% csrf_token %}
+                        <button class="btn btn-danger" type="submit">رد فیش</button>
+                    </form>
+                </div>
+            </div>
         {% endfor %}
-
-    </ul>
-
+    </div>
 {% else %}
-
-    <p>
-        فیشی در انتظار بررسی وجود ندارد.
-    </p>
-
+    <div class="empty-state">فیشی در انتظار بررسی وجود ندارد.</div>
 {% endif %}
+{% endblock %}

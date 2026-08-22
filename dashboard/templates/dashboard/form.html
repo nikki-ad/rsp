@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ page_title }}</h1>
+        {% if page_subtitle %}<p>{{ page_subtitle }}</p>{% endif %}
+    </div>
+    {% if back_url %}
+        <div class="page-header-actions">
+            <a class="btn btn-ghost" href="{{ back_url }}">بازگشت</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card form-card{% if wide %} wide{% endif %}">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ذخیره</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const academicYearField = document.getElementById("id_academic_year");
+    const classroomField = document.getElementById("id_classroom");
+
+    if (academicYearField && classroomField) {
+        academicYearField.addEventListener("change", function () {
+            const yearId = this.value;
+            classroomField.innerHTML = '<option value="">---------</option>';
+            if (!yearId) {
+                return;
+            }
+            fetch("{% url 'load_classrooms' %}?academic_year=" + encodeURIComponent(yearId))
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    (data.classrooms || []).forEach(function (classroom) {
+                        const option = document.createElement("option");
+                        option.value = classroom.id;
+                        option.textContent = classroom.name;
+                        classroomField.appendChild(option);
+                    });
+                });
+        });
+    }
+});
+</script>
+
+{% if year_people_endpoint %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const yearField = document.getElementById("id_academic_year");
+    const studentsField = document.getElementById("id_students");
+    const teachersField = document.getElementById("id_teachers");
+    const endpoint = "{{ year_people_endpoint }}";
+
+    function rebuildChoices(container, items, name) {
+        if (!container) {
+            return;
+        }
+        container.innerHTML = "";
+        items.forEach(function (item) {
+            const label = document.createElement("label");
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.name = name;
+            input.value = item.id;
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(" " + item.name));
+            const wrapper = document.createElement("li");
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
+        });
+    }
+
+    if (!yearField) {
+        return;
+    }
+
+    yearField.addEventListener("change", function () {
+        const yearId = this.value;
+        if (!yearId) {
+            return;
+        }
+        fetch(endpoint + "?academic_year=" + encodeURIComponent(yearId))
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                rebuildChoices(studentsField, data.students || [], "students");
+                rebuildChoices(teachersField, data.teachers || [], "teachers");
+            });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -10,7 +10,7 @@ from django.http import HttpResponseForbidden
 from notifications.services import create_notification
 from accounts.choices import Role
 from django.urls import reverse
-
+from academic.models import AcademicYear, Enrollment
 
 
 User = get_user_model()
@@ -50,10 +50,60 @@ def conversation_list(request):
 def start_conversation(request, user_id):
 
     other_user = get_object_or_404(
-        request.user.__class__,
+        User,
         id=user_id,
         is_active=True,
     )
+
+    # مدیر و سوپرادمین می‌توانند با هر کاربر فعالی گفتگو کنند.
+    if (
+        request.user.is_superuser
+        or request.user.role in [
+            Role.SUPER_ADMIN,
+            Role.SCHOOL_MANAGER,
+        ]
+    ):
+        allowed = True
+
+    else:
+        allowed = False
+
+        # دانش‌آموز → فقط معلم کلاس خودش در سال تحصیلی فعال
+        if (
+            hasattr(request.user, "student_profile")
+            and hasattr(other_user, "teacher_profile")
+        ):
+
+            student = request.user.student_profile
+            teacher = other_user.teacher_profile
+
+            allowed = Enrollment.objects.filter(
+                student=student,
+                is_active=True,
+                academic_year__status=AcademicYear.Status.ACTIVE,
+                classroom__teacher_assignments__teacher=teacher,
+            ).exists()
+
+        # معلم → فقط دانش‌آموز کلاس‌های خودش در سال تحصیلی فعال
+        elif (
+            hasattr(request.user, "teacher_profile")
+            and hasattr(other_user, "student_profile")
+        ):
+
+            teacher = request.user.teacher_profile
+            student = other_user.student_profile
+
+            allowed = Enrollment.objects.filter(
+                student=student,
+                is_active=True,
+                academic_year__status=AcademicYear.Status.ACTIVE,
+                classroom__teacher_assignments__teacher=teacher,
+            ).exists()
+
+    if not allowed:
+        return HttpResponseForbidden(
+            "شما اجازه شروع گفتگو با این کاربر را ندارید."
+        )
 
     conversation, created = get_or_create_conversation(
         request.user,

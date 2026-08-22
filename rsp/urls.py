@@ -30,6 +30,7 @@ urlpatterns = [
     path("cafeteria/",include("cafeteria.urls"),),
     path("online-classes/",include("online_classes.urls"),),
     path("dashboard/",include("dashboard.urls"),),
+    path("reports/",include("reports.urls"),),
 
 
 

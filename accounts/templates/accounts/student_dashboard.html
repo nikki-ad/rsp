@@ -1,360 +1,569 @@
-<h1>
-    داشبورد دانش‌آموز
-</h1>
+{% extends "base.html" %}
 
 
-<p>
-    سلام {{ student.user.get_full_name }}
-</p>
+{% block title %}
+داشبورد دانش‌آموز | RSP
+{% endblock %}
+
+
+
+{% block content %}
+
+
+
+<div class="dashboard-header">
+
+
+    <h1>
+        داشبورد دانش‌آموز
+    </h1>
+
+
+    <p>
+        سلام {{ student.user.get_full_name }} 👋
+        <br>
+        مدیریت فعالیت‌های آموزشی و ارتباطی شما
+    </p>
+
+
+</div>
+
+
+
+
+
+
+<div class="dashboard-section">
+
+
+<h2>
+دسترسی سریع
+</h2>
+
+
+
+<div class="action-list">
 
 
 <a href="{% url 'notification_list' %}">
-    🔔 اعلان‌ها
 
-    {% if unread_notification_count > 0 %}
-        ({{ unread_notification_count }})
-    {% endif %}
+🔔 اعلان‌ها
+
+{% if unread_notification_count > 0 %}
+({{ unread_notification_count }})
+{% endif %}
+
 </a>
 
 
-<br>
 
 <a href="{% url 'conversation_list' %}">
-    💬 پیام‌ها
+💬 پیام‌ها
 </a>
 
 
-<br>
 
 <a href="{% url 'online_class_list' %}">
-    🖥️ کلاس‌های آنلاین من
+🖥️ کلاس‌های آنلاین
 </a>
 
 
-<br>
 
 <a href="{% url 'weekly_reservation' %}">
-    🍱 رزرو غذای هفتگی
+🍱 رزرو غذا
 </a>
 
 
 
-<h2>
-    📢 اطلاعیه‌های مدرسه
-</h2>
+</div>
 
 
-{% if announcements %}
-
-    <ul>
-
-        {% for announcement in announcements %}
-
-            <li>
-
-                <strong>
-                    {{ announcement.title }}
-                </strong>
-
-                <br>
-
-                {{ announcement.message }}
-
-                <br>
-
-                <small>
-                    {{ announcement.publish_at|date:"Y/m/d H:i" }}
-                </small>
-
-            </li>
-
-        {% endfor %}
-
-    </ul>
-
-{% else %}
-
-    <p>
-        اطلاعیه جدیدی برای شما وجود ندارد.
-    </p>
-
-{% endif %}
+</div>
 
 
 
-{% if cafeteria_reservation %}
 
-    <p>
-        <strong>
-            وضعیت رزرو غذا:
-        </strong>
 
-        {% if cafeteria_reservation.payment_status == "paid" %}
 
-            🟢 پرداخت تأیید شده
 
-        {% elif cafeteria_reservation.payment_status == "receipt_pending" %}
 
-            🟡 فیش ارسال شده و در انتظار بررسی است
-
-        {% elif cafeteria_reservation.payment_status == "rejected" %}
-
-            🔴 فیش واریزی رد شده است
-
-            <br>
-
-            <a href="{% url 'cafeteria_upload_receipt' cafeteria_reservation.id %}">
-                🧾 ارسال مجدد فیش
-            </a>
-
-        {% else %}
-
-            ⚪ پرداخت انجام نشده
-
-        {% endif %}
-    </p>
-
-{% endif %}
-
+<div class="dashboard-section">
 
 
 <h2>
-    📄 کارنامه‌های من
+🏫 کلاس من
 </h2>
-
-
-<ul>
-
-    {% for report_card in report_cards %}
-
-        <li>
-
-            <strong>
-                {{ report_card.title }}
-            </strong>
-
-            <br>
-
-            <a href="{{ report_card.file.url }}" target="_blank">
-                دانلود کارنامه PDF
-            </a>
-
-        </li>
-
-    {% empty %}
-
-        <li>
-            هنوز کارنامه‌ای برای شما ثبت نشده است.
-        </li>
-
-    {% endfor %}
-
-</ul>
 
 
 
 {% if enrollment %}
 
-    <h2>
-        کلاس من:
-        {{ enrollment.classroom.name }}
-    </h2>
+
+<div class="class-grid">
+
+
+<div class="class-card">
+
+
+<span>
+کلاس فعلی
+</span>
+
+
+<strong>
+{{ enrollment.classroom.name }}
+</strong>
+
+
+</div>
+
+
+</div>
+
 
 {% else %}
 
-    <p>
-        هنوز کلاسی برای شما ثبت نشده است.
-    </p>
+
+<p>
+هنوز کلاسی برای شما ثبت نشده است.
+</p>
+
 
 {% endif %}
 
 
 
-<h2>
-    معلم‌های کلاس من
-</h2>
+</div>
 
 
-<ul>
 
-    {% for assignment in teachers %}
 
-        <li>
 
-            {{ assignment.teacher.user.first_name }}
-            {{ assignment.teacher.user.last_name }}
 
-            <a href="{% url 'start_conversation' assignment.teacher.user.id %}">
-                💬 ارسال پیام
-            </a>
 
-        </li>
 
-    {% empty %}
-
-        <li>
-            هنوز معلمی برای این کلاس ثبت نشده است.
-        </li>
-
-    {% endfor %}
-
-</ul>
-
+<div class="dashboard-section">
 
 
 <h2>
-    مطالب آموزشی
+📢 اطلاعیه‌های مدرسه
 </h2>
 
 
-<ul>
-
-{% for material in materials %}
-
-    <li>
-
-        <strong>
-            {{ material.title }}
-        </strong>
-
-        <br>
-
-        نوع:
-        {{ material.get_content_type_display }}
+{% if announcements %}
 
 
-        {% if material.content_type == "text" %}
+<div class="announcement-list">
 
-            <p>
-                {{ material.content }}
-            </p>
 
-        {% elif material.content_type == "file" %}
+{% for announcement in announcements %}
 
-            <p>
-                <a href="{{ material.file.url }}">
-                    دریافت فایل
-                </a>
-            </p>
 
-        {% elif material.content_type == "link" %}
+<div class="announcement-card">
 
-            <p>
-                <a href="{{ material.link }}" target="_blank">
-                    مشاهده لینک
-                </a>
-            </p>
 
-        {% endif %}
+<strong>
+{{ announcement.title }}
+</strong>
 
-    </li>
 
-{% empty %}
+<p>
+{{ announcement.message }}
+</p>
 
-    <li>
-        هنوز مطلبی برای شما ثبت نشده است.
-    </li>
+
+<small>
+{{ announcement.publish_at|date:"Y/m/d H:i" }}
+</small>
+
+
+</div>
+
 
 {% endfor %}
 
-</ul>
 
+
+</div>
+
+
+{% else %}
+
+
+<p>
+اطلاعیه جدیدی برای شما وجود ندارد.
+</p>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="dashboard-section">
 
 
 <h2>
-    تکالیف من
+🍱 وضعیت رزرو غذا
 </h2>
 
 
-<ul>
+
+{% if cafeteria_reservation %}
+
+
+<div class="announcement-card">
+
+
+{% if cafeteria_reservation.payment_status == "paid" %}
+
+🟢 پرداخت تأیید شده
+
+
+{% elif cafeteria_reservation.payment_status == "receipt_pending" %}
+
+🟡 فیش ارسال شده و در انتظار بررسی است
+
+
+{% elif cafeteria_reservation.payment_status == "rejected" %}
+
+🔴 فیش رد شده است
+
+<br>
+
+<a href="{% url 'cafeteria_upload_receipt' cafeteria_reservation.id %}">
+ارسال مجدد فیش
+</a>
+
+
+{% else %}
+
+⚪ پرداخت انجام نشده
+
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="dashboard-section">
+
+
+<h2>
+📄 کارنامه‌های من
+</h2>
+
+
+
+<div class="announcement-list">
+
+
+{% for report_card in report_cards %}
+
+
+<div class="announcement-card">
+
+
+<strong>
+{{ report_card.title }}
+</strong>
+
+
+<br>
+
+
+<a href="{% url 'download_report_card' report_card.id %}">
+دانلود کارنامه PDF
+</a>
+
+
+</div>
+
+
+
+{% empty %}
+
+
+<p>
+هنوز کارنامه‌ای ثبت نشده است.
+</p>
+
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="dashboard-section">
+
+
+<h2>
+👩‍🏫 معلم‌های کلاس من
+</h2>
+
+
+<div class="announcement-list">
+
+
+{% for assignment in teachers %}
+
+
+
+<div class="announcement-card">
+
+
+<strong>
+
+{{ assignment.teacher.user.first_name }}
+{{ assignment.teacher.user.last_name }}
+
+</strong>
+
+
+<br>
+
+
+<a href="{% url 'start_conversation' assignment.teacher.user.id %}">
+💬 ارسال پیام
+</a>
+
+
+</div>
+
+
+{% empty %}
+
+
+<p>
+هنوز معلمی ثبت نشده است.
+</p>
+
+
+{% endfor %}
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="dashboard-section" id="materials">
+
+
+<h2>
+مطالب آموزشی
+</h2>
+
+
+
+<div class="announcement-list">
+
+
+{% for material in materials %}
+
+
+<div class="announcement-card">
+
+
+<strong>
+{{ material.title }}
+</strong>
+
+
+<p>
+نوع:
+{{ material.get_content_type_display }}
+</p>
+
+
+
+{% if material.content_type == "text" %}
+
+<p>
+{{ material.content }}
+</p>
+
+
+{% elif material.content_type == "file" %}
+
+
+<a href="{% url 'download_material' material.id %}">
+دریافت فایل
+</a>
+
+
+{% elif material.content_type == "link" %}
+
+
+<a href="{{ material.link }}" target="_blank">
+مشاهده لینک
+</a>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+{% empty %}
+
+
+<p>
+هنوز مطلبی برای شما ثبت نشده است.
+</p>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="dashboard-section" id="assignments">
+
+
+<h2>
+تکالیف من
+</h2>
+
+
+
+<div class="announcement-list">
+
 
 {% for item in assignment_items %}
 
+
 {% with assignment=item.assignment submission=item.submission %}
 
-    <li>
-
-        <strong>
-            {{ assignment.title }}
-        </strong>
-
-        <br>
-
-        {{ assignment.description }}
 
 
-        {% if assignment.file %}
-
-            <br>
-
-            <a href="{{ assignment.file.url }}">
-                دریافت فایل تکلیف
-            </a>
-
-        {% endif %}
+<div class="announcement-card">
 
 
-        <br>
+<strong>
+{{ assignment.title }}
+</strong>
 
 
-        {% if assignment.id in submitted_assignment_ids %}
-
-            <span style="color:green;">
-                ✅ پاسخ ارسال شده
-            </span>
-
-            <br>
-
-            <a href="{% url 'submit_assignment' assignment.id %}">
-                ویرایش پاسخ
-            </a>
+<p>
+{{ assignment.description }}
+</p>
 
 
-            {% if submission and submission.evaluation %}
 
-                <p>
-                    <strong>
-                        ارزیابی معلم:
-                    </strong>
-
-                    {{ submission.get_evaluation_display }}
-                </p>
+{% if assignment.id in submitted_assignment_ids %}
 
 
-                {% if submission.teacher_feedback %}
-
-                    <p>
-                        <strong>
-                            بازخورد معلم:
-                        </strong>
-
-                        {{ submission.teacher_feedback }}
-                    </p>
-
-                {% endif %}
-
-            {% endif %}
+<span>
+✅ پاسخ ارسال شده
+</span>
 
 
-        {% else %}
+<br>
 
-            <a href="{% url 'submit_assignment' assignment.id %}">
-                ارسال پاسخ
-            </a>
 
-        {% endif %}
+<a href="{% url 'submit_assignment' assignment.id %}">
+ویرایش پاسخ
+</a>
 
-    </li>
+
+
+{% else %}
+
+
+
+<a href="{% url 'submit_assignment' assignment.id %}">
+ارسال پاسخ
+</a>
+
+
+
+{% endif %}
+
+
+
+</div>
+
 
 {% endwith %}
 
 
+
 {% empty %}
 
-    <li>
-        هنوز تکلیفی برای شما ثبت نشده است.
-    </li>
+
+<p>
+هنوز تکلیفی ثبت نشده است.
+</p>
+
 
 {% endfor %}
 
-</ul>
+
+</div>
+
+
+</div>
+
+
+
+
+
+{% endblock %}

@@ -1,70 +1,52 @@
-<h1>
-    حضور زنده کلاس
-</h1>
+{% extends "base.html" %}
 
-<h2>
-    {{ online_class.title }}
-</h2>
+{% block title %}حضور زنده | RSP{% endblock %}
 
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>حضور زنده کلاس</h1>
+        <p>{{ online_class.title }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-secondary" href="{% url 'live_attendance' online_class.id %}">تازه‌سازی</a>
+        <a class="btn btn-ghost" href="{% url 'online_class_list' %}">بازگشت</a>
+    </div>
+</div>
 
 {% if attendance_error %}
-
-    <p style="color: red;">
-        ⚠️ {{ attendance_error }}
-    </p>
-
-    <p>
-        وضعیت حضور دانش‌آموزان در حال حاضر قابل تشخیص نیست.
-        چند لحظه بعد دوباره تلاش کنید.
-    </p>
-
+    <div class="alert-error">{{ attendance_error }}</div>
+    <p>وضعیت حضور دانش‌آموزان در حال حاضر قابل تشخیص نیست. چند لحظه بعد دوباره تلاش کنید.</p>
 {% else %}
+    <div class="info-banner">این صفحه وضعیت حضور همین لحظه در کلاس آنلاین را نشان می‌دهد.</div>
 
-    <p>
-        این صفحه وضعیت حضور همین لحظه در BigBlueButton را نشان می‌دهد.
-    </p>
-
-    <hr>
-
-    <h3>
-        دانش‌آموزان کلاس
-    </h3>
-
-    <ul>
-
-        {% for row in attendance_rows %}
-
-            <li>
-
-                {{ row.student.user.get_full_name }}
-
-                {% if row.is_present %}
-
-                    🟢 حاضر
-
-                {% else %}
-
-                    🔴 غایب
-
-                {% endif %}
-
-            </li>
-
-        {% empty %}
-
-            <li>
-                دانش‌آموزی برای این کلاس ثبت نشده است.
-            </li>
-
-        {% endfor %}
-
-    </ul>
-
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>دانش‌آموز</th>
+                    <th>وضعیت</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in attendance_rows %}
+                    <tr>
+                        <td>{{ row.student.user.get_full_name }}</td>
+                        <td>
+                            {% if row.is_present %}
+                                <span class="badge badge-success">حاضر</span>
+                            {% else %}
+                                <span class="badge badge-danger">غایب</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2">دانش‌آموزی برای این کلاس ثبت نشده است.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endif %}
-
-
-<hr>
-
-<a href="">
-    🔄 تازه‌سازی وضعیت حضور
-</a>
+{% endblock %}

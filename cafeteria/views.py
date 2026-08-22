@@ -187,7 +187,14 @@ def upload_receipt(request, reservation_id):
 def pending_receipts(request):
 
     if not request.user.is_staff:
-        return redirect("student_dashboard")
+
+        if hasattr(request.user, "teacher_profile"):
+            return redirect("teacher_dashboard")
+
+        if hasattr(request.user, "student_profile"):
+            return redirect("student_dashboard")
+
+        return redirect("user_login")
 
     reservations = (
         CafeteriaReservation.objects.filter(
@@ -213,7 +220,14 @@ def pending_receipts(request):
 def review_receipt(request, reservation_id, action):
 
     if not request.user.is_staff:
-        return redirect("student_dashboard")
+
+        if hasattr(request.user, "teacher_profile"):
+            return redirect("teacher_dashboard")
+
+        if hasattr(request.user, "student_profile"):
+            return redirect("student_dashboard")
+
+        return redirect("user_login")
 
     reservation = get_object_or_404(
         CafeteriaReservation,

@@ -1,138 +1,64 @@
-<h1>
-    داشبورد مدیریت
-</h1>
+{% extends "base.html" %}
 
+{% block title %}داشبورد مدیریت | RSP{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>داشبورد مدیریت</h1>
+    <p>مدیریت آموزشی، ارتباطی و خدماتی مدرسه از پنل اختصاصی</p>
+</div>
 
 {% if active_year %}
-
-    <p>
-        <strong>
-            سال تحصیلی فعال:
-        </strong>
-
-        {{ active_year.title }}
-    </p>
-
+    <div class="info-banner">
+        <strong>سال تحصیلی فعال:</strong> {{ active_year.title }}
+    </div>
 {% else %}
-
-    <p>
-        ⚠️ هیچ سال تحصیلی فعالی تعریف نشده است.
-    </p>
-
+    <div class="alert-error">هیچ سال تحصیلی فعالی تعریف نشده است. از بخش سال‌های تحصیلی یک سال را فعال کنید.</div>
 {% endif %}
 
+<section class="dashboard-section">
+    <h2>آمار کلی</h2>
+    <div class="stats-grid">
+        <div class="stat-card"><span>دانش‌آموزان سال فعال</span><strong>{{ student_count }}</strong></div>
+        <div class="stat-card"><span>معلمان سال فعال</span><strong>{{ teacher_count }}</strong></div>
+        <div class="stat-card"><span>کلاس‌ها</span><strong>{{ classroom_count }}</strong></div>
+        <div class="stat-card"><span>کلاس آنلاین</span><strong>{{ online_class_count }}</strong></div>
+        <div class="stat-card"><span>مطالب آموزشی</span><strong>{{ material_count }}</strong></div>
+        <div class="stat-card"><span>تکالیف</span><strong>{{ assignment_count }}</strong></div>
+        <div class="stat-card"><span>گفتگوها</span><strong>{{ conversation_count }}</strong></div>
+        <div class="stat-card"><span>فیش در انتظار</span><strong>{{ pending_receipt_count }}</strong></div>
+    </div>
+</section>
 
-<hr>
+<section class="dashboard-section">
+    <h2>پنل‌های مدیریتی</h2>
+    <div class="action-list">
+        <a href="{% url 'student_list' %}">دانش‌آموزان</a>
+        <a href="{% url 'teacher_list' %}">معلمان</a>
+        <a href="{% url 'academic_year_list' %}">سال تحصیلی</a>
+        <a href="{% url 'grade_list' %}">پایه‌ها</a>
+        <a href="{% url 'classroom_list' %}">کلاس‌ها</a>
+        <a href="{% url 'enrollment_list' %}">ثبت‌نام‌ها</a>
+        <a href="{% url 'announcement_list' %}">اطلاعیه‌ها</a>
+        <a href="{% url 'report_card_list' %}">کارنامه‌ها</a>
+        <a href="{% url 'online_class_manage_list' %}">کلاس آنلاین</a>
+        <a href="{% url 'bbb_config_list' %}">تنظیمات BBB</a>
+        <a href="{% url 'cafeteria_pending_receipts' %}">فیش غذا</a>
+        <a href="{% url 'activity_log_list' %}">گزارش فعالیت</a>
+        <a href="{% url 'conversation_list' %}">پیام‌ها</a>
+    </div>
+</section>
 
-
-<h2>
-    آمار کلی
-</h2>
-
-
-<ul>
-
-    <li>
-        👧 تعداد دانش‌آموزان:
-        {{ student_count }}
-    </li>
-
-    <li>
-        👩‍🏫 تعداد معلمان:
-        {{ teacher_count }}
-    </li>
-
-    <li>
-        🏫 تعداد کلاس‌ها:
-        {{ classroom_count }}
-    </li>
-
-    <li>
-        🖥️ کلاس‌های آنلاین فعال:
-        {{ online_class_count }}
-    </li>
-
-    <li>
-        🧾 فیش‌های در انتظار بررسی:
-
-        <a href="{% url 'cafeteria_pending_receipts' %}">
-            {{ pending_receipt_count }}
-        </a>
-    </li>
-
-</ul>
-
-
-<hr>
-
-
-<h2>
-    اقدامات مدیریتی
-</h2>
-
-
-<ul>
-
-    <li>
-        <a href="{% url 'cafeteria_pending_receipts' %}">
-            🧾 بررسی فیش‌های در انتظار
-        </a>
-    </li>
-
-    <li>
-        <a href="/admin/online_classes/onlineclass/">
-            🖥️ مدیریت کلاس‌های آنلاین
-        </a>
-    </li>
-
-    <li>
-        <a href="/admin/notifications/announcement/">
-            📢 مدیریت اطلاعیه‌های مدرسه
-        </a>
-    </li>
-
-    <li>
-        <a href="/admin/reports/studentreportcard/">
-            📄 مدیریت کارنامه‌های دانش‌آموزان
-        </a>
-    </li>
-
-    <li>
-        <a href="/admin/">
-            ⚙️ ورود به پنل کامل Django Admin
-        </a>
-    </li>
-
-</ul>
-
-<hr>
-
-<h2>
-    📚 آرشیو سال‌های تحصیلی
-</h2>
-
-{% if archived_years %}
-
-    <ul>
-
-        {% for year in archived_years %}
-
-            <li>
-
-                <a href="{% url 'academic_year_archive' year.id %}">
-                    سال تحصیلی {{ year.title }}
-                </a>
-
-            </li>
-
-        {% endfor %}
-
-    </ul>
-
-{% else %}
-
-    <p>
-        هنوز سال تحصیلی آرشیوشده‌ای وجود ندارد.
-    </p>
-
-{% endif %}
+<section class="dashboard-section">
+    <h2>آرشیو سال‌های تحصیلی</h2>
+    {% if archived_years %}
+        <div class="archive-list">
+            {% for year in archived_years %}
+                <a href="{% url 'academic_year_archive' year.id %}">سال تحصیلی {{ year.title }}</a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>هنوز سال تحصیلی آرشیوشده‌ای وجود ندارد.</p>
+    {% endif %}
+</section>
+{% endblock %}

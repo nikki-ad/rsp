@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}سال تحصیلی | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>سال‌های تحصیلی</h1>
+        <p>در هر زمان فقط یک سال می‌تواند فعال باشد.</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'academic_year_create' %}">سال جدید</a>
+    </div>
+</div>
+
+{% if years %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>وضعیت</th>
+                <th>کلاس‌ها</th>
+                <th>ثبت‌نام‌ها</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for year in years %}
+                <tr>
+                    <td>{{ year.title }}</td>
+                    <td>{{ year.get_status_display }}</td>
+                    <td>{{ year.classroom_count }}</td>
+                    <td>{{ year.enrollment_count }}</td>
+                    <td>
+                        <a href="{% url 'academic_year_edit' year.id %}">ویرایش</a>
+                        {% if year.status == "archived" %}
+                            · <a href="{% url 'academic_year_archive' year.id %}">آرشیو</a>
+                        {% endif %}
+                        · <a href="{% url 'academic_year_delete' year.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">سال تحصیلی ثبت نشده است.</div>
+{% endif %}
+{% endblock %}

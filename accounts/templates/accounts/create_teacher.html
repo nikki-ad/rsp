@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}ثبت معلم | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>ثبت معلم جدید</h1>
+        <p>حساب کاربری معلم ساخته می‌شود و می‌تواند به کلاس‌ها اختصاص داده شود.</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ثبت معلم</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,73 +1,53 @@
-<h1>
-    گفت‌وگو
-</h1>
+{% extends "base.html" %}
 
-<p>
-    {% if conversation.participant_1 == request.user %}
-        با
-        {{ conversation.participant_2.get_full_name|default:conversation.participant_2.username }}
-    {% else %}
-        با
-        {{ conversation.participant_1.get_full_name|default:conversation.participant_1.username }}
-    {% endif %}
-</p>
+{% block title %}گفت‌وگو | RSP{% endblock %}
 
-<hr>
-
-<div>
-
-    {% for message in messages %}
-
-        <div>
-
-            <strong>
-                {% if message.sender == request.user %}
-                    من
-                {% else %}
-                    {{ message.sender.get_full_name|default:message.sender.username }}
-                {% endif %}
-            </strong>
-
-            {% if message.text %}
-                <p>
-                    {{ message.text }}
-                </p>
-            {% endif %}
-
-            {% if message.file %}
-                <p>
-                    <a href="{{ message.file.url }}">
-                        دریافت فایل
-                    </a>
-                </p>
-            {% endif %}
-
-            <small>
-                {{ message.created_at }}
-            </small>
-
-        </div>
-
-        <hr>
-
-    {% empty %}
-
+{% block content %}
+<div class="chat-layout">
+    <div class="chat-header">
+        <h1>گفت‌وگو</h1>
         <p>
-            هنوز پیامی در این گفت‌وگو وجود ندارد.
+            {% if conversation.participant_1 == request.user %}
+                با {{ conversation.participant_2.get_full_name|default:conversation.participant_2.username }}
+            {% else %}
+                با {{ conversation.participant_1.get_full_name|default:conversation.participant_1.username }}
+            {% endif %}
         </p>
+    </div>
 
-    {% endfor %}
+    <div class="chat-thread">
+        {% for message in messages %}
+            <div class="bubble {% if message.sender == request.user %}mine{% else %}theirs{% endif %}">
+                <strong>
+                    {% if message.sender == request.user %}
+                        من
+                    {% else %}
+                        {{ message.sender.get_full_name|default:message.sender.username }}
+                    {% endif %}
+                </strong>
 
+                {% if message.text %}
+                    <p>{{ message.text }}</p>
+                {% endif %}
+
+                {% if message.file %}
+                    <p><a href="{{ message.file.url }}">دریافت فایل</a></p>
+                {% endif %}
+
+                <small>{{ message.created_at|date:"Y/m/d H:i" }}</small>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز پیامی در این گفت‌وگو وجود ندارد.</div>
+        {% endfor %}
+    </div>
+
+    <div class="chat-composer">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {{ form.as_p }}
+            <button class="btn btn-primary" type="submit">ارسال پیام</button>
+        </form>
+    </div>
 </div>
-
-<form method="post" enctype="multipart/form-data">
-
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-    <button type="submit">
-        ارسال پیام
-    </button>
-
-</form>
+{% endblock %}

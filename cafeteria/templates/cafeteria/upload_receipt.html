@@ -1,38 +1,29 @@
-<h1>
-    ارسال فیش واریزی
-</h1>
+{% extends "base.html" %}
 
-<h2>
-    {{ reservation.week.title }}
-</h2>
+{% block title %}ارسال فیش | RSP{% endblock %}
 
-<p>
-    <strong>مبلغ قابل پرداخت:</strong>
-    {{ reservation.final_amount }} تومان
-</p>
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>ارسال فیش واریزی</h1>
+        <p>{{ reservation.week.title }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'cafeteria_payment_method' reservation.id %}">بازگشت</a>
+    </div>
+</div>
 
-<p>
-    پس از واریز مبلغ، تصویر فیش را در این قسمت بارگذاری کنید.
-</p>
+<div class="info-banner">
+    مبلغ قابل پرداخت: <strong>{{ reservation.final_amount }} تومان</strong>
+    — پس از واریز، تصویر فیش را بارگذاری کنید.
+</div>
 
-<hr>
-
-
-<form method="post" enctype="multipart/form-data">
-
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-    <button type="submit">
-        ارسال فیش برای بررسی
-    </button>
-
-</form>
-
-
-<br>
-
-<a href="{% url 'cafeteria_payment_method' reservation.id %}">
-    بازگشت به روش‌های پرداخت
-</a>
+<div class="card form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ارسال فیش برای بررسی</button>
+    </form>
+</div>
+{% endblock %}

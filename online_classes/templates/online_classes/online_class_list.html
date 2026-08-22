@@ -1,42 +1,30 @@
-<h1>
-    کلاس‌های آنلاین من
-</h1>
+{% extends "base.html" %}
 
+{% block title %}کلاس‌های آنلاین | RSP{% endblock %}
 
-<ul>
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>کلاس‌های آنلاین من</h1>
+        <p>ورود به جلسات فعال و مشاهده حضور</p>
+    </div>
+</div>
 
+<div class="class-grid">
     {% for online_class in online_classes %}
-
-        <li>
-
-            <strong>
-                {{ online_class.title }}
-            </strong>
-
-            <br>
-
-            سال تحصیلی:
-            {{ online_class.academic_year.title }}
-
-            <br>
-
-            پلتفرم:
-            {{ online_class.get_provider_display }}
-
-            <br>
-
-            <a href="{% url 'join_online_class' online_class.id %}">
-                ورود به کلاس آنلاین
-            </a>
-
-        </li>
-
+        <div class="class-card">
+            <span>{{ online_class.get_provider_display }}</span>
+            <strong>{{ online_class.title }}</strong>
+            <p>سال تحصیلی: {{ online_class.academic_year.title }}</p>
+            <div class="card-actions">
+                <a class="btn btn-primary" href="{% url 'join_online_class' online_class.id %}">ورود به کلاس</a>
+                {% if user.is_staff %}
+                    <a class="btn btn-ghost" href="{% url 'live_attendance' online_class.id %}">حضور زنده</a>
+                {% endif %}
+            </div>
+        </div>
     {% empty %}
-
-        <li>
-            هنوز کلاس آنلاین فعالی برای شما ثبت نشده است.
-        </li>
-
+        <div class="empty-state" style="grid-column:1/-1;">هنوز کلاس آنلاین فعالی برای شما ثبت نشده است.</div>
     {% endfor %}
-
-</ul>
+</div>
+{% endblock %}

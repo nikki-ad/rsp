@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}پروفایل | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>پروفایل من</h1>
+        <p>اطلاعات حساب و عکس پروفایل خود را به‌روزرسانی کنید.</p>
+    </div>
+</div>
+
+<div class="card form-card">
+    <div class="profile-preview">
+        <span class="user-avatar">
+            {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name|default:user.username }}">
+            {% else %}
+                {{ user.avatar_initial }}
+            {% endif %}
+        </span>
+        <div>
+            <strong>{{ user.get_full_name|default:user.username }}</strong>
+            <p>{{ user.get_role_display }}</p>
+            <small>نام کاربری: {{ user.username }}</small>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        {% if extra_form %}
+            <hr>
+            {{ extra_form.non_field_errors }}
+            {{ extra_form.as_p }}
+        {% endif %}
+        <button class="btn btn-primary" type="submit">ذخیره پروفایل</button>
+    </form>
+</div>
+{% endblock %}

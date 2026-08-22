@@ -1,0 +1,117 @@
+{% load static %}
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <img src="{% static 'images/logo.jpg' %}" alt="روشنگران">
+        <div>
+            <h2>RSP</h2>
+            <span>سامانه مدیریت مدرسه</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-menu">
+        {% with url_name=request.resolver_match.url_name %}
+
+            {% if user.is_school_admin %}
+                <a href="{% url 'admin_dashboard' %}" class="{% if url_name == 'admin_dashboard' or url_name == 'academic_year_archive' %}active{% endif %}">
+                    داشبورد
+                </a>
+
+                <div class="menu-title">مدیریت آموزشی</div>
+
+                <a href="{% url 'student_list' %}" class="{% if url_name == 'student_list' or url_name == 'create_student' or url_name == 'edit_student' %}active{% endif %}">
+                    دانش‌آموزان
+                </a>
+                <a href="{% url 'teacher_list' %}" class="{% if url_name == 'teacher_list' or url_name == 'create_teacher' or url_name == 'edit_teacher' %}active{% endif %}">
+                    معلمان
+                </a>
+                <a href="{% url 'classroom_list' %}" class="{% if 'classroom' in url_name %}active{% endif %}">
+                    کلاس‌ها
+                </a>
+                <a href="{% url 'academic_year_list' %}" class="{% if 'academic_year' in url_name %}active{% endif %}">
+                    سال تحصیلی
+                </a>
+                <a href="{% url 'grade_list' %}" class="{% if 'grade' in url_name %}active{% endif %}">
+                    پایه‌ها
+                </a>
+                <a href="{% url 'enrollment_list' %}" class="{% if 'enrollment' in url_name %}active{% endif %}">
+                    ثبت‌نام‌ها
+                </a>
+
+                <div class="menu-title">خدمات</div>
+
+                <a href="{% url 'cafeteria_pending_receipts' %}" class="{% if url_name == 'cafeteria_pending_receipts' %}active{% endif %}">
+                    فیش‌های غذا
+                </a>
+                <a href="{% url 'online_class_manage_list' %}" class="{% if 'online_class' in url_name or url_name == 'live_attendance' or 'bbb' in url_name %}active{% endif %}">
+                    کلاس آنلاین
+                </a>
+                <a href="{% url 'announcement_list' %}" class="{% if 'announcement' in url_name %}active{% endif %}">
+                    اطلاعیه‌ها
+                </a>
+
+                <div class="menu-title">گزارش‌ها</div>
+                <a href="{% url 'report_card_list' %}" class="{% if 'report_card' in url_name %}active{% endif %}">کارنامه‌ها</a>
+                <a href="{% url 'activity_log_list' %}" class="{% if url_name == 'activity_log_list' %}active{% endif %}">گزارش فعالیت</a>
+
+            {% elif user.role == "teacher" %}
+                <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_dashboard' %}active{% endif %}">
+                    داشبورد
+                </a>
+
+                <div class="menu-title">آموزش</div>
+                <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_class_detail' %}active{% endif %}">
+                    کلاس‌های من
+                </a>
+                <a href="{% url 'create_material' %}" class="{% if url_name == 'create_material' or url_name == 'create_class_material' %}active{% endif %}">
+                    مطالب آموزشی
+                </a>
+                <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' or url_name == 'live_attendance' %}active{% endif %}">
+                    کلاس آنلاین
+                </a>
+
+            {% elif user.role == "student" %}
+                <a href="{% url 'student_dashboard' %}" class="{% if url_name == 'student_dashboard' %}active{% endif %}">
+                    داشبورد
+                </a>
+
+                <div class="menu-title">آموزش</div>
+                <a href="{% url 'student_dashboard' %}#assignments">تکالیف</a>
+                <a href="{% url 'student_dashboard' %}#materials">مطالب آموزشی</a>
+                <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' %}active{% endif %}">
+                    کلاس آنلاین
+                </a>
+
+                <div class="menu-title">خدمات</div>
+                <a href="{% url 'weekly_reservation' %}" class="{% if 'cafeteria' in request.path %}active{% endif %}">
+                    رزرو غذا
+                </a>
+
+            {% elif user.role == "finance" %}
+                <a href="{% url 'cafeteria_pending_receipts' %}" class="{% if url_name == 'cafeteria_pending_receipts' %}active{% endif %}">
+                    فیش‌های غذا
+                </a>
+            {% endif %}
+
+            <div class="menu-title">حساب کاربری</div>
+            <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}active{% endif %}">پروفایل</a>
+            <a href="{% url 'conversation_list' %}" class="{% if url_name == 'conversation_list' or url_name == 'chat_view' or url_name == 'user_list_for_messaging' %}active{% endif %}">
+                پیام‌ها
+            </a>
+            <a href="{% url 'notification_list' %}" class="{% if url_name == 'notification_list' %}active{% endif %}">
+                اعلان‌ها
+                {% if unread_notification_count %}
+                    <span class="notif-count">{{ unread_notification_count }}</span>
+                {% endif %}
+            </a>
+
+        {% endwith %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <form class="logout-form" method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit">خروج از حساب</button>
+        </form>
+    </div>
+</aside>

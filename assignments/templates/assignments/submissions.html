@@ -1,69 +1,50 @@
-<h1>
-    پاسخ‌های تکلیف:
-    {{ assignment.title }}
-</h1>
+{% extends "base.html" %}
 
+{% block title %}پاسخ‌های تکلیف | RSP{% endblock %}
 
-{% for submission in submissions %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>پاسخ‌های تکلیف</h1>
+        <p>{{ assignment.title }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'teacher_class_detail' assignment.classroom.id %}">بازگشت به کلاس</a>
+    </div>
+</div>
 
-    <hr>
+<div class="announcement-list">
+    {% for submission in submissions %}
+        <div class="list-card">
+            <strong>{{ submission.student }}</strong>
 
-    <h3>
-        {{ submission.student }}
-    </h3>
+            {% if submission.answer_text %}
+                <p>{{ submission.answer_text }}</p>
+            {% endif %}
 
+            <div class="meta-row">
+                {% if submission.evaluation %}
+                    <span class="badge badge-success">{{ submission.get_evaluation_display }}</span>
+                {% else %}
+                    <span class="badge badge-warning">در انتظار ارزیابی</span>
+                {% endif %}
+            </div>
 
-    {% if submission.answer_text %}
+            {% if submission.teacher_feedback %}
+                <p>{{ submission.teacher_feedback }}</p>
+            {% endif %}
 
-        <p>
-            {{ submission.answer_text }}
-        </p>
-
-    {% endif %}
-
-
-    {% if submission.file %}
-
-        <a href="{{ submission.file.url }}">
-            دریافت فایل پاسخ
-        </a>
-
-        <br>
-
-    {% endif %}
-
-
-    {% if submission.evaluation %}
-
-        <p>
-            <strong>ارزیابی فعلی:</strong>
-            {{ submission.get_evaluation_display }}
-        </p>
-
-        {% if submission.teacher_feedback %}
-            <p>
-                <strong>بازخورد معلم:</strong>
-                {{ submission.teacher_feedback }}
-            </p>
-        {% endif %}
-
-        <a href="{% url 'evaluate_submission' submission.id %}">
-            ویرایش ارزیابی
-        </a>
-
-    {% else %}
-
-        <a href="{% url 'evaluate_submission' submission.id %}">
-            ارزیابی پاسخ
-        </a>
-
-    {% endif %}
-
-
-{% empty %}
-
-    <p>
-        هنوز پاسخی ارسال نشده است.
-    </p>
-
-{% endfor %}
+            <div class="card-actions">
+                {% if submission.file %}
+                    <a class="btn btn-ghost" href="{% url 'download_submission_file' submission.id %}">دریافت فایل پاسخ</a>
+                {% endif %}
+                <a class="btn btn-primary" href="{% url 'evaluate_submission' submission.id %}">
+                    {% if submission.evaluation %}ویرایش ارزیابی{% else %}ارزیابی پاسخ{% endif %}
+                </a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="empty-state">هنوز پاسخی ارسال نشده است.</div>
+    {% endfor %}
+</div>
+{% endblock %}

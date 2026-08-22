@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}کلاس‌ها | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>کلاس‌ها</h1>
+        <p>ظرفیت، پایه و معلمان هر کلاس</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'classroom_create' %}">کلاس جدید</a>
+    </div>
+</div>
+
+{% if classrooms %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>کلاس</th>
+                <th>سال تحصیلی</th>
+                <th>ظرفیت</th>
+                <th>دانش‌آموزان فعال</th>
+                <th>معلمان</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for classroom in classrooms %}
+                <tr>
+                    <td>{{ classroom }}</td>
+                    <td>{{ classroom.academic_year }}</td>
+                    <td>{{ classroom.capacity }}</td>
+                    <td>{{ classroom.student_count }}</td>
+                    <td>{{ classroom.teacher_count }}</td>
+                    <td>
+                        <a href="{% url 'classroom_edit' classroom.id %}">ویرایش</a>
+                        · <a href="{% url 'classroom_delete' classroom.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">کلاسی ثبت نشده است.</div>
+{% endif %}
+{% endblock %}

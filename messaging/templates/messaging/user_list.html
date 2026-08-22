@@ -1,29 +1,31 @@
-<h1>
-    کاربران
-</h1>
+{% extends "base.html" %}
 
-<ul>
+{% block title %}کاربران | RSP{% endblock %}
 
-{% for user in users %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>شروع گفت‌وگوی جدید</h1>
+        <p>کاربری را انتخاب کنید تا گفت‌وگو آغاز شود.</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'conversation_list' %}">بازگشت به پیام‌ها</a>
+    </div>
+</div>
 
-    <li>
-
-        {{ user.get_full_name|default:user.username }}
-
-        ({{ user.get_role_display }})
-
-        <a href="{% url 'start_conversation' user.id %}">
-            💬 پیام
-        </a>
-
-    </li>
-
-{% empty %}
-
-    <li>
-        کاربری یافت نشد.
-    </li>
-
-{% endfor %}
-
-</ul>
+<div class="announcement-list">
+    {% for user_item in users %}
+        <div class="list-card">
+            <strong>{{ user_item.get_full_name|default:user_item.username }}</strong>
+            <div class="meta-row">
+                <span class="badge badge-muted">{{ user_item.get_role_display }}</span>
+            </div>
+            <div class="card-actions">
+                <a class="btn btn-primary" href="{% url 'start_conversation' user_item.id %}">ارسال پیام</a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="empty-state">کاربری یافت نشد.</div>
+    {% endfor %}
+</div>
+{% endblock %}

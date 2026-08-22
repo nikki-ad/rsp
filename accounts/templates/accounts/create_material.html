@@ -1,15 +1,24 @@
-<h1>
-    افزودن مطلب برای {{ classroom.name }}
-</h1>
+{% extends "base.html" %}
 
-<form method="post" enctype="multipart/form-data">
+{% block title %}افزودن مطلب | RSP{% endblock %}
 
-    {% csrf_token %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>افزودن مطلب آموزشی</h1>
+        <p>برای کلاس {{ classroom.name }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'teacher_class_detail' classroom.id %}">بازگشت</a>
+    </div>
+</div>
 
-    {{ form.as_p }}
-
-    <button type="submit">
-        ذخیره
-    </button>
-
-</form>
+<div class="card form-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ذخیره مطلب</button>
+    </form>
+</div>
+{% endblock %}

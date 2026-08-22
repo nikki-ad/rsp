@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}کارنامه‌ها | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>کارنامه‌ها</h1>
+        <p>آپلود فایل PDF کارنامه برای دانش‌آموز</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'report_card_create' %}">کارنامه جدید</a>
+    </div>
+</div>
+
+<form class="filter-bar" method="get">
+    <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس عنوان یا نام دانش‌آموز">
+    <button class="btn btn-primary" type="submit">جستجو</button>
+</form>
+
+{% if report_cards %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>دانش‌آموز</th>
+                <th>عنوان</th>
+                <th>وضعیت</th>
+                <th>فایل</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in report_cards %}
+                <tr>
+                    <td>{{ item.student }}</td>
+                    <td>{{ item.title }}</td>
+                    <td>
+                        {% if item.is_active %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-muted">غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.file %}
+                            <a href="{{ item.file.url }}" target="_blank" rel="noopener">دانلود</a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'report_card_edit' item.id %}">ویرایش</a>
+                        · <a href="{% url 'report_card_delete' item.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">کارنامه‌ای یافت نشد.</div>
+{% endif %}
+{% endblock %}

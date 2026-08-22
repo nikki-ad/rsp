@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}کلاس‌های آنلاین | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>کلاس‌های آنلاین</h1>
+        <p>اتاق‌های BigBlueButton و اسکای‌روم</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'bbb_config_list' %}">سرویس‌های BBB</a>
+        <a class="btn btn-primary" href="{% url 'online_class_create' %}">کلاس جدید</a>
+    </div>
+</div>
+
+{% if online_classes %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>سال تحصیلی</th>
+                <th>پلتفرم</th>
+                <th>دانش‌آموزان</th>
+                <th>معلمان</th>
+                <th>وضعیت</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in online_classes %}
+                <tr>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.academic_year }}</td>
+                    <td>{{ item.get_provider_display }}</td>
+                    <td>{{ item.student_count }}</td>
+                    <td>{{ item.teacher_count }}</td>
+                    <td>
+                        {% if item.is_active %}
+                            <span class="badge badge-success">فعال</span>
+                        {% else %}
+                            <span class="badge badge-muted">غیرفعال</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'online_class_edit' item.id %}">ویرایش</a>
+                        · <a href="{% url 'online_class_delete' item.id %}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">کلاس آنلاینی ثبت نشده است.</div>
+{% endif %}
+{% endblock %}

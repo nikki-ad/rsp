@@ -33,7 +33,7 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("username",)
 
     fieldsets = UserAdmin.fieldsets + (
-        ("اطلاعات مدرسه", {"fields": ("role",)}),
+        ("اطلاعات مدرسه", {"fields": ("role", "avatar")}),
     )
 
     add_fieldsets = UserAdmin.add_fieldsets + (

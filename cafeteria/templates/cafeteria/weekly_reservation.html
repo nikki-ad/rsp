@@ -1,48 +1,35 @@
-<h1>
-    رزرو غذای هفتگی
-</h1>
+{% extends "base.html" %}
 
-<h2>
-    {{ week.title }}
-</h2>
+{% block title %}رزرو غذا | RSP{% endblock %}
 
-<p>
-    غذاهایی که می‌خواهید دریافت کنید انتخاب کنید.
-    انتخاب‌های این صفحه مربوط به کل هفته هستند.
-</p>
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>رزرو غذای هفتگی</h1>
+        <p>{{ week.title }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">بازگشت به داشبورد</a>
+    </div>
+</div>
 
-<hr>
-
-
-<form method="post">
-
-    {% csrf_token %}
-
-    {{ form.as_p }}
-
-    <button type="submit">
-        ثبت رزرو هفتگی
-    </button>
-
-</form>
-
-
-<br>
-
-<a href="{% url 'student_dashboard' %}">
-    بازگشت به داشبورد
-</a>
+<div class="info-banner">
+    غذاهایی که می‌خواهید دریافت کنید انتخاب کنید. انتخاب‌های این صفحه مربوط به کل هفته هستند.
+</div>
 
 {% if reservation %}
-
-    <hr>
-
-    <p>
-        <strong>
-            مبلغ کل رزرو این هفته:
-        </strong>
-
+    <div class="card" style="margin-bottom:20px;">
+        <strong>مبلغ کل رزرو این هفته:</strong>
         {{ reservation.total_price }} تومان
-    </p>
-
+    </div>
 {% endif %}
+
+<div class="card form-card">
+    <form class="checkbox-list" method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit">ثبت رزرو هفتگی</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,49 +1,114 @@
-<h1>
-    ورود به سامانه
-</h1>
+{% extends "auth_base.html" %}
+{% load static %}
 
-{% if error %}
 
-    <p style="color: red;">
-        {{ error }}
-    </p>
+{% block title %}
+ورود به سامانه RSP
+{% endblock %}
 
-{% endif %}
 
-<form method="post">
 
-    {% csrf_token %}
+{% block content %}
 
-    <p>
-        <label>
-            نام کاربری
-        </label>
 
-        <br>
+<div class="login-page">
 
-        <input
-            type="text"
-            name="username"
-            required
-        >
-    </p>
 
-    <p>
-        <label>
-            رمز عبور
-        </label>
+    <div class="login-card">
 
-        <br>
 
-        <input
-            type="password"
-            name="password"
-            required
-        >
-    </p>
+        <div class="brand-logo">
 
-    <button type="submit">
-        ورود
-    </button>
+            <img 
+                src="{% static 'images/logo.jpg' %}"
+                alt="روشنگران"
+            >
 
-</form>
+        </div>
+
+
+
+        <div class="login-title">
+
+            <h1>
+                سامانه مدیریت آموزشی RSP
+            </h1>
+
+            <p>
+                دبستان روشنگران
+            </p>
+
+        </div>
+
+
+
+        {% if error %}
+
+            <div class="alert-error">
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+
+            <div class="form-group">
+
+                <label>
+                    نام کاربری
+                </label>
+
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="نام کاربری"
+                    required
+                >
+
+            </div>
+
+
+
+            <div class="form-group">
+
+                <label>
+                    رمز عبور
+                </label>
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="رمز عبور"
+                    required
+                >
+
+            </div>
+
+
+
+            <button
+                class="btn btn-primary login-button"
+                type="submit"
+            >
+
+                ورود به سامانه
+
+            </button>
+
+
+        </form>
+
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

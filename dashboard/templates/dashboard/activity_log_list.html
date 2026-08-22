@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}گزارش فعالیت | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>گزارش فعالیت</h1>
+        <p>آخرین ۴۰۰ رویداد سامانه</p>
+    </div>
+</div>
+
+<form class="filter-bar" method="get">
+    <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس کاربر یا عملیات">
+    <button class="btn btn-primary" type="submit">جستجو</button>
+</form>
+
+{% if logs %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>زمان</th>
+                <th>کاربر</th>
+                <th>عملیات</th>
+                <th>توضیحات</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in logs %}
+                <tr>
+                    <td>{{ item.created_at }}</td>
+                    <td>{{ item.user|default:"—" }}</td>
+                    <td>{{ item.action }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.ip_address|default:"—" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+    <div class="empty-state">گزارشی یافت نشد.</div>
+{% endif %}
+{% endblock %}

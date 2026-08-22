@@ -1,114 +1,38 @@
-<h1>
-    داشبورد مدیر
-</h1>
+{% extends "base.html" %}
 
+{% block title %}داشبورد مدیر | RSP{% endblock %}
 
-<a href="{% url 'notification_list' %}">
-    🔔 اعلان‌ها
+{% block content %}
+<div class="dashboard-header">
+    <h1>داشبورد مدیر</h1>
+    <p>نمای کلی از وضعیت آموزشی و ارتباطی مدرسه</p>
+</div>
 
-    {% if unread_notification_count > 0 %}
-        ({{ unread_notification_count }})
-    {% endif %}
-</a>
+<section class="dashboard-section">
+    <h2>آمار کلی</h2>
+    <div class="stats-grid">
+        <div class="stat-card"><span>دانش‌آموزان</span><strong>{{ student_count }}</strong></div>
+        <div class="stat-card"><span>معلمان</span><strong>{{ teacher_count }}</strong></div>
+        <div class="stat-card"><span>کلاس‌ها</span><strong>{{ classroom_count }}</strong></div>
+        <div class="stat-card"><span>مطالب آموزشی</span><strong>{{ material_count }}</strong></div>
+        <div class="stat-card"><span>تکالیف</span><strong>{{ assignment_count }}</strong></div>
+        <div class="stat-card"><span>گفتگوها</span><strong>{{ conversation_count }}</strong></div>
+    </div>
+</section>
 
-<hr>
-
-<p>
-    تعداد دانش‌آموزان:
-    {{ student_count }}
-</p>
-
-<p>
-    تعداد معلمان:
-    {{ teacher_count }}
-</p>
-
-<p>
-    تعداد کلاس‌ها:
-    {{ classroom_count }}
-</p>
-
-<p>
-    تعداد مطالب آموزشی:
-    {{ material_count }}
-</p>
-
-<p>
-    تعداد تکالیف:
-    {{ assignment_count }}
-</p>
-
-<p>
-    تعداد گفتگوها:
-    {{ conversation_count }}
-</p>
-
-
-
-<hr>
-
-<h2>
-    دسترسی‌های مدیریتی
-</h2>
-
-<ul>
-
-    <li>
-        <a href="/admin/accounts/studentprofile/">
-            👩‍🎓 مدیریت دانش‌آموزان
-        </a>
-    </li>
-
-    <li>
-        <a href="/admin/accounts/teacherprofile/">
-            👩‍🏫 مدیریت معلمان
-        </a>
-    </li>
-
-    <li>
-        <a href="/admin/academic/classroom/">
-            🏫 مدیریت کلاس‌ها
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'conversation_list' %}">
-            💬 مشاهده پیام‌ها
-        </a>
-    </li>
-
-    <li>
-        <a href="{% url 'user_list_for_messaging' %}">
-            ✉️ شروع گفت‌وگوی جدید
-        </a>
-    </li>
-
-    <li>
-        🍽 رزرو غذا
-        <small>
-            در حال ساخت
-        </small>
-    </li>
-
-    <li>
-        🔔 اعلان‌ها
-        <small>
-            در حال ساخت
-        </small>
-    </li>
-
-    <li>
-        🎥 کلاس‌های آنلاین
-        <small>
-            در حال ساخت
-        </small>
-    </li>
-
-    <li>
-        📄 کارنامه و گزارش‌ها
-        <small>
-            در حال ساخت
-        </small>
-    </li>
-
-</ul>
+<section class="dashboard-section">
+    <h2>دسترسی‌های مدیریتی</h2>
+    <div class="action-list">
+        <a href="{% url 'create_student' %}">ثبت دانش‌آموز</a>
+        <a href="{% url 'create_teacher' %}">ثبت معلم</a>
+        <a href="/admin/academic/classroom/">مدیریت کلاس‌ها</a>
+        <a href="{% url 'cafeteria_pending_receipts' %}">بررسی فیش غذا</a>
+        <a href="{% url 'online_class_list' %}">کلاس‌های آنلاین</a>
+        <a href="{% url 'conversation_list' %}">پیام‌ها</a>
+        <a href="{% url 'user_list_for_messaging' %}">شروع گفت‌وگوی جدید</a>
+        <a href="{% url 'notification_list' %}">اعلان‌ها</a>
+        <a href="/admin/reports/studentreportcard/">کارنامه‌ها</a>
+        <a href="/admin/">ورود به Django Admin</a>
+    </div>
+</section>
+{% endblock %}
