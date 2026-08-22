@@ -19,6 +19,10 @@
     <p>وضعیت حضور دانش‌آموزان در حال حاضر قابل تشخیص نیست. چند لحظه بعد دوباره تلاش کنید.</p>
 {% else %}
     <div class="info-banner">این صفحه وضعیت حضور همین لحظه در کلاس آنلاین را نشان می‌دهد.</div>
+    <form class="filter-bar" method="get">
+        <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس نام یا نام خانوادگی">
+        <button class="btn btn-primary" type="submit">جستجو</button>
+    </form>
 
     <div class="table-wrap">
         <table class="data-table">

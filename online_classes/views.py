@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import render
 import requests
 from .models import OnlineClass
@@ -193,6 +194,12 @@ def live_attendance(request, class_id):
         .select_related("user")
         .all()
     )
+    query = (request.GET.get("q") or "").strip()
+    if query:
+        students = students.filter(
+            Q(user__first_name__icontains=query)
+            | Q(user__last_name__icontains=query)
+        )
 
     attendance_rows = []
 
@@ -213,5 +220,6 @@ def live_attendance(request, class_id):
             "attendance_rows": attendance_rows,
             "attendees": attendees,
             "attendance_error": attendance_error,
+            "query": query,
         },
     )

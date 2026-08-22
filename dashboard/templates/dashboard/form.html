@@ -15,6 +15,26 @@
     {% endif %}
 </div>
 
+{% if form.students %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const list = document.getElementById("id_students");
+    if (!list) return;
+    const search = document.createElement("input");
+    search.type = "search";
+    search.className = "student-choice-search";
+    search.placeholder = "جستجو در دانش‌آموزان بر اساس نام یا نام خانوادگی";
+    list.parentNode.insertBefore(search, list);
+    search.addEventListener("input", function () {
+        const term = this.value.trim().toLocaleLowerCase("fa");
+        list.querySelectorAll("li, option").forEach(function (item) {
+            item.style.display = item.textContent.toLocaleLowerCase("fa").includes(term) ? "" : "none";
+        });
+    });
+});
+</script>
+{% endif %}
+
 <div class="card form-card{% if wide %} wide{% endif %}">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}

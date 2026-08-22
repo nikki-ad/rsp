@@ -31,6 +31,7 @@ urlpatterns = [
     path("online-classes/",include("online_classes.urls"),),
     path("dashboard/",include("dashboard.urls"),),
     path("reports/",include("reports.urls"),),
+    path("language-unit/", include("language_unit.urls")),
 
 
 

@@ -19,11 +19,15 @@ User = get_user_model()
 @login_required
 def conversation_list(request):
 
+    channel = request.GET.get("channel", Conversation.Channel.GENERAL)
+    if channel not in Conversation.Channel.values:
+        channel = Conversation.Channel.GENERAL
+
     conversations = (
         Conversation.objects.filter(
             Q(participant_1=request.user)
             | Q(participant_2=request.user)
-        )
+        ).filter(channel=channel)
         .annotate(
             unread_count=Count(
                 "messages",
@@ -41,6 +45,7 @@ def conversation_list(request):
         "messaging/conversation_list.html",
         {
             "conversations": conversations,
+            "channel": channel,
         }
     )
 
@@ -108,6 +113,7 @@ def start_conversation(request, user_id):
     conversation, created = get_or_create_conversation(
         request.user,
         other_user,
+        channel=Conversation.Channel.GENERAL,
     )
 
     return redirect(
@@ -116,6 +122,24 @@ def start_conversation(request, user_id):
     )
 
 
+@login_required
+def start_language_conversation(request, user_id):
+    other_user = get_object_or_404(User, id=user_id, is_active=True)
+    allowed = request.user.is_school_admin
+    if not allowed and hasattr(request.user, "student_profile") and hasattr(other_user, "teacher_profile"):
+        allowed = request.user.student_profile.language_groups.filter(
+            teachers=other_user.teacher_profile, is_active=True, academic_year__status="active"
+        ).exists()
+    if not allowed and hasattr(request.user, "teacher_profile") and hasattr(other_user, "student_profile"):
+        allowed = request.user.teacher_profile.language_groups.filter(
+            students=other_user.student_profile, is_active=True, academic_year__status="active"
+        ).exists()
+    if not allowed:
+        return HttpResponseForbidden("شما اجازه گفت‌وگوی واحد زبان با این کاربر را ندارید.")
+    conversation, _ = get_or_create_conversation(
+        request.user, other_user, channel=Conversation.Channel.LANGUAGE
+    )
+    return redirect("chat_view", conversation_id=conversation.id)
 
 @login_required
 def chat_view(request, conversation_id):
@@ -217,6 +241,7 @@ def user_list_for_messaging(request):
             "شما اجازه دسترسی به این صفحه را ندارید."
         )
 
+    query = (request.GET.get("q") or "").strip()
     users = User.objects.filter(
         is_active=True,
     ).exclude(
@@ -227,11 +252,17 @@ def user_list_for_messaging(request):
         "last_name",
         "username",
     )
+    if query:
+        users = users.filter(
+            Q(first_name__icontains=query) | Q(last_name__icontains=query)
+            | Q(username__icontains=query)
+        )
 
     return render(
         request,
         "messaging/user_list.html",
         {
             "users": users,
+            "query": query,
         }
     )
