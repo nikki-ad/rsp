@@ -84,9 +84,97 @@
     font-weight: 400;
 }
 
+.classroom-schedule-editor {
+    margin: 30px 0 24px;
+    padding: 22px;
+    background: #fbfdfc;
+    border: 1px solid #dce9e5;
+    border-radius: 18px;
+}
+
+.classroom-schedule-editor__header {
+    margin-bottom: 16px;
+}
+
+.classroom-schedule-editor__header span {
+    display: inline-block;
+    padding: 4px 10px;
+    margin-bottom: 4px;
+    border-radius: 99px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.classroom-schedule-editor__header h2 {
+    margin: 4px 0;
+    font-size: 20px;
+}
+
+.classroom-schedule-editor__header p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 13px;
+}
+
+.classroom-schedule-editor__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: white;
+}
+
+.classroom-schedule-editor table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.classroom-schedule-editor th,
+.classroom-schedule-editor td {
+    padding: 10px;
+    border-left: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.classroom-schedule-editor thead th {
+    background: #f4f7f6;
+    font-size: 13px;
+}
+
+.classroom-schedule-editor tbody th {
+    min-width: 100px;
+    font-size: 14px;
+}
+
+.classroom-schedule-editor tbody tr:last-child th,
+.classroom-schedule-editor tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.classroom-schedule-editor .schedule-saturday th { background: #EAF5F1; }
+.classroom-schedule-editor .schedule-sunday th { background: #FCEEF4; }
+.classroom-schedule-editor .schedule-monday th { background: #FBF3E3; }
+.classroom-schedule-editor .schedule-tuesday th { background: #EEF1FA; }
+.classroom-schedule-editor .schedule-wednesday th { background: #F2ECF8; }
+
+.classroom-schedule-editor .schedule-slot-input {
+    min-width: 115px;
+    margin: 0;
+    padding: 10px 9px;
+    text-align: center;
+    background: #fff;
+}
+
 @media (max-width: 900px) {
     .weekly-schedule-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .classroom-schedule-editor {
+        padding: 16px;
     }
 }
