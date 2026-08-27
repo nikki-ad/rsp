@@ -55,6 +55,14 @@ class ClassroomForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple,
     )
 
+    SCHEDULE_DAYS = (
+        ("saturday", "شنبه"),
+        ("sunday", "یکشنبه"),
+        ("monday", "دوشنبه"),
+        ("tuesday", "سه‌شنبه"),
+        ("wednesday", "چهارشنبه"),
+    )
+
     class Meta:
         model = Classroom
         fields = (
@@ -67,6 +75,54 @@ class ClassroomForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        existing_schedule = {}
+        if self.instance.pk and not self.is_bound:
+            existing_schedule = {
+                (item.day, item.period): item.subject
+                for item in self.instance.weekly_schedule.all()
+            }
+
+        for day_key, day_label in self.SCHEDULE_DAYS:
+            for period in range(1, 6):
+                field_name = f"schedule_{day_key}_{period}"
+                self.fields[field_name] = forms.CharField(
+                    required=False,
+                    max_length=100,
+                    label=f"{day_label} - زنگ {period}",
+                    widget=forms.TextInput(
+                        attrs={
+                            "class": "schedule-slot-input",
+                            "placeholder": "نام درس",
+                            "autocomplete": "off",
+                        }
+                    ),
+                )
+                if not self.is_bound:
+                    self.fields[field_name].initial = existing_schedule.get(
+                        (day_key, period),
+                        "",
+                    )
+
+    def save(self, commit=True):
+        classroom = super().save(commit=commit)
+        schedule_data = {}
+        for day_key, _day_label in self.SCHEDULE_DAYS:
+            for period in range(1, 6):
+                field_name = f"schedule_{day_key}_{period}"
+                schedule_data[(day_key, period)] = (
+                    self.cleaned_data.get(field_name) or ""
+                ).strip()
+
+        if commit:
+            classroom.sync_weekly_schedule(schedule_data)
+        else:
+            classroom._pending_weekly_schedule = schedule_data
+
+        return classroom
 
 
 class EnrollmentManageForm(forms.ModelForm):
@@ -164,14 +220,19 @@ class AnnouncementForm(forms.ModelForm):
             "grade",
         )
         if not self.initial.get("publish_at") and not self.instance.pk:
-            self.initial["publish_at"] = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
+            self.initial["publish_at"] = timezone.localtime().strftime(
+                "%Y-%m-%dT%H:%M"
+            )
 
     def clean(self):
         cleaned_data = super().clean()
         audience = cleaned_data.get("audience")
         classroom = cleaned_data.get("classroom")
         if audience == Announcement.Audience.CLASSROOM and not classroom:
-            self.add_error("classroom", "برای اطلاعیه مخصوص کلاس، انتخاب کلاس الزامی است.")
+            self.add_error(
+                "classroom",
+                "برای اطلاعیه مخصوص کلاس، انتخاب کلاس الزامی است.",
+            )
         if audience != Announcement.Audience.CLASSROOM:
             cleaned_data["classroom"] = None
         return cleaned_data
