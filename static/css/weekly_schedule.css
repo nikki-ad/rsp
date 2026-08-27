@@ -1,0 +1,92 @@
+.weekly-schedule-section {
+    background: white;
+    border: 1px solid #dce9e5;
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow: 0 12px 36px rgba(38, 50, 56, 0.08);
+}
+
+.weekly-schedule-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.weekly-schedule-heading h2 {
+    font-size: 24px;
+    margin: 2px 0 0;
+}
+
+.weekly-schedule-kicker {
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.weekly-schedule-class {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 99px;
+    padding: 8px 14px;
+    font-weight: 700;
+}
+
+.weekly-schedule-scroll {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.weekly-schedule-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    text-align: center;
+    background: white;
+}
+
+.weekly-schedule-table th,
+.weekly-schedule-table td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+}
+
+.weekly-schedule-table thead th {
+    background: #f4f7f6;
+    font-size: 13px;
+}
+
+.weekly-schedule-table tbody th {
+    min-width: 110px;
+    font-size: 15px;
+}
+
+.weekly-schedule-table td {
+    min-width: 120px;
+}
+
+.weekly-schedule-table tr:last-child th,
+.weekly-schedule-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.weekly-schedule-table .schedule-saturday th { background: #EAF5F1; }
+.weekly-schedule-table .schedule-sunday th { background: #FCEEF4; }
+.weekly-schedule-table .schedule-monday th { background: #FBF3E3; }
+.weekly-schedule-table .schedule-tuesday th { background: #EEF1FA; }
+.weekly-schedule-table .schedule-wednesday th { background: #F2ECF8; }
+
+.schedule-empty {
+    color: #b8c2c6;
+    font-weight: 400;
+}
+
+@media (max-width: 900px) {
+    .weekly-schedule-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
