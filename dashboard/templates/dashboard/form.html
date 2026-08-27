@@ -46,6 +46,70 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    const firstScheduleField = document.getElementById("id_schedule_saturday_1");
+    if (!firstScheduleField) return;
+
+    const formElement = firstScheduleField.closest("form");
+    const submitButton = formElement.querySelector('button[type="submit"]');
+    const days = [
+        ["saturday", "شنبه", "schedule-saturday"],
+        ["sunday", "یکشنبه", "schedule-sunday"],
+        ["monday", "دوشنبه", "schedule-monday"],
+        ["tuesday", "سه‌شنبه", "schedule-tuesday"],
+        ["wednesday", "چهارشنبه", "schedule-wednesday"]
+    ];
+
+    const section = document.createElement("section");
+    section.className = "classroom-schedule-editor";
+    section.innerHTML = `
+        <div class="classroom-schedule-editor__header">
+            <div>
+                <span>اختیاری</span>
+                <h2>🗓️ برنامه هفتگی کلاس</h2>
+                <p>شنبه تا چهارشنبه، هر روز ۵ زنگ. خانه‌های خالی بدون مشکل ذخیره می‌شوند.</p>
+            </div>
+        </div>
+        <div class="classroom-schedule-editor__scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>روز</th>
+                        <th>زنگ اول</th>
+                        <th>زنگ دوم</th>
+                        <th>زنگ سوم</th>
+                        <th>زنگ چهارم</th>
+                        <th>زنگ پنجم</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>`;
+
+    const tbody = section.querySelector("tbody");
+    days.forEach(function (day) {
+        const row = document.createElement("tr");
+        row.className = day[2];
+        const dayCell = document.createElement("th");
+        dayCell.textContent = day[1];
+        row.appendChild(dayCell);
+
+        for (let period = 1; period <= 5; period++) {
+            const input = document.getElementById(`id_schedule_${day[0]}_${period}`);
+            const wrapper = input.closest("p");
+            const cell = document.createElement("td");
+            cell.appendChild(input);
+            row.appendChild(cell);
+            if (wrapper) wrapper.remove();
+        }
+        tbody.appendChild(row);
+    });
+
+    formElement.insertBefore(section, submitButton);
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
     const academicYearField = document.getElementById("id_academic_year");
     const classroomField = document.getElementById("id_classroom");
 
