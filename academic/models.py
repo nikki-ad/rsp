@@ -5,13 +5,6 @@ from core.models import BaseModel
 
 
 class AcademicYear(BaseModel):
-    """
-    Academic year model.
-
-    Example:
-        1405-1406
-    """
-
     class Status(models.TextChoices):
         DRAFT = "draft", "پیش‌نویس"
         ACTIVE = "active", "فعال"
@@ -67,6 +60,30 @@ class Classroom(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.grade.title} {self.name}"
+
+    def save(self, *args, **kwargs):
+        pending_schedule = getattr(self, "_pending_weekly_schedule", None)
+        super().save(*args, **kwargs)
+        if pending_schedule is not None:
+            self.sync_weekly_schedule(pending_schedule)
+            delattr(self, "_pending_weekly_schedule")
+
+    def sync_weekly_schedule(self, schedule_data):
+        for (day, period), subject in schedule_data.items():
+            subject = (subject or "").strip()
+            if subject:
+                ClassroomSchedule.objects.update_or_create(
+                    classroom=self,
+                    day=day,
+                    period=period,
+                    defaults={"subject": subject},
+                )
+            else:
+                ClassroomSchedule.objects.filter(
+                    classroom=self,
+                    day=day,
+                    period=period,
+                ).delete()
 
 
 class ClassroomSchedule(models.Model):
