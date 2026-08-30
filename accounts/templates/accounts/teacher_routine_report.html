@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}گزارش برنامه روزانه {{ report.classroom }} | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div><h1>گزارش برنامه روزانه {{ report.classroom }}</h1><p>{{ report.start_date|date:"Y/m/d" }} تا {{ report.end_date|date:"Y/m/d" }}؛ این گزارش فقط برای مسئول تعیین‌شده کلاس قابل مشاهده است.</p></div>
+    <div class="page-header-actions"><a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">بازگشت</a></div>
+</div>
+
+<div class="stats-grid routine-report-stats">
+    <div class="stat-card"><span>مشارکت هفتگی</span><strong>{{ report.participation_percent }}٪</strong></div>
+    <div class="stat-card"><span>میانگین مطالعه</span><strong>{{ report.study_average }}</strong></div>
+    <div class="stat-card"><span>میانگین انجام تکالیف</span><strong>{{ report.homework_average }}</strong></div>
+    <div class="stat-card"><span>میانگین ساعت خواب</span><strong>{{ report.sleep_average }}</strong></div>
+</div>
+
+<div class="info-banner routine-report-note">وضعیت‌ها صرفاً برای اولویت‌بندی‌اند: ثبت کمتر از ۳ روز یا خواب دیرهنگام تکرارشونده «نیازمند پیگیری» و ثبت کمتر از ۵ روز «اطلاعات ناکافی» محسوب می‌شود.</div>
+
+{% if report.rows %}
+<div class="table-wrap"><table class="data-table">
+    <thead><tr><th>دانش‌آموز</th><th>روزهای ثبت‌شده</th><th>میانگین مطالعه</th><th>میانگین تکالیف</th><th>میانگین خواب</th><th>وضعیت</th></tr></thead>
+    <tbody>
+    {% for row in report.rows %}<tr>
+        <td><strong>{{ row.student }}</strong></td><td>{{ row.submitted_days }} از {{ report.days }}</td><td>{{ row.study_average }}</td><td>{{ row.homework_average }}</td><td>{{ row.sleep_average }}</td>
+        <td><span class="routine-status routine-status--{{ row.status }}">{{ row.status_label }}</span></td>
+    </tr>{% endfor %}
+    </tbody>
+</table></div>
+{% else %}<div class="empty-state">دانش‌آموز فعالی در این کلاس ثبت نشده است.</div>{% endif %}
+{% endblock %}

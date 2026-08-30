@@ -7,7 +7,8 @@ from django.urls import reverse
 from django.db.models import Q
 from django.utils import timezone
 
-from academic.models import AcademicYear, Classroom, ClassroomSchedule, Enrollment
+from academic.models import AcademicYear, Classroom, ClassroomSchedule, Enrollment, StudentDailyRoutine
+from academic.routine_reports import classroom_routine_report
 from activitylog.utils import log_activity
 from materials.forms import EducationalMaterialCreateForm
 from materials.models import EducationalMaterial
@@ -17,6 +18,7 @@ from notifications.services import create_notification
 from reports.models import StudentReportCard
 
 from .forms import ProfileForm, StudentSelfProfileForm, TeacherSelfProfileForm
+from .routine_forms import StudentDailyRoutineForm
 from .permissions import post_login_redirect_name
 
 User = get_user_model()
@@ -67,9 +69,30 @@ def teacher_dashboard(request):
         return render(request, "dashboard/access_denied.html", status=403)
     teacher = request.user.teacher_profile
     classrooms = Classroom.objects.filter(teacher_assignments__teacher=teacher, academic_year__status=AcademicYear.Status.ACTIVE).distinct()
+    report_classrooms = Classroom.objects.filter(
+        daily_report_responsible=teacher,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+    ).select_related("grade", "academic_year")
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
     announcements = Announcement.objects.filter(is_active=True, publish_at__lte=timezone.now()).filter(Q(audience=Announcement.Audience.ALL) | Q(audience=Announcement.Audience.TEACHERS)).order_by("-publish_at")
-    return render(request, "accounts/teacher_dashboard.html", {"classrooms": classrooms, "unread_notification_count": unread_notification_count, "announcements": announcements})
+    return render(request, "accounts/teacher_dashboard.html", {"classrooms": classrooms, "report_classrooms": report_classrooms, "unread_notification_count": unread_notification_count, "announcements": announcements})
+
+
+@login_required
+def teacher_routine_report(request, classroom_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
+    classroom = get_object_or_404(
+        Classroom.objects.select_related("grade", "academic_year"),
+        id=classroom_id,
+        daily_report_responsible=request.user.teacher_profile,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+    )
+    return render(
+        request,
+        "accounts/teacher_routine_report.html",
+        {"report": classroom_routine_report(classroom)},
+    )
 
 
 @login_required
@@ -108,6 +131,22 @@ def student_dashboard(request):
         return render(request, "dashboard/access_denied.html", status=403)
 
     student = request.user.student_profile
+    today = timezone.localdate()
+    today_routine = StudentDailyRoutine.objects.filter(student=student, record_date=today).first()
+    if request.method == "POST":
+        routine_form = StudentDailyRoutineForm(request.POST, instance=today_routine)
+        if routine_form.is_valid():
+            routine = routine_form.save(commit=False)
+            routine.student = student
+            routine.record_date = today
+            if not routine.pk:
+                routine.created_by = request.user
+            routine.save()
+            messages.success(request, "برنامه امروزت با موفقیت ثبت شد 🌱")
+            return redirect("student_dashboard")
+    else:
+        routine_form = StudentDailyRoutineForm(instance=today_routine)
+    recent_routines = student.daily_routines.order_by("-record_date")[:7]
     enrollment = Enrollment.objects.filter(student=student, is_active=True, academic_year__status=AcademicYear.Status.ACTIVE).select_related("academic_year", "classroom").first()
     teachers = []
     materials = []
@@ -165,6 +204,9 @@ def student_dashboard(request):
         "report_cards": report_cards,
         "announcements": announcements,
         "weekly_schedule": weekly_schedule,
+        "routine_form": routine_form,
+        "today_routine": today_routine,
+        "recent_routines": recent_routines,
     })
 
 

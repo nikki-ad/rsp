@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}گزارش برنامه روزانه | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header routine-report-page-header">
+    <div><h1>🌿 گزارش برنامه روزانه دانش‌آموزان</h1><p>{% if active_year %}خلاصه هفت روز اخیر کلاس‌های سال تحصیلی {{ active_year.title }}{% else %}سال تحصیلی فعالی تعریف نشده است.{% endif %}</p></div>
+    <div class="page-header-actions no-print">
+        <button class="btn btn-ghost" type="button" onclick="window.print()">🖨️ چاپ گزارش</button>
+        <a class="btn btn-primary" href="{% url 'routine_report_excel' %}">⬇️ دانلود Excel</a>
+        <a class="btn btn-ghost" href="{% url 'admin_dashboard' %}">بازگشت</a>
+    </div>
+</div>
+
+{% if routine_reports %}
+<div class="table-wrap routine-print-table"><table class="data-table">
+    <thead><tr><th>کلاس</th><th>مسئول پیگیری</th><th>دانش‌آموزان</th><th>مشارکت</th><th>میانگین مطالعه</th><th>میانگین تکالیف</th><th>میانگین خواب</th><th>نیازمند پیگیری</th></tr></thead>
+    <tbody>
+    {% for report in routine_reports %}<tr>
+        <td><strong>{{ report.classroom }}</strong></td>
+        <td>{{ report.classroom.daily_report_responsible|default:"تعیین نشده" }}</td>
+        <td>{{ report.student_count }} نفر</td><td>{{ report.participation_percent }}٪</td>
+        <td>{{ report.study_average }}</td><td>{{ report.homework_average }}</td><td>{{ report.sleep_average }}</td>
+        <td><span class="routine-status routine-status--{% if report.follow_up_count %}follow_up{% else %}normal{% endif %}">{{ report.follow_up_count }} نفر</span></td>
+    </tr>{% endfor %}
+    </tbody>
+</table></div>
+{% else %}<div class="empty-state">برای سال فعال کلاسی ثبت نشده است.</div>{% endif %}
+{% endblock %}

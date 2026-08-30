@@ -33,6 +33,7 @@
 <section class="dashboard-section">
     <h2>پنل‌های مدیریتی</h2>
     <div class="action-list">
+        <a href="{% url 'user_list' %}">کاربران و فیلتر نقش‌ها</a>
         <a href="{% url 'student_list' %}">دانش‌آموزان</a>
         <a href="{% url 'teacher_list' %}">معلمان</a>
         <a href="{% url 'academic_year_list' %}">سال تحصیلی</a>
@@ -47,6 +48,13 @@
         <a href="{% url 'cafeteria_pending_receipts' %}">فیش غذا</a>
         <a href="{% url 'activity_log_list' %}">گزارش فعالیت</a>
         <a href="{% url 'conversation_list' %}">پیام‌ها</a>
+    </div>
+</section>
+
+<section class="dashboard-section routine-manager-entry">
+    <div class="card routine-manager-entry__card">
+        <div><span>گزارش مدیریتی</span><h2>🌿 برنامه روزانه دانش‌آموزان</h2><p>خلاصه هفت‌روزه کلاس‌ها، موارد نیازمند پیگیری و خروجی قابل چاپ و Excel</p></div>
+        <a class="btn btn-primary" href="{% url 'routine_report_list' %}">مشاهده گزارش کامل</a>
     </div>
 </section>
 

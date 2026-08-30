@@ -8,6 +8,40 @@
     <p>سلام {{ student.user.get_full_name }} 👋<br>مدیریت فعالیت‌های آموزشی و ارتباطی شما</p>
 </div>
 
+<section class="daily-routine-card">
+    <div class="daily-routine-card__heading">
+        <div><span>برنامه امروز من</span><h2>🌱 امروزت را چطور گذراندی؟</h2></div>
+        {% if today_routine %}<span class="daily-routine-saved">ثبت شده ✓</span>{% endif %}
+    </div>
+    <p class="daily-routine-help">ساعت‌های مطالعه، انجام تکالیف و خواب امروزت را ثبت کن.</p>
+    <form method="post" class="daily-routine-form">
+        {% csrf_token %}
+        {{ routine_form.non_field_errors }}
+        <div class="routine-field-group routine-field-group--study">
+            <div class="routine-field-title"><span>📚</span><strong>ساعت مطالعه</strong></div>
+            <label>از {{ routine_form.study_start }}</label><label>تا {{ routine_form.study_end }}</label>
+            {{ routine_form.study_start.errors }}{{ routine_form.study_end.errors }}
+        </div>
+        <div class="routine-field-group routine-field-group--homework">
+            <div class="routine-field-title"><span>✏️</span><strong>انجام تکالیف</strong></div>
+            <label>از {{ routine_form.homework_start }}</label><label>تا {{ routine_form.homework_end }}</label>
+            {{ routine_form.homework_start.errors }}{{ routine_form.homework_end.errors }}
+        </div>
+        <div class="routine-field-group routine-field-group--sleep">
+            <div class="routine-field-title"><span>🌙</span><strong>ساعت خواب</strong></div>
+            <label>ساعت {{ routine_form.sleep_time }}</label>{{ routine_form.sleep_time.errors }}
+        </div>
+        <button class="btn btn-primary daily-routine-submit" type="submit">{% if today_routine %}به‌روزرسانی برنامه امروز{% else %}ثبت برنامه امروز{% endif %}</button>
+    </form>
+    {% if recent_routines %}
+    <details class="routine-history"><summary>مشاهده ثبت‌های اخیر من</summary>
+        <div class="routine-history-grid">
+        {% for item in recent_routines %}<div><strong>{{ item.record_date|date:"Y/m/d" }}</strong><span>مطالعه {{ item.study_start|time:"H:i" }} تا {{ item.study_end|time:"H:i" }}</span><span>تکالیف {{ item.homework_start|time:"H:i" }} تا {{ item.homework_end|time:"H:i" }}</span><span>خواب {{ item.sleep_time|time:"H:i" }}</span></div>{% endfor %}
+        </div>
+    </details>
+    {% endif %}
+</section>
+
 <div class="dashboard-section">
     <h2>دسترسی سریع</h2>
     <div class="action-list">

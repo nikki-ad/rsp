@@ -71,6 +71,7 @@ class ClassroomForm(forms.ModelForm):
             "name",
             "capacity",
             "description",
+            "daily_report_responsible",
         )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
@@ -78,6 +79,14 @@ class ClassroomForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["daily_report_responsible"].queryset = (
+            TeacherProfile.objects.select_related("user")
+            .filter(user__is_active=True)
+            .order_by("user__last_name", "user__first_name")
+        )
+        self.fields["daily_report_responsible"].help_text = (
+            "فقط یکی از معلمان انتخاب‌شده همین کلاس را انتخاب کنید. این بخش اختیاری است."
+        )
 
         existing_schedule = {}
         if self.instance.pk and not self.is_bound:
@@ -106,6 +115,17 @@ class ClassroomForm(forms.ModelForm):
                         (day_key, period),
                         "",
                     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        responsible = cleaned_data.get("daily_report_responsible")
+        teachers = cleaned_data.get("teachers")
+        if responsible and teachers is not None and responsible not in teachers:
+            self.add_error(
+                "daily_report_responsible",
+                "مسئول پیگیری باید در فهرست معلمان همین کلاس انتخاب شده باشد.",
+            )
+        return cleaned_data
 
     def save(self, commit=True):
         classroom = super().save(commit=commit)
