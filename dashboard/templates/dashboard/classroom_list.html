@@ -23,6 +23,7 @@
                 <th>ظرفیت</th>
                 <th>دانش‌آموزان فعال</th>
                 <th>معلمان</th>
+                <th>مسئول گزارش روزانه</th>
                 <th></th>
             </tr>
         </thead>
@@ -34,6 +35,7 @@
                     <td>{{ classroom.capacity }}</td>
                     <td>{{ classroom.student_count }}</td>
                     <td>{{ classroom.teacher_count }}</td>
+                    <td>{{ classroom.daily_report_responsible|default:"—" }}</td>
                     <td>
                         <a href="{% url 'classroom_edit' classroom.id %}">ویرایش</a>
                         · <a href="{% url 'classroom_delete' classroom.id %}">حذف</a>

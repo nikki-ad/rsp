@@ -30,6 +30,20 @@
 
 
 
+{% if report_classrooms %}
+<div class="dashboard-section routine-teacher-section">
+    <h2>🌿 پایش برنامه روزانه</h2>
+    <p>فقط کلاس‌هایی نمایش داده می‌شوند که مسئول پیگیری آن‌ها هستید.</p>
+    <div class="class-grid">
+    {% for classroom in report_classrooms %}
+        <a class="class-card routine-report-link" href="{% url 'teacher_routine_report' classroom.id %}">
+            <span>گزارش هفت روز اخیر</span><strong>{{ classroom }}</strong><small>مشاهده خلاصه و موارد نیازمند پیگیری</small>
+        </a>
+    {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="dashboard-section">
 
 

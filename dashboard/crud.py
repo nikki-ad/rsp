@@ -374,7 +374,9 @@ def grade_delete(request, grade_id):
 
 @manager_required
 def classroom_list(request):
-    classrooms = Classroom.objects.select_related("academic_year", "grade").annotate(
+    classrooms = Classroom.objects.select_related(
+        "academic_year", "grade", "daily_report_responsible__user"
+    ).annotate(
         student_count=Count(
             "enrollments",
             filter=Q(enrollments__is_active=True),

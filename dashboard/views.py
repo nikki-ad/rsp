@@ -1,15 +1,20 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 
 from accounts.models import TeacherProfile
+from accounts.choices import Role
 from accounts.permissions import is_school_admin
 from academic.models import AcademicYear, Classroom, Enrollment
+from academic.routine_reports import classroom_routine_report
 from assignments.models import Assignment
 from cafeteria.models import CafeteriaReservation
 from materials.models import EducationalMaterial
 from messaging.models import Conversation
 from online_classes.models import OnlineClass
+
+User = get_user_model()
 
 
 @login_required
@@ -26,6 +31,7 @@ def admin_dashboard(request):
     classroom_count = 0
     online_class_count = 0
     pending_receipt_count = 0
+    routine_reports = []
 
     if active_year:
         student_count = Enrollment.objects.filter(
@@ -55,6 +61,12 @@ def admin_dashboard(request):
             .distinct()
             .count()
         )
+        routine_reports = [
+            classroom_routine_report(classroom)
+            for classroom in Classroom.objects.filter(academic_year=active_year)
+            .select_related("grade", "daily_report_responsible__user")
+            .order_by("grade__order", "name")
+        ]
 
     archived_years = AcademicYear.objects.filter(
         status=AcademicYear.Status.ARCHIVED,
@@ -71,9 +83,38 @@ def admin_dashboard(request):
         "assignment_count": Assignment.objects.count(),
         "conversation_count": Conversation.objects.count(),
         "archived_years": archived_years,
+        "routine_reports": routine_reports,
     }
 
     return render(request, "dashboard/admin_dashboard.html", context)
+
+
+@login_required
+def user_list(request):
+    if not is_school_admin(request.user):
+        return render(request, "dashboard/access_denied.html", status=403)
+
+    query = (request.GET.get("q") or "").strip()
+    selected_role = (request.GET.get("role") or "").strip()
+    valid_roles = {value for value, _label in Role.choices}
+    users = User.objects.all().order_by("last_name", "first_name", "username")
+    if query:
+        users = users.filter(
+            Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(username__icontains=query)
+        )
+    if selected_role in valid_roles:
+        users = users.filter(role=selected_role)
+    else:
+        selected_role = ""
+
+    return render(request, "dashboard/user_list.html", {
+        "users": users,
+        "query": query,
+        "selected_role": selected_role,
+        "role_choices": Role.choices,
+    })
 
 
 @login_required

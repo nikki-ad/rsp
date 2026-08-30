@@ -15,6 +15,11 @@ urlpatterns = [
         name="teacher_class_detail",
     ),
     path(
+        "teacher/routine-report/<uuid:classroom_id>/",
+        views.teacher_routine_report,
+        name="teacher_routine_report",
+    ),
+    path(
         "teacher/class/<uuid:classroom_id>/material/create/",
         views.create_material,
         name="create_class_material",

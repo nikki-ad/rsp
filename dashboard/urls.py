@@ -5,6 +5,7 @@ from . import views
 
 urlpatterns = [
     path("", views.admin_dashboard, name="admin_dashboard"),
+    path("users/", views.user_list, name="user_list"),
     path(
         "archive/<uuid:year_id>/",
         views.academic_year_archive,

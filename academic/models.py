@@ -49,6 +49,14 @@ class Classroom(BaseModel):
     name = models.CharField(max_length=50, verbose_name="نام کلاس")
     capacity = models.PositiveSmallIntegerField(verbose_name="ظرفیت")
     description = models.TextField(blank=True, verbose_name="توضیحات")
+    daily_report_responsible = models.ForeignKey(
+        "accounts.TeacherProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="daily_report_classrooms",
+        verbose_name="مسئول پیگیری گزارش روزانه",
+    )
 
     class Meta:
         verbose_name = "کلاس"
@@ -155,3 +163,32 @@ class TeacherClassAssignment(BaseModel):
 
     def __str__(self):
         return f"{self.teacher} - {self.classroom}"
+
+
+class StudentDailyRoutine(BaseModel):
+    student = models.ForeignKey(
+        StudentProfile,
+        on_delete=models.CASCADE,
+        related_name="daily_routines",
+        verbose_name="دانش‌آموز",
+    )
+    record_date = models.DateField(verbose_name="تاریخ ثبت")
+    study_start = models.TimeField(verbose_name="شروع مطالعه")
+    study_end = models.TimeField(verbose_name="پایان مطالعه")
+    homework_start = models.TimeField(verbose_name="شروع انجام تکالیف")
+    homework_end = models.TimeField(verbose_name="پایان انجام تکالیف")
+    sleep_time = models.TimeField(verbose_name="ساعت خواب")
+
+    class Meta:
+        verbose_name = "برنامه روزانه دانش‌آموز"
+        verbose_name_plural = "برنامه‌های روزانه دانش‌آموزان"
+        ordering = ["-record_date", "student__user__last_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["student", "record_date"],
+                name="unique_student_daily_routine",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.student} | {self.record_date}"
