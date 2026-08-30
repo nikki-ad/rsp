@@ -51,35 +51,11 @@
     </div>
 </section>
 
-<section class="dashboard-section routine-manager-summary">
-    <div class="section-heading-row">
-        <div>
-            <h2>🌿 خلاصه برنامه روزانه دانش‌آموزان</h2>
-            <p>گزارش تجمیعی هفت روز اخیر؛ جزئیات پیگیری فقط در اختیار مسئول هر کلاس است.</p>
-        </div>
+<section class="dashboard-section routine-manager-entry">
+    <div class="card routine-manager-entry__card">
+        <div><span>گزارش مدیریتی</span><h2>🌿 برنامه روزانه دانش‌آموزان</h2><p>خلاصه هفت‌روزه کلاس‌ها، موارد نیازمند پیگیری و خروجی قابل چاپ و Excel</p></div>
+        <a class="btn btn-primary" href="{% url 'routine_report_list' %}">مشاهده گزارش کامل</a>
     </div>
-    {% if routine_reports %}
-        <div class="table-wrap">
-            <table class="data-table">
-                <thead><tr><th>کلاس</th><th>مسئول پیگیری</th><th>مشارکت</th><th>میانگین مطالعه</th><th>میانگین تکالیف</th><th>میانگین خواب</th><th>نیازمند پیگیری</th></tr></thead>
-                <tbody>
-                {% for report in routine_reports %}
-                    <tr>
-                        <td><strong>{{ report.classroom }}</strong></td>
-                        <td>{{ report.classroom.daily_report_responsible|default:"تعیین نشده" }}</td>
-                        <td>{{ report.participation_percent }}٪</td>
-                        <td>{{ report.study_average }}</td>
-                        <td>{{ report.homework_average }}</td>
-                        <td>{{ report.sleep_average }}</td>
-                        <td><span class="routine-status routine-status--{% if report.follow_up_count %}follow_up{% else %}normal{% endif %}">{{ report.follow_up_count }} نفر</span></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="empty-state">برای سال فعال کلاسی ثبت نشده است.</div>
-    {% endif %}
 </section>
 
 <section class="dashboard-section">

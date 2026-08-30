@@ -5,6 +5,8 @@ from . import views
 
 urlpatterns = [
     path("", views.admin_dashboard, name="admin_dashboard"),
+    path("routine-reports/", views.routine_report_list, name="routine_report_list"),
+    path("routine-reports/excel/", views.routine_report_excel, name="routine_report_excel"),
     path("users/", views.user_list, name="user_list"),
     path(
         "archive/<uuid:year_id>/",

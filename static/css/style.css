@@ -1012,6 +1012,19 @@ form p label {
 .routine-status--attention { color: #8a651e; background: var(--warning-light); }
 .routine-status--follow_up { color: #984d4d; background: var(--danger-light); }
 .user-role-filter select { min-width: 180px; }
+.routine-manager-entry__card { display: flex; align-items: center; justify-content: space-between; gap: 20px; background: linear-gradient(135deg, #eff9f5, #fff); }
+.routine-manager-entry__card > div > span { color: var(--primary-dark); font-size: 13px; font-weight: 700; }
+
+@media print {
+    .sidebar, .top-header, .no-print { display: none !important; }
+    .app-wrapper { margin: 0 !important; }
+    .page-content { padding: 0 !important; }
+    body { background: white; font-size: 11px; }
+    .routine-report-page-header { margin-bottom: 14px; }
+    .routine-print-table { overflow: visible; border: 0; }
+    .routine-print-table table { width: 100%; }
+    .routine-print-table th, .routine-print-table td { padding: 7px 5px; }
+}
 
 @media (max-width: 1100px) { .daily-routine-form { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px) { .daily-routine-card { padding: 18px; } .daily-routine-form { grid-template-columns: 1fr; } }
