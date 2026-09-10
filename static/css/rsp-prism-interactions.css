@@ -1,0 +1,184 @@
+/* RSP Prism interaction layer: cursor reset, manual theme controls, ripple UI */
+
+html,
+body {
+  cursor: auto !important;
+}
+
+a,
+button,
+.btn,
+summary,
+.sidebar-menu a,
+.action-card,
+.class-card,
+.payment-option,
+[data-rsp-interactive] {
+  cursor: pointer !important;
+}
+
+input,
+textarea,
+select {
+  cursor: text !important;
+}
+
+select,
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer !important;
+}
+
+.rsp-ripple-host {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+.rsp-ripple {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 30;
+  background: rgba(255,255,255,.55);
+  transform: translate(-50%, -50%) scale(0);
+  animation: rsp-ripple-bloom 560ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+@keyframes rsp-ripple-bloom {
+  0% { opacity: .9; transform: translate(-50%, -50%) scale(0); }
+  70% { opacity: .28; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(18); }
+}
+
+.rsp-ui-controls {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 90;
+  display: flex;
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid rgba(99,91,255,.12);
+  border-radius: 18px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 12px 30px rgba(52,45,130,.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: rsp-controls-enter 500ms cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes rsp-controls-enter {
+  from { opacity: 0; transform: translateY(12px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.rsp-ui-control {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 13px;
+  display: inline-grid;
+  place-items: center;
+  background: #fff;
+  color: #4F46E5;
+  box-shadow: inset 0 0 0 1px #E5E7F2;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 180ms cubic-bezier(.16,1,.3,1), background 180ms ease, box-shadow 180ms ease;
+}
+
+.rsp-ui-control:hover {
+  transform: translateY(-3px) scale(1.08);
+  background: linear-gradient(135deg,#FFF7D6,#FCE7F3);
+  box-shadow: 0 8px 18px rgba(244,114,182,.16), inset 0 0 0 1px rgba(244,114,182,.18);
+}
+
+.rsp-ui-control:active { transform: scale(.92); }
+.rsp-ui-control.is-off { opacity: .55; filter: grayscale(.3); }
+.rsp-ui-control.is-active { background: linear-gradient(135deg,#EEF2FF,#FCE7F3); }
+
+.rsp-click-pop {
+  animation: rsp-click-pop 250ms cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes rsp-click-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(.96); }
+  100% { transform: scale(1); }
+}
+
+html.rsp-dark {
+  color-scheme: dark;
+  --rsp-bg:#10111A;
+  --rsp-surface:#181A27;
+  --rsp-surface-soft:#1D1F2D;
+  --rsp-text:#F6F7FB;
+  --rsp-text-muted:#ADB3C7;
+  --rsp-border:#2A2D3D;
+  --background:var(--rsp-bg);
+  --surface:var(--rsp-surface);
+  --text:var(--rsp-text);
+  --text-light:var(--rsp-text-muted);
+  --border:var(--rsp-border);
+}
+
+html.rsp-dark body {
+  background:
+    radial-gradient(circle at 12% 8%,rgba(244,114,182,.08),transparent 24rem),
+    radial-gradient(circle at 86% 15%,rgba(244,201,93,.08),transparent 24rem),
+    #10111A !important;
+  color: var(--rsp-text);
+}
+
+html.rsp-dark .sidebar,
+html.rsp-dark .card,
+html.rsp-dark .stat-card,
+html.rsp-dark .action-list a,
+html.rsp-dark .archive-list a,
+html.rsp-dark .action-card,
+html.rsp-dark .announcement-card,
+html.rsp-dark .list-card,
+html.rsp-dark .class-card,
+html.rsp-dark .payment-option,
+html.rsp-dark .table-wrap,
+html.rsp-dark .chat-layout,
+html.rsp-dark .chat-composer,
+html.rsp-dark input,
+html.rsp-dark textarea,
+html.rsp-dark select,
+html.rsp-dark .empty-state,
+html.rsp-dark .rsp-ui-controls {
+  background: #181A27 !important;
+  color: #F6F7FB !important;
+  border-color: #2A2D3D !important;
+}
+
+html.rsp-dark .top-header { background: rgba(24,26,39,.92) !important; }
+html.rsp-dark .sidebar-menu a { color: #ECEEFA; }
+html.rsp-dark .data-table th,
+html.rsp-dark .chat-thread { background: #141620 !important; }
+html.rsp-dark .data-table tbody tr:hover { background: #202231 !important; }
+html.rsp-dark .stat-card strong { color: #F6F3FF; }
+html.rsp-dark .rsp-ui-control { background: #202231; color: #F8E59B; box-shadow: inset 0 0 0 1px #34384C; }
+html.rsp-dark .daily-routine-card { background: linear-gradient(125deg,#302B1D 0%,#342033 42%,#272345 72%,#18343B 100%) !important; }
+html.rsp-dark .routine-field-group--study { background:#332E1D !important; }
+html.rsp-dark .routine-field-group--homework { background:#342134 !important; }
+html.rsp-dark .routine-field-group--sleep { background:#292546 !important; }
+html.rsp-dark .weekly-schedule-section,
+html.rsp-dark .classroom-schedule-editor { background:#181A27 !important; border-color:#2A2D3D !important; }
+html.rsp-dark .weekly-schedule-table,
+html.rsp-dark .classroom-schedule-editor table { background:#181A27 !important; color:#F6F7FB; }
+
+@media (max-width: 700px) {
+  .rsp-ui-controls { left: 12px; bottom: 12px; }
+  .rsp-ui-control { width: 38px; height: 38px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsp-ripple,
+  .rsp-click-pop,
+  .rsp-ui-controls { animation: none !important; }
+}
