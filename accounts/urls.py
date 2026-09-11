@@ -15,6 +15,16 @@ urlpatterns = [
         name="teacher_class_detail",
     ),
     path(
+        "teacher/class/<uuid:classroom_id>/materials/",
+        views.teacher_class_material_list,
+        name="teacher_class_material_list",
+    ),
+    path(
+        "teacher/class/<uuid:classroom_id>/assignments/",
+        views.teacher_class_assignment_list,
+        name="teacher_class_assignment_list",
+    ),
+    path(
         "teacher/routine-report/<uuid:classroom_id>/",
         views.teacher_routine_report,
         name="teacher_routine_report",

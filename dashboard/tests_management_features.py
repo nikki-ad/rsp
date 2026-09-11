@@ -189,6 +189,16 @@ class StudentExperienceTests(TestCase):
         self.assertContains(material_response, "مطلب قدیمی")
         self.assertContains(assignment_response, "تکلیف جدید")
         self.assertContains(assignment_response, "تکلیف قدیمی")
+        material_content = material_response.content.decode()
+        assignment_content = assignment_response.content.decode()
+        self.assertLess(
+            material_content.index("مطلب جدید"),
+            material_content.index("مطلب قدیمی"),
+        )
+        self.assertLess(
+            assignment_content.index("تکلیف جدید"),
+            assignment_content.index("تکلیف قدیمی"),
+        )
 
     def test_student_sees_teacher_and_manager_as_contacts(self):
         response = self.client.get(reverse("conversation_list"))
@@ -208,6 +218,84 @@ class StudentExperienceTests(TestCase):
         self.assertEqual(forbidden.status_code, 403)
 
 
+class TeacherClassExperienceTests(TestCase):
+    def setUp(self):
+        self.teacher_user = User.objects.create_user(
+            username="teacher.class",
+            password="pass",
+            role=Role.TEACHER,
+        )
+        self.teacher = TeacherProfile.objects.create(user=self.teacher_user)
+        self.year = AcademicYear.objects.create(
+            title="۱۴۰۵-۱۴۰۶",
+            status=AcademicYear.Status.ACTIVE,
+        )
+        self.grade = Grade.objects.create(code="2", title="دوم", order=2)
+        self.classroom = Classroom.objects.create(
+            academic_year=self.year,
+            grade=self.grade,
+            name="یاس ۲",
+            capacity=30,
+        )
+        TeacherClassAssignment.objects.create(
+            teacher=self.teacher,
+            classroom=self.classroom,
+        )
+        old_material = EducationalMaterial.objects.create(
+            teacher=self.teacher,
+            title="مطلب قدیمی معلم",
+            content_type="text",
+        )
+        old_material.classrooms.add(self.classroom)
+        new_material = EducationalMaterial.objects.create(
+            teacher=self.teacher,
+            title="مطلب جدید معلم",
+            content_type="text",
+        )
+        new_material.classrooms.add(self.classroom)
+        Assignment.objects.create(
+            teacher=self.teacher,
+            classroom=self.classroom,
+            title="تکلیف قدیمی معلم",
+        )
+        Assignment.objects.create(
+            teacher=self.teacher,
+            classroom=self.classroom,
+            title="تکلیف جدید معلم",
+        )
+        self.client.force_login(self.teacher_user)
+
+    def test_class_detail_shows_only_latest_items_before_students(self):
+        response = self.client.get(
+            reverse("teacher_class_detail", args=[self.classroom.id])
+        )
+        self.assertContains(response, "مطلب جدید معلم")
+        self.assertNotContains(response, "مطلب قدیمی معلم")
+        self.assertContains(response, "تکلیف جدید معلم")
+        self.assertNotContains(response, "تکلیف قدیمی معلم")
+        content = response.content.decode()
+        self.assertLess(content.index("آخرین مطلب آموزشی"), content.index("آخرین تکلیف"))
+        self.assertLess(content.index("آخرین تکلیف"), content.index("دانش‌آموزان کلاس"))
+
+    def test_teacher_archive_pages_show_newest_items_first(self):
+        material_response = self.client.get(
+            reverse("teacher_class_material_list", args=[self.classroom.id])
+        )
+        assignment_response = self.client.get(
+            reverse("teacher_class_assignment_list", args=[self.classroom.id])
+        )
+        material_content = material_response.content.decode()
+        assignment_content = assignment_response.content.decode()
+        self.assertLess(
+            material_content.index("مطلب جدید معلم"),
+            material_content.index("مطلب قدیمی معلم"),
+        )
+        self.assertLess(
+            assignment_content.index("تکلیف جدید معلم"),
+            assignment_content.index("تکلیف قدیمی معلم"),
+        )
+
+
 class LightThemeTests(SimpleTestCase):
     def test_dark_theme_code_is_removed(self):
         static_root = Path(settings.BASE_DIR) / "static"
@@ -218,6 +306,8 @@ class LightThemeTests(SimpleTestCase):
                 static_root / "css" / "rsp-prism.css",
                 static_root / "css" / "rsp-prism-interactions.css",
                 static_root / "css" / "weekly_schedule.css",
+                Path(settings.BASE_DIR) / "templates" / "base.html",
+                Path(settings.BASE_DIR) / "templates" / "auth_base.html",
             ]
         )
         self.assertNotIn("rsp-dark", combined)
