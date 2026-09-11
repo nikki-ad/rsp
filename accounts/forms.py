@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 
 from accounts.choices import Role
@@ -12,6 +14,9 @@ User = get_user_model()
 
 
 class StudentCreateForm(forms.Form):
+    username = forms.CharField(max_length=150, required=False, label="نام کاربری دلخواه", help_text="اگر خالی بماند، سامانه آن را می‌سازد.")
+    password1 = forms.CharField(required=False, label="رمز عبور دلخواه", widget=forms.PasswordInput, help_text="اگر خالی بماند، رمز اولیه 12345678 خواهد بود.")
+    password2 = forms.CharField(required=False, label="تکرار رمز عبور", widget=forms.PasswordInput)
     first_name = forms.CharField(max_length=150, label="نام")
     last_name = forms.CharField(max_length=150, label="نام خانوادگی")
     national_code = forms.CharField(
@@ -65,6 +70,9 @@ class StudentCreateForm(forms.Form):
                 ).order_by("grade__order", "name")
 
     def generate_username(self):
+        requested = (self.cleaned_data.get("username") or "").strip()
+        if requested:
+            return requested
         first_name = self.cleaned_data["first_name"].strip()
         last_name = self.cleaned_data["last_name"].strip()
         base = f"{first_name}.{last_name}".replace(" ", "").lower() or "student"
@@ -82,6 +90,12 @@ class StudentCreateForm(forms.Form):
         if StudentProfile.objects.filter(national_code=national_code).exists():
             raise forms.ValidationError("این کد ملی قبلاً ثبت شده است.")
         return national_code
+
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        if username and User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("این نام کاربری قبلاً استفاده شده است.")
+        return username
 
     def clean(self):
         cleaned_data = super().clean()
@@ -107,10 +121,21 @@ class StudentCreateForm(forms.Form):
             if enrolled_count >= classroom.capacity:
                 self.add_error("classroom", "ظرفیت این کلاس تکمیل شده است.")
 
+        password1 = cleaned_data.get("password1") or ""
+        password2 = cleaned_data.get("password2") or ""
+        if password1 or password2:
+            if password1 != password2:
+                self.add_error("password2", "تکرار رمز عبور یکسان نیست.")
+            else:
+                try:
+                    validate_password(password1)
+                except DjangoValidationError as exc:
+                    self.add_error("password1", exc)
+
         return cleaned_data
 
     def generate_password(self):
-        return "12345678"
+        return self.cleaned_data.get("password1") or "12345678"
 
     @transaction.atomic
     def save(self, created_by=None):
@@ -146,6 +171,9 @@ class StudentCreateForm(forms.Form):
 
 
 class TeacherCreateForm(forms.Form):
+    username = forms.CharField(max_length=150, required=False, label="نام کاربری دلخواه", help_text="اگر خالی بماند، سامانه آن را می‌سازد.")
+    password1 = forms.CharField(required=False, label="رمز عبور دلخواه", widget=forms.PasswordInput, help_text="اگر خالی بماند، رمز اولیه 12345678 خواهد بود.")
+    password2 = forms.CharField(required=False, label="تکرار رمز عبور", widget=forms.PasswordInput)
     first_name = forms.CharField(max_length=150, label="نام")
     last_name = forms.CharField(max_length=150, label="نام خانوادگی")
     personnel_code = forms.CharField(
@@ -181,6 +209,9 @@ class TeacherCreateForm(forms.Form):
             ).order_by("grade__order", "name")
 
     def generate_username(self):
+        requested = (self.cleaned_data.get("username") or "").strip()
+        if requested:
+            return requested
         first_name = self.cleaned_data["first_name"].strip()
         last_name = self.cleaned_data["last_name"].strip()
         base = f"{first_name}.{last_name}".replace(" ", "").lower() or "teacher"
@@ -192,7 +223,27 @@ class TeacherCreateForm(forms.Form):
         return username
 
     def generate_password(self):
-        return "12345678"
+        return self.cleaned_data.get("password1") or "12345678"
+
+    def clean_username(self):
+        username = (self.cleaned_data.get("username") or "").strip()
+        if username and User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("این نام کاربری قبلاً استفاده شده است.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1") or ""
+        password2 = cleaned_data.get("password2") or ""
+        if password1 or password2:
+            if password1 != password2:
+                self.add_error("password2", "تکرار رمز عبور یکسان نیست.")
+            else:
+                try:
+                    validate_password(password1)
+                except DjangoValidationError as exc:
+                    self.add_error("password1", exc)
+        return cleaned_data
 
     def clean_personnel_code(self):
         code = (self.cleaned_data.get("personnel_code") or "").strip()
@@ -307,6 +358,9 @@ class TeacherSelfProfileForm(forms.ModelForm):
 
 
 class StudentEditForm(forms.Form):
+    username = forms.CharField(max_length=150, label="نام کاربری")
+    new_password1 = forms.CharField(required=False, label="رمز عبور جدید", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(required=False, label="تکرار رمز جدید", widget=forms.PasswordInput)
     first_name = forms.CharField(max_length=150, label="نام")
     last_name = forms.CharField(max_length=150, label="نام خانوادگی")
     is_active = forms.BooleanField(required=False, label="حساب فعال است")
@@ -364,6 +418,26 @@ class StudentEditForm(forms.Form):
             raise forms.ValidationError("این کد ملی قبلاً ثبت شده است.")
         return national_code
 
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        if User.objects.filter(username__iexact=username).exclude(pk=self.student.user_id).exists():
+            raise forms.ValidationError("این نام کاربری قبلاً استفاده شده است.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("new_password1") or ""
+        password2 = cleaned_data.get("new_password2") or ""
+        if password1 or password2:
+            if password1 != password2:
+                self.add_error("new_password2", "تکرار رمز عبور یکسان نیست.")
+            else:
+                try:
+                    validate_password(password1, self.student.user)
+                except DjangoValidationError as exc:
+                    self.add_error("new_password1", exc)
+        return cleaned_data
+
     def clean_classroom(self):
         classroom = self.cleaned_data.get("classroom")
         if classroom and self.active_year:
@@ -379,10 +453,15 @@ class StudentEditForm(forms.Form):
     @transaction.atomic
     def save(self):
         user = self.student.user
+        user.username = self.cleaned_data["username"]
         user.first_name = self.cleaned_data["first_name"].strip()
         user.last_name = self.cleaned_data["last_name"].strip()
         user.is_active = bool(self.cleaned_data.get("is_active"))
-        user.save(update_fields=["first_name", "last_name", "is_active"])
+        update_fields = ["username", "first_name", "last_name", "is_active"]
+        if self.cleaned_data.get("new_password1"):
+            user.set_password(self.cleaned_data["new_password1"])
+            update_fields.append("password")
+        user.save(update_fields=update_fields)
 
         self.student.national_code = self.cleaned_data.get("national_code") or None
         self.student.birth_date = self.cleaned_data.get("birth_date")
@@ -417,6 +496,9 @@ class StudentEditForm(forms.Form):
 
 
 class TeacherEditForm(forms.Form):
+    username = forms.CharField(max_length=150, label="نام کاربری")
+    new_password1 = forms.CharField(required=False, label="رمز عبور جدید", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(required=False, label="تکرار رمز جدید", widget=forms.PasswordInput)
     first_name = forms.CharField(max_length=150, label="نام")
     last_name = forms.CharField(max_length=150, label="نام خانوادگی")
     is_active = forms.BooleanField(required=False, label="حساب فعال است")
@@ -465,13 +547,38 @@ class TeacherEditForm(forms.Form):
             raise forms.ValidationError("این کد پرسنلی قبلاً ثبت شده است.")
         return code
 
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        if User.objects.filter(username__iexact=username).exclude(pk=self.teacher.user_id).exists():
+            raise forms.ValidationError("این نام کاربری قبلاً استفاده شده است.")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("new_password1") or ""
+        password2 = cleaned_data.get("new_password2") or ""
+        if password1 or password2:
+            if password1 != password2:
+                self.add_error("new_password2", "تکرار رمز عبور یکسان نیست.")
+            else:
+                try:
+                    validate_password(password1, self.teacher.user)
+                except DjangoValidationError as exc:
+                    self.add_error("new_password1", exc)
+        return cleaned_data
+
     @transaction.atomic
     def save(self):
         user = self.teacher.user
+        user.username = self.cleaned_data["username"]
         user.first_name = self.cleaned_data["first_name"].strip()
         user.last_name = self.cleaned_data["last_name"].strip()
         user.is_active = bool(self.cleaned_data.get("is_active"))
-        user.save(update_fields=["first_name", "last_name", "is_active"])
+        update_fields = ["username", "first_name", "last_name", "is_active"]
+        if self.cleaned_data.get("new_password1"):
+            user.set_password(self.cleaned_data["new_password1"])
+            update_fields.append("password")
+        user.save(update_fields=update_fields)
 
         self.teacher.personnel_code = self.cleaned_data.get("personnel_code") or None
         self.teacher.expertise = self.cleaned_data.get("expertise") or ""

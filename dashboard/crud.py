@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -23,6 +24,7 @@ from notifications.models import Announcement
 from notifications.services import create_notification
 from online_classes.models import BBBConfiguration, OnlineClass
 from reports.models import StudentReportCard
+from cafeteria.models import CafeteriaWeek
 
 from .forms import (
     AcademicYearForm,
@@ -33,7 +35,67 @@ from .forms import (
     GradeForm,
     OnlineClassForm,
     ReportCardForm,
+    CafeteriaMenuFormSet,
+    CafeteriaWeekForm,
 )
+
+
+@manager_required
+def cafeteria_week_list(request):
+    weeks = CafeteriaWeek.objects.prefetch_related("menus").order_by("-start_date")
+    return render(request, "dashboard/cafeteria_week_list.html", {"weeks": weeks})
+
+
+@manager_required
+def cafeteria_week_form(request, week_id=None):
+    week = get_object_or_404(CafeteriaWeek, id=week_id) if week_id else CafeteriaWeek()
+    menu_initial = None if week.pk else [
+        {"day": day, "price": 0}
+        for day in ["saturday", "sunday", "monday", "tuesday", "wednesday"]
+    ]
+    if request.method == "POST":
+        form = CafeteriaWeekForm(request.POST, instance=week)
+        formset = CafeteriaMenuFormSet(
+            request.POST, instance=week, prefix="menus", initial=menu_initial
+        )
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                week = form.save()
+                formset.instance = week
+                formset.save()
+            log_activity(
+                request,
+                action="cafeteria_week_updated" if week_id else "cafeteria_week_created",
+                description=f"منوی غذایی {week.title} ذخیره شد.",
+            )
+            messages.success(request, "منوی هفتگی غذا ذخیره شد.")
+            return redirect("cafeteria_week_list")
+    else:
+        form = CafeteriaWeekForm(instance=week)
+        formset = CafeteriaMenuFormSet(instance=week, prefix="menus", initial=menu_initial)
+    return render(request, "dashboard/cafeteria_week_form.html", {
+        "form": form,
+        "formset": formset,
+        "week": week if week.pk else None,
+    })
+
+
+@manager_required
+def cafeteria_week_delete(request, week_id):
+    week = get_object_or_404(CafeteriaWeek, id=week_id)
+    if request.method == "POST":
+        if week.reservations.exists():
+            messages.error(request, "این هفته رزرو دارد و قابل حذف نیست؛ آن را غیرفعال کنید.")
+            return redirect("cafeteria_week_list")
+        label = str(week)
+        week.delete()
+        log_activity(request, action="cafeteria_week_deleted", description=f"منوی غذایی {label} حذف شد.")
+        messages.success(request, "منوی غذایی حذف شد.")
+        return redirect("cafeteria_week_list")
+    return render(request, "dashboard/confirm_delete.html", {
+        "object_label": str(week),
+        "back_url": reverse("cafeteria_week_list"),
+    })
 
 
 def _save_created_by(form, request):
@@ -147,6 +209,7 @@ def edit_student(request, student_id):
         ).select_related("classroom").first()
 
     initial = {
+        "username": student.user.username,
         "first_name": student.user.first_name,
         "last_name": student.user.last_name,
         "is_active": student.user.is_active,
@@ -244,6 +307,7 @@ def edit_teacher(request, teacher_id):
         assigned = assigned.filter(classroom__academic_year=active_year)
 
     initial = {
+        "username": teacher.user.username,
         "first_name": teacher.user.first_name,
         "last_name": teacher.user.last_name,
         "is_active": teacher.user.is_active,

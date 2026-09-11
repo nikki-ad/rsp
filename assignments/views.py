@@ -30,6 +30,29 @@ def _student_or_forbidden(request):
 
 
 @login_required
+def student_assignment_list(request):
+    student, forbidden = _student_or_forbidden(request)
+    if forbidden:
+        return forbidden
+    assignments = Assignment.objects.filter(
+        classroom__enrollments__student=student,
+        classroom__enrollments__is_active=True,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
+    ).select_related("teacher__user", "classroom").distinct().order_by("-created_at")
+    submissions = {
+        submission.assignment_id: submission
+        for submission in student.assignment_submissions.select_related("assignment")
+    }
+    assignment_items = [
+        {"assignment": assignment, "submission": submissions.get(assignment.id)}
+        for assignment in assignments
+    ]
+    return render(request, "assignments/student_assignment_list.html", {
+        "assignment_items": assignment_items,
+    })
+
+
+@login_required
 def create_assignment(request, classroom_id):
     teacher, denied = _teacher_or_denied(request)
     if denied:
@@ -80,7 +103,7 @@ def create_assignment(request, classroom_id):
                     notification_type=notification_constants.ASSIGNMENT,
                     title=f"تکلیف جدید: {assignment.title}",
                     message=f"یک تکلیف جدید برای کلاس {classroom} ثبت شده است.",
-                    url=reverse("student_dashboard"),
+                    url=reverse("student_assignment_list"),
                 )
 
             return redirect(

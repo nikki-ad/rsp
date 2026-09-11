@@ -6,6 +6,7 @@
 <div class="page-header">
     <div><h1>کاربران</h1><p>جستجو و فیلتر همه حساب‌ها بر اساس نقش</p></div>
     <div class="page-header-actions">
+        <a class="btn btn-secondary" href="{% url 'general_user_create' %}">کاربر مدیریتی جدید</a>
         <a class="btn btn-primary" href="{% url 'create_student' %}">دانش‌آموز جدید</a>
         <a class="btn btn-primary" href="{% url 'create_teacher' %}">معلم جدید</a>
     </div>
@@ -33,7 +34,7 @@
         <td>
             {% if item.role == "student" and item.student_profile %}<a href="{% url 'edit_student' item.student_profile.id %}">ویرایش</a>
             {% elif item.role == "teacher" and item.teacher_profile %}<a href="{% url 'edit_teacher' item.teacher_profile.id %}">ویرایش</a>
-            {% else %}—{% endif %}
+            {% else %}<a href="{% url 'general_user_edit' item.id %}">ویرایش و تغییر رمز</a>{% endif %}
         </td>
     </tr>{% endfor %}
     </tbody>

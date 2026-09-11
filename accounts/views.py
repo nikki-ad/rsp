@@ -118,7 +118,7 @@ def create_material(request, classroom_id):
             material.save()
             material.classrooms.add(classroom)
             for enrollment in classroom.enrollments.filter(is_active=True).select_related("student__user"):
-                create_notification(recipient=enrollment.student.user, notification_type=notification_constants.MATERIAL, title=f"مطلب آموزشی جدید: {material.title}", message=f"برای کلاس {classroom} یک مطلب آموزشی جدید منتشر شد.", url=reverse("student_dashboard"))
+                create_notification(recipient=enrollment.student.user, notification_type=notification_constants.MATERIAL, title=f"مطلب آموزشی جدید: {material.title}", message=f"برای کلاس {classroom} یک مطلب آموزشی جدید منتشر شد.", url=reverse("student_material_list"))
             return redirect("teacher_class_detail", classroom_id=classroom.id)
     else:
         form = EducationalMaterialCreateForm(teacher=teacher, hide_classrooms=True)
@@ -167,8 +167,8 @@ def student_dashboard(request):
     if enrollment:
         classroom = enrollment.classroom
         teachers = classroom.teacher_assignments.select_related("teacher__user")
-        materials = classroom.materials.all().order_by("-created_at")
-        assignments = classroom.assignments.all().order_by("-created_at")
+        materials = classroom.materials.all().order_by("-created_at")[:1]
+        assignments = classroom.assignments.all().order_by("-created_at")[:1]
         submitted_assignment_ids = set(student.assignment_submissions.values_list("assignment_id", flat=True))
         student_submissions = {submission.assignment_id: submission for submission in student.assignment_submissions.select_related("assignment")}
         assignment_items = [{"assignment": assignment, "submission": student_submissions.get(assignment.id)} for assignment in assignments]

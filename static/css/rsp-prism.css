@@ -321,39 +321,6 @@ input:focus,textarea:focus,select:focus { border-color:var(--primary); box-shado
   .menu-toggle:active { transform:scale(.92); }
 }
 
-/* Automatic dark mode, no JS or markup changes required */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --rsp-bg:#10111A;
-    --rsp-surface:#181A27;
-    --rsp-surface-soft:#1D1F2D;
-    --rsp-text:#F6F7FB;
-    --rsp-text-muted:#ADB3C7;
-    --rsp-border:#2A2D3D;
-    --rsp-shadow:0 10px 28px rgba(0,0,0,.22);
-    --rsp-shadow-hover:0 20px 44px rgba(0,0,0,.34);
-    --background:var(--rsp-bg);
-    --surface:var(--rsp-surface);
-    --text:var(--rsp-text);
-    --text-light:var(--rsp-text-muted);
-    --border:var(--rsp-border);
-    color-scheme:dark;
-  }
-  body { background:radial-gradient(circle at 12% 8%,rgba(244,114,182,.08),transparent 24rem),radial-gradient(circle at 86% 15%,rgba(244,201,93,.08),transparent 24rem),#10111A; }
-  body::before { opacity:.18; }
-  .sidebar,.card,.stat-card,.action-list a,.archive-list a,.action-card,.announcement-card,.list-card,.class-card,.payment-option,.table-wrap,.chat-layout,.chat-composer,input,textarea,select,.empty-state { background:#181A27; color:var(--rsp-text); }
-  .top-header { background:rgba(24,26,39,.88); }
-  .sidebar-menu a { color:#ECEEFA; }
-  .sidebar-menu a:hover { background:linear-gradient(135deg,rgba(244,201,93,.15),rgba(244,114,182,.13),rgba(99,91,255,.18)); }
-  .data-table th,.chat-thread { background:#141620; }
-  .data-table tbody tr:hover { background:#202231; }
-  .stat-card strong { color:#F6F3FF; }
-  .daily-routine-card { background:linear-gradient(125deg,#302B1D 0%,#342033 42%,#272345 72%,#18343B 100%); }
-  .routine-field-group--study { background:#332E1D; }
-  .routine-field-group--homework { background:#342134; }
-  .routine-field-group--sleep { background:#292546; }
-}
-
 @media (prefers-reduced-motion:reduce) {
   html { scroll-behavior:auto; }
   *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }

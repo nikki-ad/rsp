@@ -1,4 +1,8 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.forms import inlineformset_factory
 from django.utils import timezone
 
 from academic.models import AcademicYear, Classroom, Enrollment, Grade
@@ -6,6 +10,91 @@ from accounts.models import StudentProfile, TeacherProfile
 from notifications.models import Announcement
 from online_classes.models import BBBConfiguration, OnlineClass
 from reports.models import StudentReportCard
+from accounts.choices import Role
+from cafeteria.models import CafeteriaMenu, CafeteriaWeek
+
+
+User = get_user_model()
+
+
+class GeneralUserForm(forms.ModelForm):
+    password1 = forms.CharField(required=False, label="رمز عبور", widget=forms.PasswordInput)
+    password2 = forms.CharField(required=False, label="تکرار رمز عبور", widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ("username", "first_name", "last_name", "email", "role", "is_active")
+        labels = {
+            "username": "نام کاربری",
+            "first_name": "نام",
+            "last_name": "نام خانوادگی",
+            "email": "ایمیل",
+            "role": "نقش",
+            "is_active": "حساب فعال است",
+        }
+
+    def __init__(self, *args, allow_super_admin=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        allowed_roles = [Role.SCHOOL_MANAGER, Role.FINANCE, Role.OPERATOR]
+        if allow_super_admin:
+            allowed_roles.insert(0, Role.SUPER_ADMIN)
+        self.fields["role"].choices = [
+            (value, label) for value, label in Role.choices if value in allowed_roles
+        ]
+        if not self.instance.pk:
+            self.fields["password1"].required = True
+            self.fields["password2"].required = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1") or ""
+        password2 = cleaned_data.get("password2") or ""
+        if password1 or password2:
+            if password1 != password2:
+                self.add_error("password2", "تکرار رمز عبور یکسان نیست.")
+            else:
+                try:
+                    validate_password(password1, self.instance if self.instance.pk else None)
+                except DjangoValidationError as exc:
+                    self.add_error("password1", exc)
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.cleaned_data.get("password1"):
+            user.set_password(self.cleaned_data["password1"])
+        user.is_staff = user.role in {Role.SUPER_ADMIN, Role.SCHOOL_MANAGER, Role.FINANCE}
+        if commit:
+            user.save()
+        return user
+
+
+class CafeteriaWeekForm(forms.ModelForm):
+    class Meta:
+        model = CafeteriaWeek
+        fields = ("title", "start_date", "is_active")
+        widgets = {"start_date": forms.DateInput(attrs={"type": "date"})}
+
+    def clean_is_active(self):
+        is_active = self.cleaned_data["is_active"]
+        if is_active:
+            existing = CafeteriaWeek.objects.filter(is_active=True)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise forms.ValidationError("ابتدا هفته غذایی فعال فعلی را غیرفعال کنید.")
+        return is_active
+
+
+CafeteriaMenuFormSet = inlineformset_factory(
+    CafeteriaWeek,
+    CafeteriaMenu,
+    fields=("day", "food_name", "description", "price"),
+    extra=5,
+    max_num=5,
+    can_delete=True,
+    widgets={"description": forms.Textarea(attrs={"rows": 2})},
+)
 
 
 class AcademicYearForm(forms.ModelForm):

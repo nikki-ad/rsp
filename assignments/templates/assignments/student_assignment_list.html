@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}تکالیف من | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div><h1>✏️ تکالیف من</h1><p>همه تکالیف کلاس و وضعیت پاسخ‌های شما</p></div>
+    <div class="page-header-actions"><a class="btn btn-ghost" href="{% url 'student_dashboard' %}">بازگشت به داشبورد</a></div>
+</div>
+<div class="announcement-list">
+{% for item in assignment_items %}{% with assignment=item.assignment submission=item.submission %}
+    <div class="announcement-card">
+        <strong>{{ assignment.title }}</strong>
+        <p>{{ assignment.description }}</p>
+        <small>{{ assignment.classroom }} · {{ assignment.created_at|date:"Y/m/d H:i" }}</small><br>
+        {% if submission %}
+            <span class="badge badge-success">پاسخ ارسال شده</span>
+            <a class="btn btn-secondary" href="{% url 'submit_assignment' assignment.id %}">ویرایش پاسخ</a>
+        {% else %}
+            <span class="badge badge-muted">در انتظار پاسخ</span>
+            <a class="btn btn-primary" href="{% url 'submit_assignment' assignment.id %}">ارسال پاسخ</a>
+        {% endif %}
+    </div>
+{% endwith %}{% empty %}<div class="empty-state">هنوز تکلیفی برای شما ثبت نشده است.</div>{% endfor %}
+</div>
+{% endblock %}

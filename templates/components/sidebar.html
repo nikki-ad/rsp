@@ -19,6 +19,10 @@
 
                 <div class="menu-title">مدیریت آموزشی</div>
 
+                <a href="{% url 'user_list' %}" class="{% if 'user' in url_name %}active{% endif %}">
+                    همه کاربران
+                </a>
+
                 <a href="{% url 'student_list' %}" class="{% if url_name == 'student_list' or url_name == 'create_student' or url_name == 'edit_student' %}active{% endif %}">
                     دانش‌آموزان
                 </a>
@@ -39,6 +43,10 @@
                 </a>
 
                 <div class="menu-title">خدمات</div>
+
+                <a href="{% url 'cafeteria_week_list' %}" class="{% if 'cafeteria_week' in url_name %}active{% endif %}">
+                    منوی غذای هفتگی
+                </a>
 
                 <a href="{% url 'cafeteria_pending_receipts' %}" class="{% if url_name == 'cafeteria_pending_receipts' %}active{% endif %}">
                     فیش‌های غذا
@@ -82,8 +90,8 @@
                 </a>
 
                 <div class="menu-title">آموزش</div>
-                <a href="{% url 'student_dashboard' %}#assignments">تکالیف</a>
-                <a href="{% url 'student_dashboard' %}#materials">مطالب آموزشی</a>
+                <a href="{% url 'student_assignment_list' %}" class="{% if url_name == 'student_assignment_list' %}active{% endif %}">تکالیف</a>
+                <a href="{% url 'student_material_list' %}" class="{% if url_name == 'student_material_list' %}active{% endif %}">مطالب آموزشی</a>
                 <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' %}active{% endif %}">
                     کلاس آنلاین
                 </a>
