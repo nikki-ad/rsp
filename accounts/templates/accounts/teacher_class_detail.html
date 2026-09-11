@@ -16,6 +16,62 @@
 </div>
 
 <section class="dashboard-section">
+    <div class="page-header">
+        <div><h2>آخرین مطلب آموزشی</h2></div>
+        <a class="btn btn-ghost" href="{% url 'teacher_class_material_list' classroom.id %}">مشاهده همه</a>
+    </div>
+    <div class="announcement-list">
+        {% for material in materials %}
+            <div class="list-card">
+                <strong>{{ material.title }}</strong>
+                <div class="meta-row">
+                    <span class="badge badge-primary">{{ material.get_content_type_display }}</span>
+                </div>
+
+                {% if material.content_type == "text" %}
+                    <p>{{ material.content }}</p>
+                {% elif material.content_type == "file" and material.file %}
+                    <a href="{{ material.file.url }}">دریافت فایل</a>
+                {% elif material.content_type == "link" %}
+                    <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
+                {% endif %}
+
+                <div class="card-actions">
+                    <a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز مطلبی برای این کلاس ثبت نشده است.</div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="dashboard-section">
+    <div class="page-header">
+        <div><h2>آخرین تکلیف</h2></div>
+        <a class="btn btn-ghost" href="{% url 'teacher_class_assignment_list' classroom.id %}">مشاهده همه</a>
+    </div>
+    <div class="announcement-list">
+        {% for assignment in assignments %}
+            <div class="list-card">
+                <strong>{{ assignment.title }}</strong>
+                <p>{{ assignment.description }}</p>
+
+                <div class="card-actions">
+                    {% if assignment.file %}
+                        <a class="btn btn-ghost" href="{{ assignment.file.url }}">فایل تکلیف</a>
+                    {% endif %}
+                    <a class="btn btn-secondary" href="{% url 'assignment_submissions' assignment.id %}">مشاهده پاسخ‌ها</a>
+                    <a class="btn btn-ghost" href="{% url 'delete_assignment' assignment.id %}">حذف تکلیف</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز تکلیفی ثبت نشده است.</div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="dashboard-section">
     <h2>دانش‌آموزان کلاس</h2>
     {% if students %}
         <div class="table-wrap">
@@ -44,55 +100,5 @@
     {% else %}
         <div class="empty-state">دانش‌آموزی در این کلاس ثبت نشده است.</div>
     {% endif %}
-</section>
-
-<section class="dashboard-section">
-    <h2>مطالب آموزشی</h2>
-    <div class="announcement-list">
-        {% for material in materials %}
-            <div class="list-card">
-                <strong>{{ material.title }}</strong>
-                <div class="meta-row">
-                    <span class="badge badge-primary">{{ material.get_content_type_display }}</span>
-                </div>
-
-                {% if material.content_type == "text" %}
-                    <p>{{ material.content }}</p>
-                {% elif material.content_type == "file" and material.file %}
-                    <a href="{{ material.file.url }}">دریافت فایل</a>
-                {% elif material.content_type == "link" %}
-                    <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
-                {% endif %}
-
-                <div class="card-actions">
-                    <a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
-                </div>
-            </div>
-        {% empty %}
-            <div class="empty-state">هنوز مطلبی برای این کلاس ثبت نشده است.</div>
-        {% endfor %}
-    </div>
-</section>
-
-<section class="dashboard-section">
-    <h2>تکالیف</h2>
-    <div class="announcement-list">
-        {% for assignment in assignments %}
-            <div class="list-card">
-                <strong>{{ assignment.title }}</strong>
-                <p>{{ assignment.description }}</p>
-
-                <div class="card-actions">
-                    {% if assignment.file %}
-                        <a class="btn btn-ghost" href="{{ assignment.file.url }}">فایل تکلیف</a>
-                    {% endif %}
-                    <a class="btn btn-secondary" href="{% url 'assignment_submissions' assignment.id %}">مشاهده پاسخ‌ها</a>
-                    <a class="btn btn-ghost" href="{% url 'delete_assignment' assignment.id %}">حذف تکلیف</a>
-                </div>
-            </div>
-        {% empty %}
-            <div class="empty-state">هنوز تکلیفی ثبت نشده است.</div>
-        {% endfor %}
-    </div>
 </section>
 {% endblock %}

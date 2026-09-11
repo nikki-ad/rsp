@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}تکالیف {{ classroom.name }} | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>تکالیف {{ classroom.name }}</h1>
+        <p>همه تکالیف از جدیدترین به قدیمی‌ترین</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="{% url 'create_assignment' classroom.id %}">افزودن تکلیف</a>
+        <a class="btn btn-ghost" href="{% url 'teacher_class_detail' classroom.id %}">بازگشت به کلاس</a>
+    </div>
+</div>
+
+<section class="dashboard-section">
+    <div class="announcement-list">
+        {% for assignment in assignments %}
+            <div class="list-card">
+                <strong>{{ assignment.title }}</strong>
+                <p>{{ assignment.description }}</p>
+                <div class="card-actions">
+                    {% if assignment.file %}
+                        <a class="btn btn-ghost" href="{{ assignment.file.url }}">فایل تکلیف</a>
+                    {% endif %}
+                    <a class="btn btn-secondary" href="{% url 'assignment_submissions' assignment.id %}">مشاهده پاسخ‌ها</a>
+                    <a class="btn btn-ghost" href="{% url 'delete_assignment' assignment.id %}">حذف تکلیف</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز تکلیفی برای این کلاس ثبت نشده است.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

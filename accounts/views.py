@@ -101,7 +101,45 @@ def teacher_class_detail(request, classroom_id):
         return render(request, "dashboard/access_denied.html", status=403)
     teacher = request.user.teacher_profile
     classroom = get_object_or_404(Classroom, id=classroom_id, teacher_assignments__teacher=teacher, academic_year__status=AcademicYear.Status.ACTIVE)
-    return render(request, "accounts/teacher_class_detail.html", {"classroom": classroom, "students": classroom.enrollments.filter(is_active=True), "materials": classroom.materials.all(), "assignments": classroom.assignments.all()})
+    return render(request, "accounts/teacher_class_detail.html", {
+        "classroom": classroom,
+        "students": classroom.enrollments.filter(is_active=True).select_related("student__user"),
+        "materials": classroom.materials.select_related("teacher__user").order_by("-created_at")[:1],
+        "assignments": classroom.assignments.select_related("teacher__user").order_by("-created_at")[:1],
+    })
+
+
+def _teacher_classroom_or_404(request, classroom_id):
+    return get_object_or_404(
+        Classroom,
+        id=classroom_id,
+        teacher_assignments__teacher=request.user.teacher_profile,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+    )
+
+
+@login_required
+def teacher_class_material_list(request, classroom_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
+    classroom = _teacher_classroom_or_404(request, classroom_id)
+    materials = classroom.materials.select_related("teacher__user").order_by("-created_at")
+    return render(request, "accounts/teacher_class_material_list.html", {
+        "classroom": classroom,
+        "materials": materials,
+    })
+
+
+@login_required
+def teacher_class_assignment_list(request, classroom_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return render(request, "dashboard/access_denied.html", status=403)
+    classroom = _teacher_classroom_or_404(request, classroom_id)
+    assignments = classroom.assignments.select_related("teacher__user").order_by("-created_at")
+    return render(request, "accounts/teacher_class_assignment_list.html", {
+        "classroom": classroom,
+        "assignments": assignments,
+    })
 
 
 @login_required

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}مطالب {{ classroom.name }} | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>مطالب آموزشی {{ classroom.name }}</h1>
+        <p>همه مطالب از جدیدترین به قدیمی‌ترین</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-secondary" href="{% url 'create_class_material' classroom.id %}">افزودن مطلب</a>
+        <a class="btn btn-ghost" href="{% url 'teacher_class_detail' classroom.id %}">بازگشت به کلاس</a>
+    </div>
+</div>
+
+<section class="dashboard-section">
+    <div class="announcement-list">
+        {% for material in materials %}
+            <div class="list-card">
+                <strong>{{ material.title }}</strong>
+                <div class="meta-row"><span class="badge badge-primary">{{ material.get_content_type_display }}</span></div>
+                {% if material.content_type == "text" %}
+                    <p>{{ material.content }}</p>
+                {% elif material.content_type == "file" and material.file %}
+                    <a href="{{ material.file.url }}">دریافت فایل</a>
+                {% elif material.content_type == "link" %}
+                    <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
+                {% endif %}
+                <div class="card-actions">
+                    <a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">هنوز مطلبی برای این کلاس ثبت نشده است.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
