@@ -6,6 +6,7 @@
 <div class="page-header">
     <div><h1>کاربران</h1><p>جستجو و فیلتر همه حساب‌ها بر اساس نقش</p></div>
     <div class="page-header-actions">
+        <a class="btn btn-secondary" href="{% url 'general_user_create' %}">کاربر مدیریتی جدید</a>
         <a class="btn btn-primary" href="{% url 'create_student' %}">دانش‌آموز جدید</a>
         <a class="btn btn-primary" href="{% url 'create_teacher' %}">معلم جدید</a>
     </div>
@@ -28,12 +29,12 @@
     {% for item in users %}<tr>
         <td>{{ item.get_full_name|default:item.username }}</td>
         <td>{{ item.username }}</td>
-        <td><span class="badge badge-muted">{{ item.get_role_display }}</span></td>
+        <td><span class="badge badge-muted">{% if item.is_superuser %}مدیر سیستم{% else %}{{ item.get_role_display }}{% endif %}</span></td>
         <td>{% if item.is_active %}<span class="badge badge-success">فعال</span>{% else %}<span class="badge badge-muted">غیرفعال</span>{% endif %}</td>
         <td>
             {% if item.role == "student" and item.student_profile %}<a href="{% url 'edit_student' item.student_profile.id %}">ویرایش</a>
             {% elif item.role == "teacher" and item.teacher_profile %}<a href="{% url 'edit_teacher' item.teacher_profile.id %}">ویرایش</a>
-            {% else %}—{% endif %}
+            {% else %}<a href="{% url 'general_user_edit' item.id %}">ویرایش و تغییر رمز</a>{% endif %}
         </td>
     </tr>{% endfor %}
     </tbody>

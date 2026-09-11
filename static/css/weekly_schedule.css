@@ -209,25 +209,6 @@
     background: #fff;
 }
 
-@media (prefers-color-scheme: dark) {
-    .weekly-schedule-section {
-        background: linear-gradient(135deg, #1e202f, #181a27 46%, #291d29 100%);
-        border-color: rgba(244,201,93,.18);
-    }
-    .weekly-schedule-scroll,
-    .weekly-schedule-table,
-    .weekly-schedule-table td,
-    .classroom-schedule-editor,
-    .classroom-schedule-editor__scroll,
-    .classroom-schedule-editor .schedule-slot-input {
-        background: #181A27;
-        color: #F6F7FB;
-    }
-    .weekly-schedule-table thead th,
-    .classroom-schedule-editor thead th { background: #141620; }
-    .weekly-schedule-table td:hover { background: #27293a; }
-}
-
 @media (max-width: 900px) {
     .weekly-schedule-heading {
         align-items: flex-start;

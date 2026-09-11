@@ -8,6 +8,12 @@ urlpatterns = [
     path("routine-reports/", views.routine_report_list, name="routine_report_list"),
     path("routine-reports/excel/", views.routine_report_excel, name="routine_report_excel"),
     path("users/", views.user_list, name="user_list"),
+    path("users/create/", views.general_user_form, name="general_user_create"),
+    path("users/<uuid:user_id>/edit/", views.general_user_form, name="general_user_edit"),
+    path("cafeteria-weeks/", crud.cafeteria_week_list, name="cafeteria_week_list"),
+    path("cafeteria-weeks/create/", crud.cafeteria_week_form, name="cafeteria_week_create"),
+    path("cafeteria-weeks/<uuid:week_id>/edit/", crud.cafeteria_week_form, name="cafeteria_week_edit"),
+    path("cafeteria-weeks/<uuid:week_id>/delete/", crud.cafeteria_week_delete, name="cafeteria_week_delete"),
     path(
         "archive/<uuid:year_id>/",
         views.academic_year_archive,

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{% if week %}ویرایش{% else %}ایجاد{% endif %} منوی غذا | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div><h1>{% if week %}ویرایش {{ week.title }}{% else %}تعریف منوی غذای جدید{% endif %}</h1><p>برای هر روز یک غذا و قیمت تعیین کنید.</p></div>
+    <div class="page-header-actions"><a class="btn btn-ghost" href="{% url 'cafeteria_week_list' %}">بازگشت</a></div>
+</div>
+
+<form method="post" class="card form-card wide">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.as_p }}
+    <h2>غذاهای هفته</h2>
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+    <div class="table-wrap"><table class="data-table">
+        <thead><tr><th>روز</th><th>نام غذا</th><th>توضیحات</th><th>قیمت (تومان)</th><th>حذف</th></tr></thead>
+        <tbody>
+        {% for menu_form in formset %}
+            <tr>
+                <td>{{ menu_form.id }}{{ menu_form.day }}{{ menu_form.day.errors }}</td>
+                <td>{{ menu_form.food_name }}{{ menu_form.food_name.errors }}</td>
+                <td>{{ menu_form.description }}{{ menu_form.description.errors }}</td>
+                <td>{{ menu_form.price }}{{ menu_form.price.errors }}</td>
+                <td>{% if menu_form.instance.pk %}{{ menu_form.DELETE }}{% else %}—{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    <button class="btn btn-primary" type="submit">ذخیره منوی هفتگی</button>
+</form>
+{% endblock %}

@@ -8,6 +8,25 @@ from notifications import constants as notification_constants
 from notifications.services import create_notification
 from django.http import HttpResponseForbidden , FileResponse
 from academic.models import AcademicYear
+from academic.models import Enrollment
+
+
+@login_required
+def student_material_list(request):
+    if not hasattr(request.user, "student_profile"):
+        return HttpResponseForbidden("شما اجازه مشاهده این صفحه را ندارید.")
+    enrollment = Enrollment.objects.filter(
+        student=request.user.student_profile,
+        is_active=True,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+    ).select_related("classroom").first()
+    materials = EducationalMaterial.objects.none()
+    if enrollment:
+        materials = enrollment.classroom.materials.select_related("teacher__user").order_by("-created_at")
+    return render(request, "materials/student_material_list.html", {
+        "materials": materials,
+        "enrollment": enrollment,
+    })
 
 
 
@@ -49,7 +68,7 @@ def create_material(request):
                         notification_type=notification_constants.MATERIAL,
                         title=f"مطلب آموزشی جدید: {material.title}",
                         message=f"برای کلاس {classroom} یک مطلب آموزشی جدید منتشر شد.",
-                        url=reverse("student_dashboard"),
+                        url=reverse("student_material_list"),
                     )
 
             return redirect("teacher_dashboard")

@@ -1,25 +1,9 @@
 (function () {
   "use strict";
 
-  var root = document.documentElement;
   var storage = window.localStorage;
-  var themeKey = "rsp-prism-theme";
   var soundKey = "rsp-prism-sound";
   var audioCtx = null;
-
-  function prefersDark() {
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  }
-
-  function currentThemePreference() {
-    return storage.getItem(themeKey) || "auto";
-  }
-
-  function applyTheme(mode) {
-    var dark = mode === "dark" || (mode === "auto" && prefersDark());
-    root.classList.toggle("rsp-dark", dark);
-    root.dataset.rspTheme = mode;
-  }
 
   function soundEnabled() {
     return storage.getItem(soundKey) === "on";
@@ -84,13 +68,7 @@
   function createControls() {
     var controls = document.createElement("div");
     controls.className = "rsp-ui-controls";
-    controls.setAttribute("aria-label", "تنظیمات ظاهری RSP");
-
-    var themeButton = document.createElement("button");
-    themeButton.type = "button";
-    themeButton.className = "rsp-ui-control";
-    themeButton.setAttribute("aria-label", "تغییر حالت روشن و تاریک");
-    themeButton.title = "حالت روشن / تاریک";
+    controls.setAttribute("aria-label", "تنظیمات صدای RSP");
 
     var soundButton = document.createElement("button");
     soundButton.type = "button";
@@ -99,25 +77,11 @@
     soundButton.title = "صدای رابط کاربری";
 
     function refreshButtons() {
-      var mode = currentThemePreference();
-      var dark = root.classList.contains("rsp-dark");
-      themeButton.textContent = dark ? "☀️" : "🌙";
-      themeButton.classList.toggle("is-active", mode !== "auto");
-      themeButton.dataset.mode = mode;
-
       var sound = soundEnabled();
       soundButton.textContent = sound ? "🔊" : "🔇";
       soundButton.classList.toggle("is-off", !sound);
       soundButton.classList.toggle("is-active", sound);
     }
-
-    themeButton.addEventListener("click", function () {
-      var next = root.classList.contains("rsp-dark") ? "light" : "dark";
-      storage.setItem(themeKey, next);
-      applyTheme(next);
-      playUiSound("toggle");
-      refreshButtons();
-    });
 
     soundButton.addEventListener("click", function () {
       var next = soundEnabled() ? "off" : "on";
@@ -126,13 +90,10 @@
       refreshButtons();
     });
 
-    controls.appendChild(themeButton);
     controls.appendChild(soundButton);
     document.body.appendChild(controls);
     refreshButtons();
   }
-
-  applyTheme(currentThemePreference());
 
   document.addEventListener("DOMContentLoaded", function () {
     createControls();
@@ -145,12 +106,4 @@
       if (!target.closest(".rsp-ui-controls")) playUiSound("click");
     });
   });
-
-  if (window.matchMedia) {
-    var media = window.matchMedia("(prefers-color-scheme: dark)");
-    var syncAutoTheme = function () {
-      if (currentThemePreference() === "auto") applyTheme("auto");
-    };
-    if (media.addEventListener) media.addEventListener("change", syncAutoTheme);
-  }
 })();

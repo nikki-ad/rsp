@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}منوی غذای هفتگی | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div><h1>منوی غذای هفتگی</h1><p>تعریف هفته، غذای هر روز و قیمت رزرو</p></div>
+    <div class="page-header-actions"><a class="btn btn-primary" href="{% url 'cafeteria_week_create' %}">هفته جدید</a></div>
+</div>
+
+{% if weeks %}
+<div class="announcement-list">
+    {% for week in weeks %}
+    <div class="list-card">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div>
+                <strong>{{ week.title }}</strong>
+                <p>شروع هفته: {{ week.start_date|date:"Y/m/d" }} · {{ week.menus.count }} غذای ثبت‌شده</p>
+                {% if week.is_active %}<span class="badge badge-success">فعال</span>{% else %}<span class="badge badge-muted">غیرفعال</span>{% endif %}
+            </div>
+            <div class="page-header-actions">
+                <a class="btn btn-secondary" href="{% url 'cafeteria_week_edit' week.id %}">ویرایش منو</a>
+                <a class="btn btn-ghost" href="{% url 'cafeteria_week_delete' week.id %}">حذف</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}<div class="empty-state">هنوز منوی هفتگی تعریف نشده است.</div>{% endif %}
+{% endblock %}

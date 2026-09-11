@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from accounts.models import TeacherProfile
 from accounts.choices import Role
@@ -15,6 +17,8 @@ from materials.models import EducationalMaterial
 from messaging.models import Conversation
 from online_classes.models import OnlineClass
 from .xlsx_export import build_routine_report_xlsx
+from .forms import GeneralUserForm
+from activitylog.utils import log_activity
 
 User = get_user_model()
 
@@ -166,6 +170,48 @@ def user_list(request):
         "query": query,
         "selected_role": selected_role,
         "role_choices": Role.choices,
+    })
+
+
+@login_required
+def general_user_form(request, user_id=None):
+    if not is_school_admin(request.user):
+        return render(request, "dashboard/access_denied.html", status=403)
+
+    user_obj = get_object_or_404(User, id=user_id) if user_id else None
+    if user_obj and user_obj.role == Role.STUDENT and hasattr(user_obj, "student_profile"):
+        return redirect("edit_student", student_id=user_obj.student_profile.id)
+    if user_obj and user_obj.role == Role.TEACHER and hasattr(user_obj, "teacher_profile"):
+        return redirect("edit_teacher", teacher_id=user_obj.teacher_profile.id)
+    if user_obj and (user_obj.is_superuser or user_obj.role == Role.SUPER_ADMIN) and not request.user.is_superuser:
+        return render(request, "dashboard/access_denied.html", status=403)
+
+    if request.method == "POST":
+        form = GeneralUserForm(
+            request.POST,
+            instance=user_obj,
+            allow_super_admin=request.user.is_superuser,
+        )
+        if form.is_valid():
+            saved_user = form.save()
+            log_activity(
+                request,
+                action="user_updated" if user_obj else "user_created",
+                description=f"حساب کاربری {saved_user.username} ذخیره شد.",
+            )
+            messages.success(request, "حساب کاربری با موفقیت ذخیره شد.")
+            return redirect("user_list")
+    else:
+        form = GeneralUserForm(
+            instance=user_obj,
+            allow_super_admin=request.user.is_superuser,
+        )
+
+    return render(request, "dashboard/form.html", {
+        "form": form,
+        "page_title": "ویرایش کاربر" if user_obj else "کاربر مدیریتی جدید",
+        "page_subtitle": "برای مدیر، امور مالی و اپراتور حساب بسازید یا رمز را تغییر دهید.",
+        "back_url": reverse("user_list"),
     })
 
 

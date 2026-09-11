@@ -40,12 +40,27 @@ def conversation_list(request):
         .order_by("-last_message_at", "-updated_at")
     )
 
+    contacts = User.objects.none()
+    if channel == Conversation.Channel.GENERAL and hasattr(request.user, "student_profile"):
+        student = request.user.student_profile
+        contacts = User.objects.filter(
+            Q(is_superuser=True)
+            | Q(role__in=[Role.SUPER_ADMIN, Role.SCHOOL_MANAGER])
+            | Q(
+                teacher_profile__class_assignments__classroom__enrollments__student=student,
+                teacher_profile__class_assignments__classroom__enrollments__is_active=True,
+                teacher_profile__class_assignments__classroom__academic_year__status=AcademicYear.Status.ACTIVE,
+            ),
+            is_active=True,
+        ).exclude(id=request.user.id).distinct().order_by("role", "first_name", "last_name")
+
     return render(
         request,
         "messaging/conversation_list.html",
         {
             "conversations": conversations,
             "channel": channel,
+            "contacts": contacts,
         }
     )
 
@@ -76,18 +91,18 @@ def start_conversation(request, user_id):
         # دانش‌آموز → فقط معلم کلاس خودش در سال تحصیلی فعال
         if (
             hasattr(request.user, "student_profile")
-            and hasattr(other_user, "teacher_profile")
         ):
-
-            student = request.user.student_profile
-            teacher = other_user.teacher_profile
-
-            allowed = Enrollment.objects.filter(
-                student=student,
-                is_active=True,
-                academic_year__status=AcademicYear.Status.ACTIVE,
-                classroom__teacher_assignments__teacher=teacher,
-            ).exists()
+            if other_user.is_school_admin:
+                allowed = True
+            elif hasattr(other_user, "teacher_profile"):
+                student = request.user.student_profile
+                teacher = other_user.teacher_profile
+                allowed = Enrollment.objects.filter(
+                    student=student,
+                    is_active=True,
+                    academic_year__status=AcademicYear.Status.ACTIVE,
+                    classroom__teacher_assignments__teacher=teacher,
+                ).exists()
 
         # معلم → فقط دانش‌آموز کلاس‌های خودش در سال تحصیلی فعال
         elif (

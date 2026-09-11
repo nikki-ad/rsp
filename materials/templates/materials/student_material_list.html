@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}مطالب آموزشی من | RSP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div><h1>📚 مطالب آموزشی من</h1><p>{% if enrollment %}همه مطالب منتشرشده برای {{ enrollment.classroom }}{% else %}آرشیو مطالب کلاس{% endif %}</p></div>
+    <div class="page-header-actions"><a class="btn btn-ghost" href="{% url 'student_dashboard' %}">بازگشت به داشبورد</a></div>
+</div>
+<div class="announcement-list">
+{% for material in materials %}
+    <div class="announcement-card">
+        <strong>{{ material.title }}</strong>
+        <p>نوع: {{ material.get_content_type_display }} · معلم: {{ material.teacher.user.get_full_name|default:material.teacher.user.username }}</p>
+        {% if material.content_type == "text" %}<p>{{ material.content }}</p>
+        {% elif material.content_type == "file" %}<a class="btn btn-secondary" href="{% url 'download_material' material.id %}">دریافت فایل</a>
+        {% elif material.content_type == "link" %}<a class="btn btn-secondary" href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
+        <small>{{ material.created_at|date:"Y/m/d H:i" }}</small>
+    </div>
+{% empty %}<div class="empty-state">هنوز مطلب آموزشی برای شما ثبت نشده است.</div>{% endfor %}
+</div>
+{% endblock %}
