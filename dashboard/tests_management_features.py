@@ -116,6 +116,12 @@ class StudentExperienceTests(TestCase):
             last_name="مدرسه",
             role=Role.SCHOOL_MANAGER,
         )
+        self.superuser = User.objects.create_superuser(
+            username="system.admin",
+            password="pass",
+            first_name="مدیر",
+            last_name="تست",
+        )
         self.student_user = User.objects.create_user(
             username="student",
             password="pass",
@@ -188,6 +194,8 @@ class StudentExperienceTests(TestCase):
         response = self.client.get(reverse("conversation_list"))
         self.assertContains(response, "معلم کلاس")
         self.assertContains(response, "مدیر مدرسه")
+        self.assertContains(response, "مدیر تست")
+        self.assertContains(response, "مدیر سیستم")
 
     def test_student_can_start_manager_conversation_but_not_unrelated_teacher(self):
         response = self.client.get(reverse("start_conversation", args=[self.manager.id]))
