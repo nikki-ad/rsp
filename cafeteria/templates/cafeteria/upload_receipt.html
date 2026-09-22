@@ -25,7 +25,7 @@
             <div class="announcement-list">
                 {% for card in cards %}
                     <div class="list-card">
-                        <strong>شماره کارت: {{ card.card_number }}</strong>
+                        <strong>شماره کارت: <span dir="ltr">{{ card.card_number }}</span></strong>
                         <p>به نام: {{ card.card_holder }}</p>
                     </div>
                 {% endfor %}
