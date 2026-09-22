@@ -16,6 +16,24 @@
         {{ reservation.final_amount }} تومان
     </p>
 
+    {% with cards=reservation.week.payment_cards.all %}
+        {% if cards %}
+            <h2>اطلاعات واریز بانکی</h2>
+            <div class="announcement-list">
+                {% for card in cards %}
+                    <div class="list-card">
+                        <strong>شماره کارت: <span dir="ltr">{{ card.card_number }}</span></strong>
+                        <p>به نام: {{ card.card_holder }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="info-banner">
+                هنوز شماره کارت واریز برای این هفته ثبت نشده است.
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <h2>روش پرداخت را انتخاب کنید</h2>
 
     <div class="payment-options">

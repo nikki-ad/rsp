@@ -40,6 +40,55 @@ class CafeteriaWeek(BaseModel):
         return self.title
 
 
+class CafeteriaPaymentCard(BaseModel):
+
+    week = models.ForeignKey(
+        CafeteriaWeek,
+        on_delete=models.CASCADE,
+        related_name="payment_cards",
+        verbose_name="هفته غذایی",
+    )
+
+    card_number = models.CharField(
+        max_length=32,
+        verbose_name="شماره کارت",
+    )
+
+    card_holder = models.CharField(
+        max_length=150,
+        verbose_name="نام صاحب کارت",
+    )
+
+    class Meta:
+        verbose_name = "کارت واریز"
+        verbose_name_plural = "کارت‌های واریز"
+        ordering = (
+            "created_at",
+        )
+
+    def __str__(self):
+        return f"{self.card_number} - {self.card_holder}"
+
+
+class CafeteriaMenuQuerySet(models.QuerySet):
+
+    def weekday_order(self):
+        return self.annotate(
+            _weekday_order=models.Case(
+                models.When(day="saturday", then=models.Value(1)),
+                models.When(day="sunday", then=models.Value(2)),
+                models.When(day="monday", then=models.Value(3)),
+                models.When(day="tuesday", then=models.Value(4)),
+                models.When(day="wednesday", then=models.Value(5)),
+                default=models.Value(99),
+                output_field=models.IntegerField(),
+            )
+        ).order_by(
+            "_weekday_order",
+            "created_at",
+        )
+
+
 class CafeteriaMenu(BaseModel):
 
     DAY_CHOICES = (
@@ -83,6 +132,8 @@ class CafeteriaMenu(BaseModel):
         verbose_name="قیمت",
     )
 
+    objects = CafeteriaMenuQuerySet.as_manager()
+
     class Meta:
         verbose_name = "غذای روز"
         verbose_name_plural = "غذاهای هفته"
@@ -97,7 +148,6 @@ class CafeteriaMenu(BaseModel):
             )
         ]
 
-
     @property
     def confirmed_count(self):
         return self.reservation_items.filter(
@@ -107,7 +157,6 @@ class CafeteriaMenu(BaseModel):
 
     def __str__(self):
         return f"{self.week} - {self.get_day_display()} - {self.food_name}"
-
 
 
 class CafeteriaReservation(BaseModel):
@@ -194,7 +243,6 @@ class CafeteriaReservation(BaseModel):
                 name="unique_student_week_reservation",
             )
         ]
-
 
     @property
     def total_price(self):

@@ -23,7 +23,7 @@ def weekly_reservation(request):
         is_active=True,
     )
 
-    menus = week.menus.all().order_by("day")
+    menus = week.menus.all().weekday_order()
 
     reservation = CafeteriaReservation.objects.filter(
         student=student,

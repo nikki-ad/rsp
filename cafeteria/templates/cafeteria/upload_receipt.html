@@ -18,6 +18,26 @@
     — پس از واریز، تصویر فیش را بارگذاری کنید.
 </div>
 
+{% with cards=reservation.week.payment_cards.all %}
+    {% if cards %}
+        <div class="card" style="margin-bottom:20px;">
+            <h2>شماره کارت‌های واریز</h2>
+            <div class="announcement-list">
+                {% for card in cards %}
+                    <div class="list-card">
+                        <strong>شماره کارت: <span dir="ltr">{{ card.card_number }}</span></strong>
+                        <p>به نام: {{ card.card_holder }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="info-banner">
+            هنوز شماره کارت واریز برای این هفته ثبت نشده است.
+        </div>
+    {% endif %}
+{% endwith %}
+
 <div class="card form-card">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
