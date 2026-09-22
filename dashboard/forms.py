@@ -11,7 +11,7 @@ from notifications.models import Announcement
 from online_classes.models import BBBConfiguration, OnlineClass
 from reports.models import StudentReportCard
 from accounts.choices import Role
-from cafeteria.models import CafeteriaMenu, CafeteriaWeek
+from cafeteria.models import CafeteriaMenu, CafeteriaPaymentCard, CafeteriaWeek
 
 
 User = get_user_model()
@@ -94,6 +94,15 @@ CafeteriaMenuFormSet = inlineformset_factory(
     max_num=5,
     can_delete=True,
     widgets={"description": forms.Textarea(attrs={"rows": 2})},
+)
+
+
+CafeteriaPaymentCardFormSet = inlineformset_factory(
+    CafeteriaWeek,
+    CafeteriaPaymentCard,
+    fields=("card_number", "card_holder"),
+    extra=2,
+    can_delete=True,
 )
 
 
