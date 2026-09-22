@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     CafeteriaMenu,
+    CafeteriaPaymentCard,
     CafeteriaReservation,
     CafeteriaReservationItem,
     CafeteriaWeek,
@@ -34,6 +35,16 @@ class CafeteriaMenuInline(admin.TabularInline):
         return obj.confirmed_count
 
 
+class CafeteriaPaymentCardInline(admin.TabularInline):
+    model = CafeteriaPaymentCard
+    extra = 2
+
+    fields = (
+        "card_number",
+        "card_holder",
+    )
+
+
 @admin.register(CafeteriaWeek)
 class CafeteriaWeekAdmin(admin.ModelAdmin):
 
@@ -50,12 +61,13 @@ class CafeteriaWeekAdmin(admin.ModelAdmin):
 
     inlines = [
         CafeteriaMenuInline,
+        CafeteriaPaymentCardInline,
     ]
-
 
     @admin.display(description="مجموع دریافتی قطعی")
     def confirmed_revenue_display(self, obj):
         return f"{obj.confirmed_revenue:,} تومان"
+
 
 class CafeteriaReservationItemInline(admin.TabularInline):
     model = CafeteriaReservationItem
@@ -98,14 +110,11 @@ class CafeteriaReservationAdmin(admin.ModelAdmin):
     def total_price_display(self, obj):
         return f"{obj.total_price:,} تومان"
 
-
-
     @admin.action(description="تأیید پرداخت انتخاب‌شده‌ها")
     def approve_payment(self, request, queryset):
         queryset.update(
             payment_status="paid",
         )
-
 
     @admin.action(description="رد فیش انتخاب‌شده‌ها")
     def reject_payment(self, request, queryset):
