@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-header">
-    <div><h1>{% if week %}ویرایش {{ week.title }}{% else %}تعریف منوی غذای جدید{% endif %}</h1><p>برای هر روز یک غذا و قیمت تعیین کنید.</p></div>
+    <div><h1>{% if week %}ویرایش {{ week.title }}{% else %}تعریف منوی غذای جدید{% endif %}</h1><p>برای هر روز غذا و قیمت را تعیین کنید و شماره کارت‌های واریز این هفته را وارد کنید.</p></div>
     <div class="page-header-actions"><a class="btn btn-ghost" href="{% url 'cafeteria_week_list' %}">بازگشت</a></div>
 </div>
 
@@ -12,6 +12,7 @@
     {% csrf_token %}
     {{ form.non_field_errors }}
     {{ form.as_p }}
+
     <h2>غذاهای هفته</h2>
     {{ formset.management_form }}
     {{ formset.non_form_errors }}
@@ -29,6 +30,24 @@
         {% endfor %}
         </tbody>
     </table></div>
+
+    <h2>شماره کارت‌های واریز</h2>
+    <p class="form-help">می‌توانید برای هر هفته یک یا چند شماره کارت تعریف کنید. این کارت‌ها در مرحله پرداخت و ارسال فیش به دانش‌آموز نمایش داده می‌شوند.</p>
+    {{ card_formset.management_form }}
+    {{ card_formset.non_form_errors }}
+    <div class="table-wrap"><table class="data-table">
+        <thead><tr><th>شماره کارت</th><th>نام صاحب کارت</th><th>حذف</th></tr></thead>
+        <tbody>
+        {% for card_form in card_formset %}
+            <tr>
+                <td>{{ card_form.id }}{{ card_form.card_number }}{{ card_form.card_number.errors }}</td>
+                <td>{{ card_form.card_holder }}{{ card_form.card_holder.errors }}</td>
+                <td>{% if card_form.instance.pk %}{{ card_form.DELETE }}{% else %}—{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+
     <button class="btn btn-primary" type="submit">ذخیره منوی هفتگی</button>
 </form>
 {% endblock %}
