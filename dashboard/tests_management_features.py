@@ -99,12 +99,28 @@ class ManagementFeatureTests(TestCase):
             "menus-4-food_name": "چلو مرغ",
             "menus-4-description": "",
             "menus-4-price": "150000",
+            "payment_cards-TOTAL_FORMS": "2",
+            "payment_cards-INITIAL_FORMS": "0",
+            "payment_cards-MIN_NUM_FORMS": "0",
+            "payment_cards-MAX_NUM_FORMS": "1000",
+            "payment_cards-0-card_number": "1111",
+            "payment_cards-0-card_holder": "مرضیه شفیعی",
+            "payment_cards-1-card_number": "33333",
+            "payment_cards-1-card_holder": "نیکی ادهمی",
         })
         self.assertRedirects(response, reverse("cafeteria_week_list"))
         week = CafeteriaWeek.objects.get(title="هفته اول مهر")
         self.assertTrue(week.is_active)
         self.assertEqual(week.menus.count(), 5)
         self.assertEqual(week.menus.get(day="saturday").food_name, "عدس پلو")
+        self.assertEqual(week.payment_cards.count(), 2)
+        self.assertEqual(
+            list(week.payment_cards.values_list("card_number", "card_holder")),
+            [
+                ("1111", "مرضیه شفیعی"),
+                ("33333", "نیکی ادهمی"),
+            ],
+        )
 
 
 class StudentExperienceTests(TestCase):
