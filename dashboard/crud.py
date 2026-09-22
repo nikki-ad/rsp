@@ -36,13 +36,14 @@ from .forms import (
     OnlineClassForm,
     ReportCardForm,
     CafeteriaMenuFormSet,
+    CafeteriaPaymentCardFormSet,
     CafeteriaWeekForm,
 )
 
 
 @manager_required
 def cafeteria_week_list(request):
-    weeks = CafeteriaWeek.objects.prefetch_related("menus").order_by("-start_date")
+    weeks = CafeteriaWeek.objects.prefetch_related("menus", "payment_cards").order_by("-start_date")
     return render(request, "dashboard/cafeteria_week_list.html", {"weeks": weeks})
 
 
@@ -53,29 +54,53 @@ def cafeteria_week_form(request, week_id=None):
         {"day": day, "price": 0}
         for day in ["saturday", "sunday", "monday", "tuesday", "wednesday"]
     ]
+
+    menu_formset_kwargs = {
+        "instance": week,
+        "prefix": "menus",
+        "initial": menu_initial,
+    }
+    if week.pk:
+        menu_formset_kwargs["queryset"] = week.menus.all().weekday_order()
+
+    card_formset_kwargs = {
+        "instance": week,
+        "prefix": "payment_cards",
+    }
+
     if request.method == "POST":
         form = CafeteriaWeekForm(request.POST, instance=week)
         formset = CafeteriaMenuFormSet(
-            request.POST, instance=week, prefix="menus", initial=menu_initial
+            request.POST,
+            **menu_formset_kwargs,
         )
-        if form.is_valid() and formset.is_valid():
+        card_formset = CafeteriaPaymentCardFormSet(
+            request.POST,
+            **card_formset_kwargs,
+        )
+        if form.is_valid() and formset.is_valid() and card_formset.is_valid():
             with transaction.atomic():
                 week = form.save()
                 formset.instance = week
+                card_formset.instance = week
                 formset.save()
+                card_formset.save()
             log_activity(
                 request,
                 action="cafeteria_week_updated" if week_id else "cafeteria_week_created",
                 description=f"منوی غذایی {week.title} ذخیره شد.",
             )
-            messages.success(request, "منوی هفتگی غذا ذخیره شد.")
+            messages.success(request, "منوی هفتگی غذا و اطلاعات واریز ذخیره شد.")
             return redirect("cafeteria_week_list")
     else:
         form = CafeteriaWeekForm(instance=week)
-        formset = CafeteriaMenuFormSet(instance=week, prefix="menus", initial=menu_initial)
+        formset = CafeteriaMenuFormSet(**menu_formset_kwargs)
+        card_formset = CafeteriaPaymentCardFormSet(**card_formset_kwargs)
+
     return render(request, "dashboard/cafeteria_week_form.html", {
         "form": form,
         "formset": formset,
+        "card_formset": card_formset,
         "week": week if week.pk else None,
     })
 
