@@ -103,6 +103,15 @@ CafeteriaPaymentCardFormSet = inlineformset_factory(
     fields=("card_number", "card_holder"),
     extra=2,
     can_delete=True,
+    widgets={
+        "card_number": forms.TextInput(
+            attrs={
+                "dir": "ltr",
+                "inputmode": "numeric",
+                "autocomplete": "off",
+            }
+        ),
+    },
 )
 
 
