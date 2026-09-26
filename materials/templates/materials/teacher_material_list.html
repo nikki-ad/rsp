@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}مطالب آموزشی من | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>مطالب آموزشی من</h1><p>مطالبی که خودتان برای کلاس‌ها منتشر کرده‌اید.</p></div>
+<div class="page-header-actions"><a class="btn btn-primary" href="{% url 'create_material' %}">افزودن مطلب</a></div></div>
+<div class="announcement-list">
+{% for material in materials %}
+<div class="list-card"><h2>{{ material.title }}</h2><p>{{ material.get_content_type_display }}</p>
+<p>{% for classroom in material.classrooms.all %}{{ classroom }}{% if not forloop.last %}، {% endif %}{% endfor %}</p>
+<div class="card-actions">
+<a class="btn btn-secondary" href="{% url 'edit_material' material.id %}">ویرایش مطلب</a>
+<a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
+</div></div>
+{% empty %}<div class="empty-state">هنوز مطلبی برای کلاس‌های فعال خود منتشر نکرده‌اید.</div>{% endfor %}
+</div>{% endblock %}

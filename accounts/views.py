@@ -104,8 +104,8 @@ def teacher_class_detail(request, classroom_id):
     return render(request, "accounts/teacher_class_detail.html", {
         "classroom": classroom,
         "students": classroom.enrollments.filter(is_active=True).select_related("student__user"),
-        "materials": classroom.materials.select_related("teacher__user").order_by("-created_at")[:1],
-        "assignments": classroom.assignments.select_related("teacher__user").order_by("-created_at")[:1],
+        "materials": classroom.materials.filter(teacher=request.user.teacher_profile).select_related("teacher__user").order_by("-created_at")[:1],
+        "assignments": classroom.assignments.filter(teacher=request.user.teacher_profile).select_related("teacher__user").order_by("-created_at")[:1],
     })
 
 
@@ -123,7 +123,7 @@ def teacher_class_material_list(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
     classroom = _teacher_classroom_or_404(request, classroom_id)
-    materials = classroom.materials.select_related("teacher__user").order_by("-created_at")
+    materials = classroom.materials.filter(teacher=request.user.teacher_profile).select_related("teacher__user").order_by("-created_at")
     return render(request, "accounts/teacher_class_material_list.html", {
         "classroom": classroom,
         "materials": materials,
@@ -135,7 +135,7 @@ def teacher_class_assignment_list(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
     classroom = _teacher_classroom_or_404(request, classroom_id)
-    assignments = classroom.assignments.select_related("teacher__user").order_by("-created_at")
+    assignments = classroom.assignments.filter(teacher=request.user.teacher_profile).select_related("teacher__user").order_by("-created_at")
     return render(request, "accounts/teacher_class_assignment_list.html", {
         "classroom": classroom,
         "assignments": assignments,
@@ -205,8 +205,8 @@ def student_dashboard(request):
     if enrollment:
         classroom = enrollment.classroom
         teachers = classroom.teacher_assignments.select_related("teacher__user")
-        materials = classroom.materials.all().order_by("-created_at")[:1]
-        assignments = classroom.assignments.all().order_by("-created_at")[:1]
+        materials = classroom.materials.select_related("teacher__user").order_by("-created_at")[:1]
+        assignments = classroom.assignments.select_related("teacher__user").order_by("-created_at")[:1]
         submitted_assignment_ids = set(student.assignment_submissions.values_list("assignment_id", flat=True))
         student_submissions = {submission.assignment_id: submission for submission in student.assignment_submissions.select_related("assignment")}
         assignment_items = [{"assignment": assignment, "submission": student_submissions.get(assignment.id)} for assignment in assignments]

@@ -73,7 +73,7 @@ class WorkflowUpdateTests(TestCase):
     def test_sidebar_and_class_actions(self):
         self.client.force_login(self.teacher_user)
         response=self.client.get(reverse('teacher_class_detail',args=[self.classroom.pk]))
-        for route in ['teacher_assignment_list','create_material']:
+        for route in ['teacher_assignment_list','teacher_material_list']:
             self.assertContains(response,reverse(route))
         self.assertContains(response,'افزودن تکلیف')
         self.assertContains(response,'افزودن مطلب')
@@ -157,3 +157,56 @@ class WorkflowUpdateTests(TestCase):
         self.assertEqual(Announcement.objects.count(),1)
         self.client.force_login(self.student_user)
         self.assertEqual(self.client.get(reverse('announcement_edit',args=[announcement.pk])).status_code,403)
+
+class TeacherContentOwnershipTests(TestCase):
+    setUpTestData = classmethod(WorkflowUpdateTests.setUpTestData.__func__)
+    def setUp(self):
+        TeacherClassAssignment.objects.create(teacher=self.other, classroom=self.classroom)
+        self.teacher_user.first_name='سارا'; self.teacher_user.last_name='معلم اول'; self.teacher_user.save()
+        self.other_user.first_name='مریم'; self.other_user.last_name='معلم دوم'; self.other_user.save()
+        self.other_material=EducationalMaterial.objects.create(title='مطلب خصوصی معلم دوم',teacher=self.other,content_type='text',content='محتوای دوم')
+        self.other_material.classrooms.add(self.classroom)
+        self.other_assignment=Assignment.objects.create(title='تکلیف خصوصی معلم دوم',teacher=self.other,classroom=self.classroom)
+        self.client.force_login(self.teacher_user)
+
+    def test_shared_class_lists_show_only_own_content(self):
+        for route,args in [('teacher_class_detail',[self.classroom.pk]),('teacher_class_material_list',[self.classroom.pk]),('teacher_class_assignment_list',[self.classroom.pk]),('teacher_material_list',[]),('teacher_assignment_list',[])]:
+            response=self.client.get(reverse(route,args=args))
+            self.assertEqual(response.status_code,200)
+            self.assertNotContains(response,self.other_material.title)
+            self.assertNotContains(response,self.other_assignment.title)
+        response=self.client.get(reverse('teacher_class_detail',args=[self.classroom.pk]))
+        self.assertContains(response,reverse('edit_material',args=[self.material.pk]))
+        self.assertContains(response,reverse('edit_assignment',args=[self.assignment.pk]))
+
+    def test_direct_edit_delete_and_answers_are_owner_only(self):
+        for route,obj in [('delete_material',self.other_material),('edit_material',self.other_material),('delete_assignment',self.other_assignment),('edit_assignment',self.other_assignment),('assignment_submissions',self.other_assignment)]:
+            for method in [self.client.get,self.client.post]:
+                self.assertEqual(method(reverse(route,args=[obj.pk])).status_code,404)
+        self.assertTrue(EducationalMaterial.objects.filter(pk=self.other_material.pk).exists())
+        self.assertTrue(Assignment.objects.filter(pk=self.other_assignment.pk).exists())
+
+    def test_sidebar_material_edit_end_to_end_keeps_file(self):
+        self.material.content_type='file';self.material.file='educational_materials/existing.pdf';self.material.save()
+        response=self.client.get(reverse('teacher_material_list'))
+        url=reverse('edit_material',args=[self.material.pk])
+        self.assertContains(response,url)
+        self.assertEqual(self.client.get(url).status_code,200)
+        response=self.client.post(url,{'title':'عنوان اصلاح‌شده','content_type':'file','classrooms':[str(self.classroom.pk)]},follow=True)
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,'عنوان اصلاح‌شده')
+        self.material.refresh_from_db()
+        self.assertEqual(self.material.file.name,'educational_materials/existing.pdf')
+        self.assertEqual(self.material.teacher_id,self.teacher.pk)
+        self.assertEqual(list(self.material.classrooms.all()),[self.classroom])
+
+    def test_students_see_both_authors_and_dashboard_author(self):
+        self.client.force_login(self.student_user)
+        for route in ['student_material_list','student_assignment_list']:
+            response=self.client.get(reverse(route))
+            for name in ['سارا معلم اول','مریم معلم دوم']:
+                self.assertContains(response,name)
+        response=self.client.get(reverse('student_dashboard'))
+        self.assertContains(response,'معلم: مریم معلم دوم',count=2)
+        response=self.client.get(reverse('submit_assignment',args=[self.other_assignment.pk]))
+        self.assertContains(response,'معلم: مریم معلم دوم')

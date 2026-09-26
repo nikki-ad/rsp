@@ -72,7 +72,7 @@ def create_material(request):
                         url=reverse("student_material_list"),
                     )
 
-            return redirect("teacher_dashboard")
+            return redirect("teacher_material_list")
 
     else:
         form = EducationalMaterialCreateForm(
@@ -133,5 +133,16 @@ def edit_material(request, material_id):
     if request.method == "POST" and form.is_valid():
         form.save()
         log_activity(request, action="material_updated", description=f"مطلب «{material.title}» ویرایش شد.")
-        return redirect("teacher_dashboard")
+        return redirect("teacher_material_list")
     return render(request, "materials/create_material.html", {"form": form, "editing": True})
+
+
+@login_required
+def teacher_material_list(request):
+    if not hasattr(request.user, "teacher_profile"):
+        return HttpResponseForbidden("این بخش مخصوص معلم است.")
+    teacher = request.user.teacher_profile
+    materials = EducationalMaterial.objects.filter(
+        teacher=teacher, classrooms__in=assigned_active_classrooms(teacher)
+    ).select_related("teacher__user").prefetch_related("classrooms").distinct().order_by("-created_at")
+    return render(request, "materials/teacher_material_list.html", {"materials": materials})
