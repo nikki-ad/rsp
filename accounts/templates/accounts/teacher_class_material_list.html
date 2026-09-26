@@ -28,6 +28,7 @@
                     <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
                 {% endif %}
                 <div class="card-actions">
+                    {% if material.teacher.user_id == user.id %}<a class="btn btn-secondary" href="{% url 'edit_material' material.id %}">ویرایش مطلب</a>{% endif %}
                     <a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
                 </div>
             </div>

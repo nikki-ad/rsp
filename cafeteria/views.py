@@ -1,10 +1,14 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
-from django.db.models import Q
+from django.db.models import Q, Prefetch
+from django.db import transaction
+from django.http import HttpResponse, HttpResponseForbidden
+from academic.models import Enrollment
+from accounts.choices import Role
+from dashboard.xlsx_export import build_routine_report_xlsx
 
 from activitylog.utils import log_activity
 from .forms import (
-    CafeteriaWeeklyReservationForm,
     CafeteriaReceiptUploadForm,
 )
 from .models import (
@@ -14,100 +18,31 @@ from .models import (
 )
 
 @login_required
+@transaction.atomic
 def weekly_reservation(request):
-
+    if not hasattr(request.user, "student_profile"):
+        return HttpResponseForbidden("این بخش مخصوص دانش‌آموز است.")
     student = request.user.student_profile
-
-    week = get_object_or_404(
-        CafeteriaWeek,
-        is_active=True,
-    )
-
-    menus = week.menus.all().weekday_order()
-
-    reservation = CafeteriaReservation.objects.filter(
-        student=student,
-        week=week,
-    ).first()
-
-
-    if reservation and reservation.payment_status == "paid":
-        return redirect("student_dashboard")
-
-    if request.method == "POST":
-
-        form = CafeteriaWeeklyReservationForm(
-            request.POST,
-            menus=menus,
-        )
-
-        if form.is_valid():
-
-            if reservation is None:
-                reservation = CafeteriaReservation.objects.create(
-                    student=student,
-                    week=week,
-                )
-
-            for menu in menus:
-
-                field_name = f"menu_{menu.id}"
-
-                wants_food = form.cleaned_data.get(
-                    field_name,
-                    False,
-                )
-
-                CafeteriaReservationItem.objects.update_or_create(
-                    reservation=reservation,
-                    menu=menu,
-                    defaults={
-                        "wants_food": wants_food,
-                    },
-                )
-
-            reservation.final_amount = reservation.total_price
-            reservation.save(update_fields=["final_amount"])
-
-            return redirect(
-                "cafeteria_payment_method",
-                reservation_id=reservation.id,
-            )
-
-    else:
-
-        initial = {}
-
-        existing_items = {}
-
-        if reservation is not None:
-            existing_items = {
-                item.menu_id: item.wants_food
-                for item in reservation.items.all()
-            }
-
+    week = get_object_or_404(CafeteriaWeek, is_active=True)
+    # Serialize repeated submissions for the same student, including first creation.
+    type(student).objects.select_for_update().get(pk=student.pk)
+    menus = list(week.menus.all().weekday_order())
+    reservation = CafeteriaReservation.objects.filter(student=student, week=week).first()
+    locked = reservation and reservation.payment_status in ("paid", "receipt_pending")
+    if request.method == "POST" and menus and not locked:
+        if reservation is None:
+            reservation = CafeteriaReservation.objects.create(student=student, week=week)
+        reservation.items.exclude(menu__in=menus).delete()
         for menu in menus:
-            initial[f"menu_{menu.id}"] = existing_items.get(
-                menu.id,
-                False,
-            )
-
-        form = CafeteriaWeeklyReservationForm(
-            menus=menus,
-            initial=initial,
-        )
-
-    return render(
-        request,
-        "cafeteria/weekly_reservation.html",
-        {
-            "week": week,
-            "menus": menus,
-            "form": form,
-            "reservation": reservation,
-        },
-    )
-
+            CafeteriaReservationItem.objects.update_or_create(
+                reservation=reservation, menu=menu, defaults={"wants_food": True})
+        reservation.final_amount = sum(menu.price for menu in menus)
+        reservation.save(update_fields=["final_amount"])
+        return redirect("cafeteria_payment_method", reservation_id=reservation.id)
+    return render(request, "cafeteria/weekly_reservation.html", {
+        "week": week, "menus": menus, "reservation": reservation,
+        "weekly_total": sum(menu.price for menu in menus), "locked": locked,
+    })
 
 
 @login_required
@@ -140,6 +75,9 @@ def upload_receipt(request, reservation_id):
         id=reservation_id,
         student=student,
     )
+
+    if reservation.payment_status in ("paid", "receipt_pending"):
+        return redirect("student_dashboard")
 
     if request.method == "POST":
 
@@ -187,7 +125,7 @@ def upload_receipt(request, reservation_id):
 @login_required
 def pending_receipts(request):
 
-    if not request.user.is_staff:
+    if not (request.user.is_school_admin or request.user.role == Role.FINANCE):
 
         if hasattr(request.user, "teacher_profile"):
             return redirect("teacher_dashboard")
@@ -200,8 +138,9 @@ def pending_receipts(request):
     query = (request.GET.get("q") or "").strip()
     reservations = (
         CafeteriaReservation.objects.filter(
-            payment_status="receipt_pending",
-        )
+            receipt_image__isnull=False,
+        ).exclude(receipt_image="")
+        .prefetch_related(Prefetch("student__enrollments", queryset=Enrollment.objects.filter(is_active=True).select_related("classroom__grade", "academic_year"), to_attr="receipt_enrollments"))
         .select_related(
             "student__user",
             "week",
@@ -214,12 +153,35 @@ def pending_receipts(request):
             | Q(student__user__last_name__icontains=query)
         )
 
+    week_id = request.GET.get("week", "")
+    valid_weeks = {str(pk) for pk in CafeteriaWeek.objects.values_list("pk", flat=True)}
+    if week_id in valid_weeks:
+        reservations = reservations.filter(week_id=week_id)
+    else:
+        week_id = ""
+    for reservation in reservations:
+        enrollments = reservation.student.receipt_enrollments
+        matching = [e for e in enrollments if reservation.week and
+            e.academic_year.start_date and e.academic_year.end_date and
+            e.academic_year.start_date <= reservation.week.start_date <= e.academic_year.end_date]
+        if not matching:
+            matching = [e for e in enrollments if e.academic_year.status == "active"]
+        reservation.student_class = "، ".join(str(e.classroom) for e in matching) or "—"
+    if request.GET.get("export") == "xlsx":
+        rows = [[r.student.user.first_name, r.student.user.last_name, r.student_class,
+                 r.week.title if r.week else "", r.get_payment_status_display()] for r in reservations]
+        response = HttpResponse(build_routine_report_xlsx(
+            ["نام", "نام خانوادگی", "کلاس", "هفته", "وضعیت"], rows,
+            sheet_name="فیش‌های غذا"),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        response["Content-Disposition"] = 'attachment; filename="cafeteria-receipts.xlsx"'
+        return response
     return render(
         request,
         "cafeteria/pending_receipts.html",
         {
             "reservations": reservations,
-            "query": query,
+            "query": query, "weeks": CafeteriaWeek.objects.all(), "selected_week": week_id,
         },
     )
 
@@ -227,7 +189,7 @@ def pending_receipts(request):
 @login_required
 def review_receipt(request, reservation_id, action):
 
-    if not request.user.is_staff:
+    if not (request.user.is_school_admin or request.user.role == Role.FINANCE):
 
         if hasattr(request.user, "teacher_profile"):
             return redirect("teacher_dashboard")

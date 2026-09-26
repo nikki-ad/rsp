@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import EducationalMaterial
-from .forms import EducationalMaterialCreateForm
+from .forms import EducationalMaterialCreateForm, assigned_active_classrooms
+from activitylog.utils import log_activity
 from django.urls import reverse
 
 from notifications import constants as notification_constants
@@ -116,3 +117,21 @@ def download_material(request, material_id):
         as_attachment=True,
         filename=material.file.name.split("/")[-1],
     )
+
+
+@login_required
+def edit_material(request, material_id):
+    if not hasattr(request.user, "teacher_profile"):
+        return HttpResponseForbidden("شما اجازه ویرایش مطلب آموزشی را ندارید.")
+    teacher = request.user.teacher_profile
+    material = get_object_or_404(EducationalMaterial, id=material_id, teacher=teacher)
+    if material.classrooms.exclude(pk__in=assigned_active_classrooms(teacher)).exists():
+        return HttpResponseForbidden("کلاس‌های این مطلب باید فعال و متعلق به شما باشند.")
+    form = EducationalMaterialCreateForm(
+        request.POST if request.method == "POST" else None, request.FILES or None,
+        instance=material, teacher=teacher)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        log_activity(request, action="material_updated", description=f"مطلب «{material.title}» ویرایش شد.")
+        return redirect("teacher_dashboard")
+    return render(request, "materials/create_material.html", {"form": form, "editing": True})

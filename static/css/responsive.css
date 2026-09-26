@@ -1,0 +1,33 @@
+/* Keep content reachable in RTL layouts without clipping wide tables. */
+.app-wrapper, .page-content, .page-header > *, .dashboard-section,
+.card, .list-card, .form-card, .chat-layout { min-width: 0; }
+.page-content { overflow-wrap: anywhere; }
+.table-wrap, .weekly-schedule-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+img, video, iframe { max-width: 100%; }
+input, select, textarea { max-width: 100%; box-sizing: border-box; }
+.card-actions, .page-header-actions, .filter-bar, .meta-row { flex-wrap: wrap; }
+.receipt-paid { border: 2px solid #15803d; background: #f0fdf4; }
+.receipt-paid .receipt-status { color: #166534; font-weight: 700; }
+.receipt-rejected { border: 2px solid #b91c1c; background: #fef2f2; }
+.receipt-rejected .receipt-status { color: #991b1b; font-weight: 700; }
+.receipt-receipt_pending .receipt-status { color: #854d0e; font-weight: 700; }
+.weekly-total { margin-top: 24px; }
+.weekly-total form { margin-top: 16px; }
+@media (max-width: 860px) {
+  .sidebar { max-width: 88vw; height: 100dvh; overflow-y: auto; }
+  .page-header { flex-direction: column; align-items: stretch; }
+  .page-header-actions { width: 100%; gap: 8px; }
+  .page-header-actions .btn { flex: 1 1 130px; white-space: normal; text-align: center; }
+  .filter-bar > input, .filter-bar > select { min-width: 0; flex: 1 1 160px; }
+  .card-actions .btn { white-space: normal; }
+  .top-header { flex-wrap: wrap; gap: 8px; }
+  .header-actions { flex-wrap: wrap; }
+  .chat-layout { min-height: 0; }
+  .chat-thread { max-height: 55dvh; min-height: 160px; overflow-y: auto; }
+  .bubble { max-width: 92%; }
+}
+@media (max-width: 480px) {
+  .page-content { padding: 16px 12px 88px; }
+  .card, .form-card, .list-card { padding: 16px; }
+  .data-table th, .data-table td { min-width: 100px; }
+}

@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from academic.models import AcademicYear, Classroom
+from materials.forms import assigned_active_classrooms
 from .models import Assignment, AssignmentSubmission
 from .forms import (
     AssignmentCreateForm,
@@ -396,3 +397,35 @@ def download_submission_file(request, submission_id):
         as_attachment=True,
         filename=submission.file.name.split("/")[-1],
     )
+
+
+@login_required
+def teacher_assignment_list(request):
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
+    return render(request, "assignments/teacher_assignment_list.html", {
+        "classrooms": assigned_active_classrooms(teacher),
+        "assignments": Assignment.objects.filter(teacher=teacher,
+            classroom__academic_year__status=AcademicYear.Status.ACTIVE
+        ).select_related("classroom").order_by("-created_at"),
+    })
+
+
+@login_required
+def edit_assignment(request, assignment_id):
+    teacher, denied = _teacher_or_denied(request)
+    if denied:
+        return denied
+    assignment = get_object_or_404(Assignment, id=assignment_id, teacher=teacher,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
+        classroom__teacher_assignments__teacher=teacher)
+    form = AssignmentCreateForm(request.POST if request.method == "POST" else None,
+        request.FILES or None, instance=assignment)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        log_activity(request, action="assignment_updated", description=f"تکلیف «{assignment.title}» ویرایش شد.")
+        return redirect("teacher_class_detail", classroom_id=assignment.classroom_id)
+    return render(request, "assignments/create_assignment.html", {
+        "form": form, "classroom": assignment.classroom, "editing": True,
+    })
