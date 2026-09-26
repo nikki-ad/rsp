@@ -22,7 +22,7 @@
 <section class="dashboard-section" id="language-materials"><h2>📚 مطالب زبان</h2>
   <div class="announcement-list">
   {% for material in materials %}<div class="announcement-card"><strong>{{ material.title }}</strong>
-    <small>{{ material.group.title }} | {{ material.teacher }}</small>
+    <small>{{ material.group.title }} | معلم: {{ material.teacher.user.get_full_name|default:material.teacher.user.username }}</small>
     {% if material.content_type == 'text' %}<p>{{ material.content }}</p>
     {% elif material.content_type == 'file' %}<a href="{{ material.file.url }}">دریافت فایل</a>
     {% elif material.content_type == 'link' %}<a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
@@ -32,7 +32,7 @@
 
 <section class="dashboard-section" id="language-assignments"><h2>✍️ تکالیف زبان</h2>
   <div class="announcement-list">
-  {% for item in assignment_items %}<div class="announcement-card"><strong>{{ item.assignment.title }}</strong>
+  {% for item in assignment_items %}<div class="announcement-card"><strong>{{ item.assignment.title }}</strong><p>معلم: {{ item.assignment.teacher.user.get_full_name|default:item.assignment.teacher.user.username }}</p>
     <p>{{ item.assignment.description }}</p>
     {% if item.assignment.file %}<a href="{{ item.assignment.file.url }}">دریافت فایل تکلیف</a><br>{% endif %}
     {% if item.submission %}<span class="badge badge-success">پاسخ ارسال شده</span>{% endif %}

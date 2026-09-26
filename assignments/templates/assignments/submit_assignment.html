@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1>ارسال پاسخ</h1>
-        <p>{{ assignment.title }}</p>
+        <p>{{ assignment.title }}</p><p>معلم: {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</p>
     </div>
     <div class="page-header-actions">
         <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">بازگشت</a>

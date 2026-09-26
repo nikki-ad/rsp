@@ -10,7 +10,7 @@
 <div class="announcement-list">
 {% for item in assignment_items %}{% with assignment=item.assignment submission=item.submission %}
     <div class="announcement-card">
-        <strong>{{ assignment.title }}</strong>
+        <strong>{{ assignment.title }}</strong><p class="content-author">معلم: {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</p>
         <p>{{ assignment.description }}</p>
         <small>{{ assignment.classroom }} · {{ assignment.created_at|date:"Y/m/d H:i" }}</small><br>
         {% if submission %}

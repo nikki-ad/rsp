@@ -75,7 +75,7 @@
                     کلاس‌های من
                 </a>
                 <a href="{% url 'teacher_assignment_list' %}" class="{% if 'assignment' in url_name %}active{% endif %}">تکالیف</a>
-                <a href="{% url 'create_material' %}" class="{% if url_name == 'create_material' or url_name == 'create_class_material' %}active{% endif %}">
+                <a href="{% url 'teacher_material_list' %}" class="{% if url_name == 'teacher_material_list' or url_name == 'edit_material' or url_name == 'create_material' or url_name == 'create_class_material' %}active{% endif %}">
                     مطالب آموزشی
                 </a>
                 <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' or url_name == 'live_attendance' %}active{% endif %}">
