@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} {{ classroom.name }} | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ title }} — {{ classroom.name }}</h1>
+<p>{{ classroom.grade }} · {{ classroom.academic_year }} · جدیدترین به قدیمی‌ترین</p></div>
+<div class="page-header-actions"><a class="btn btn-ghost" href="{% url back_route %}">بازگشت به کلاس‌ها</a></div></div>
+<div class="announcement-list">
+{% for item in page_obj %}
+<article class="list-card">
+<h2>{{ item.title }}</h2>
+<p class="content-author">معلم: {{ item.teacher.user.get_full_name|default:item.teacher.user.username }}</p>
+<p>{{ item.created_at|date:"Y/m/d H:i" }}</p>
+{% if kind == "materials" %}
+<span class="badge badge-primary">{{ item.get_content_type_display }}</span>
+{% if item.content_type == "text" %}<div>{{ item.content|linebreaksbr }}</div>
+{% elif item.content_type == "file" and item.file %}<a class="btn btn-secondary" href="{{ item.file.url }}" target="_blank" rel="noopener">دریافت فایل مطلب</a>
+{% elif item.content_type == "link" and item.link %}<a class="btn btn-secondary" href="{{ item.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
+{% else %}
+<div>{{ item.description|default:""|linebreaksbr }}</div>
+{% if item.file %}<a class="btn btn-secondary" href="{{ item.file.url }}" target="_blank" rel="noopener">دریافت فایل تکلیف</a>{% endif %}
+{% endif %}
+</article>
+{% empty %}<div class="empty-state">هنوز محتوایی برای این کلاس ثبت نشده است.</div>{% endfor %}
+</div>
+{% if page_obj.has_other_pages %}
+<nav class="card-actions" aria-label="صفحه‌بندی">
+{% if page_obj.has_previous %}<a class="btn btn-ghost" href="?page={{ page_obj.previous_page_number }}">صفحه قبل</a>{% endif %}
+<span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+{% if page_obj.has_next %}<a class="btn btn-ghost" href="?page={{ page_obj.next_page_number }}">صفحه بعد</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

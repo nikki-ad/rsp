@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ title }}</h1><p>برای مشاهده محتوای همه معلمان، کلاس را انتخاب کنید.</p></div></div>
+<div class="class-grid">
+{% for classroom in classrooms %}
+<a class="class-card" href="{% url detail_route classroom.id %}">
+<h2>{{ classroom.name }}</h2><p>{{ classroom.grade }} · {{ classroom.academic_year }}</p>
+<span>مشاهده {{ title }}</span>
+</a>
+{% empty %}<div class="empty-state">هنوز کلاسی ثبت نشده است.</div>{% endfor %}
+</div>
+{% endblock %}

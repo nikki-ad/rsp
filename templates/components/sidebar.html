@@ -18,6 +18,8 @@
                 </a>
 
                 <div class="menu-title">مدیریت آموزشی</div>
+                <a href="{% url 'manager_material_classrooms' %}" class="{% if url_name == 'manager_material_classrooms' or url_name == 'manager_class_materials' %}active{% endif %}">مطالب آموزشی</a>
+                <a href="{% url 'manager_assignment_classrooms' %}" class="{% if url_name == 'manager_assignment_classrooms' or url_name == 'manager_class_assignments' %}active{% endif %}">تکالیف آموزشی</a>
 
                 <a href="{% url 'user_list' %}" class="{% if 'user' in url_name %}active{% endif %}">
                     همه کاربران

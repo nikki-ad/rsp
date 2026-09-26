@@ -1,9 +1,14 @@
 from django.urls import path
 
+from . import content_views
 from . import crud
 from . import views
 
 urlpatterns = [
+    path("educational-materials/", content_views.content_classrooms, {"kind": "materials"}, name="manager_material_classrooms"),
+    path("educational-assignments/", content_views.content_classrooms, {"kind": "assignments"}, name="manager_assignment_classrooms"),
+    path("educational-materials/<uuid:classroom_id>/", content_views.classroom_content, {"kind": "materials"}, name="manager_class_materials"),
+    path("educational-assignments/<uuid:classroom_id>/", content_views.classroom_content, {"kind": "assignments"}, name="manager_class_assignments"),
     path("", views.admin_dashboard, name="admin_dashboard"),
     path("routine-reports/", views.routine_report_list, name="routine_report_list"),
     path("routine-reports/excel/", views.routine_report_excel, name="routine_report_excel"),
