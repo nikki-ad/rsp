@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header"><h1>تکالیف من</h1></div>
+<div class="card"><h2>افزودن تکلیف برای کلاس</h2><div class="card-actions">
+{% for classroom in classrooms %}<a class="btn btn-primary" href="{% url 'create_assignment' classroom.id %}">{{ classroom }}</a>{% empty %}<p>کلاس فعالی ندارید.</p>{% endfor %}
+</div></div>
+<div class="announcement-list">
+{% for assignment in assignments %}<div class="list-card"><h2>{{ assignment.title }}</h2><p>{{ assignment.classroom }}</p><div class="card-actions">
+<a class="btn btn-secondary" href="{% url 'edit_assignment' assignment.id %}">ویرایش تکلیف</a>
+<a class="btn btn-ghost" href="{% url 'assignment_submissions' assignment.id %}">مشاهده پاسخ‌ها</a>
+</div></div>{% empty %}<p>هنوز تکلیفی ثبت نشده است.</p>{% endfor %}
+</div>{% endblock %}

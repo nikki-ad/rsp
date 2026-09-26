@@ -11,7 +11,7 @@ def _column_name(index):
     return result
 
 
-def build_routine_report_xlsx(headers, rows):
+def build_routine_report_xlsx(headers, rows, sheet_name="گزارش برنامه روزانه"):
     data = [headers, *rows]
     row_xml = []
     for row_number, row in enumerate(data, start=1):
@@ -33,7 +33,7 @@ def build_routine_report_xlsx(headers, rows):
         f'<col min="{index}" max="{index}" width="{width}" customWidth="1"/>'
         for index, width in enumerate(widths, start=1)
     )
-    last_cell = f"I{len(data)}"
+    last_cell = f"{_column_name(len(headers))}{len(data)}"
     sheet_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
 <sheetViews><sheetView rightToLeft="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
@@ -55,9 +55,9 @@ def build_routine_report_xlsx(headers, rows):
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
 </Relationships>''')
-        archive.writestr("xl/workbook.xml", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        archive.writestr("xl/workbook.xml", f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<sheets><sheet name="گزارش برنامه روزانه" sheetId="1" r:id="rId1"/></sheets>
+<sheets><sheet name="{escape(sheet_name)}" sheetId="1" r:id="rId1"/></sheets>
 </workbook>''')
         archive.writestr("xl/_rels/workbook.xml.rels", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">

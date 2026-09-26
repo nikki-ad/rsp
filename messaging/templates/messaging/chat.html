@@ -16,7 +16,7 @@
     </div>
 
     <div class="chat-thread">
-        {% for message in messages %}
+        {% for message in chat_messages %}
             <div class="bubble {% if message.sender == request.user %}mine{% else %}theirs{% endif %}">
                 <strong>
                     {% if message.sender == request.user %}

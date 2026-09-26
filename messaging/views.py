@@ -237,7 +237,7 @@ def chat_view(request, conversation_id):
         "messaging/chat.html",
         {
             "conversation": conversation,
-            "messages": messages,
+            "chat_messages": messages,
             "form": form,
         }
     )

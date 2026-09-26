@@ -74,6 +74,7 @@
                 <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_class_detail' %}active{% endif %}">
                     کلاس‌های من
                 </a>
+                <a href="{% url 'teacher_assignment_list' %}" class="{% if 'assignment' in url_name %}active{% endif %}">تکالیف</a>
                 <a href="{% url 'create_material' %}" class="{% if url_name == 'create_material' or url_name == 'create_class_material' %}active{% endif %}">
                     مطالب آموزشی
                 </a>

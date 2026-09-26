@@ -4,6 +4,8 @@ from . import views
 
 
 urlpatterns = [
+    path("teacher/", views.teacher_assignment_list, name="teacher_assignment_list"),
+    path("<uuid:assignment_id>/edit/", views.edit_assignment, name="edit_assignment"),
     path("student/", views.student_assignment_list, name="student_assignment_list"),
     path(
         "create/<uuid:classroom_id>/",

@@ -1,26 +1,30 @@
 {% extends "base.html" %}
 
-{% block title %}فیش‌های در انتظار | RSP{% endblock %}
+{% block title %}فیش‌های غذا | RSP{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>فیش‌های در انتظار بررسی</h1>
+        <h1>فیش‌های بارگذاری‌شده</h1>
         <p>تأیید یا رد فیش‌های واریزی رزرو غذا</p>
     </div>
 </div>
 
 <form class="filter-bar" method="get">
     <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس نام یا نام خانوادگی">
+    <select name="week"><option value="">همه هفته‌ها</option>{% for week in weeks %}<option value="{{ week.id }}" {% if selected_week == week.id|stringformat:"s" %}selected{% endif %}>{{ week.title }}</option>{% endfor %}</select>
     <button class="btn btn-primary" type="submit">جستجو</button>
+    <button class="btn btn-secondary" name="export" value="xlsx" type="submit">خروجی اکسل فیش‌ها</button>
 </form>
 
 {% if reservations %}
     <div class="announcement-list">
         {% for reservation in reservations %}
-            <div class="list-card">
+            <div class="list-card receipt-{{ reservation.payment_status }}">
                 <strong>{{ reservation.student.user.get_full_name }}</strong>
                 <div class="meta-row">
+                    <span>کلاس: {{ reservation.student_class }}</span>
+                    <span class="receipt-status">{{ reservation.get_payment_status_display }}</span>
                     <span>هفته: {{ reservation.week.title }}</span>
                     <span>مبلغ: {{ reservation.final_amount }} تومان</span>
                 </div>
@@ -30,6 +34,7 @@
                         <a class="btn btn-ghost" href="{{ reservation.receipt_image.url }}" target="_blank" rel="noopener">مشاهده فیش</a>
                     {% endif %}
 
+                    {% if reservation.payment_status == "receipt_pending" %}
                     <form class="inline-form" method="post" action="{% url 'cafeteria_review_receipt' reservation.id 'approve' %}">
                         {% csrf_token %}
                         <button class="btn btn-success" type="submit">تأیید فیش</button>
@@ -38,12 +43,12 @@
                     <form class="inline-form" method="post" action="{% url 'cafeteria_review_receipt' reservation.id 'reject' %}">
                         {% csrf_token %}
                         <button class="btn btn-danger" type="submit">رد فیش</button>
-                    </form>
+                    </form>{% endif %}
                 </div>
             </div>
         {% endfor %}
     </div>
 {% else %}
-    <div class="empty-state">فیشی در انتظار بررسی وجود ندارد.</div>
+    <div class="empty-state">فیشی با این مشخصات بارگذاری نشده است.</div>
 {% endif %}
 {% endblock %}

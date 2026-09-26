@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}افزودن تکلیف | RSP{% endblock %}
+{% block title %}{% if editing %}ویرایش تکلیف{% else %}افزودن تکلیف{% endif %} | RSP{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>افزودن تکلیف</h1>
+        <h1>{% if editing %}ویرایش تکلیف{% else %}افزودن تکلیف{% endif %}</h1>
         <p>برای کلاس {{ classroom.name }}</p>
     </div>
     <div class="page-header-actions">

@@ -1,35 +1,12 @@
 {% extends "base.html" %}
-
-{% block title %}رزرو غذا | RSP{% endblock %}
-
+{% block title %}رزرو غذای هفتگی | RSP{% endblock %}
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1>رزرو غذای هفتگی</h1>
-        <p>{{ week.title }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a class="btn btn-ghost" href="{% url 'student_dashboard' %}">بازگشت به داشبورد</a>
-    </div>
-</div>
-
-<div class="info-banner">
-    غذاهایی که می‌خواهید دریافت کنید انتخاب کنید. انتخاب‌های این صفحه مربوط به کل هفته هستند.
-</div>
-
-{% if reservation %}
-    <div class="card" style="margin-bottom:20px;">
-        <strong>مبلغ کل رزرو این هفته:</strong>
-        {{ reservation.total_price }} تومان
-    </div>
-{% endif %}
-
-<div class="card form-card">
-    <form class="checkbox-list" method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        {{ form.as_p }}
-        <button class="btn btn-primary" type="submit">ثبت رزرو هفتگی</button>
-    </form>
-</div>
-{% endblock %}
+<div class="page-header"><h1>رزرو غذای هفتگی</h1><p>{{ week.title }}</p></div>
+<div class="info-banner">رزرو غذا برای تمام روزهای درج‌شده در منوی هفته انجام می‌شود.</div>
+<div class="announcement-list">{% for menu in menus %}
+<div class="list-card"><h2>{{ menu.get_day_display }} — {{ menu.food_name }}</h2><p>{{ menu.description|default:"" }}</p><span>{{ menu.price }} تومان</span></div>
+{% empty %}<div class="empty-state">منوی این هفته هنوز ثبت نشده است.</div>{% endfor %}</div>
+{% if menus %}<div class="card weekly-total"><strong>مجموع قیمت غذاهای هفته: {{ weekly_total }} تومان</strong>
+{% if locked %}<p>{{ reservation.get_payment_status_display }}</p>
+{% else %}<form method="post">{% csrf_token %}<button class="btn btn-primary" type="submit">رزرو کل هفته و ادامه پرداخت</button></form>{% endif %}
+</div>{% endif %}{% endblock %}
