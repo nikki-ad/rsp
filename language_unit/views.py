@@ -2,8 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponseForbidden
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from uuid import UUID
 
 from accounts.permissions import is_school_admin
 from activitylog.utils import log_activity
@@ -12,7 +14,9 @@ from notifications.services import create_notification
 from .forms import (
     LanguageAssignmentForm, LanguageGroupForm, LanguageMaterialForm, LanguageSubmissionForm,
 )
-from .models import LanguageAssignment, LanguageAssignmentSubmission, LanguageGroup
+from .models import LanguageAssignment, LanguageAssignmentSubmission, LanguageGroup, LanguageMaterial
+from accounts.models import StudentProfile
+from academic.models import AcademicYear
 
 
 def _language_teacher(request):
@@ -104,6 +108,30 @@ def create_language_material(request, group_id):
 
 
 @login_required
+def edit_language_material(request, material_id):
+    teacher = _language_teacher(request)
+    item = get_object_or_404(
+        LanguageMaterial, id=material_id, teacher=teacher,
+        group__teachers=teacher, group__is_active=True,
+        group__academic_year__status=AcademicYear.Status.ACTIVE,
+    )
+    form = LanguageMaterialForm(
+        request.POST if request.method == "POST" else None,
+        request.FILES or None, instance=item,
+    )
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        log_activity(request, action="language_material_updated",
+                     description=f"مطلب زبان «{item.title}» ویرایش شد.")
+        messages.success(request, "مطلب واحد زبان ویرایش شد.")
+        return redirect("language_group_detail", group_id=item.group_id)
+    return render(request, "dashboard/form.html", {
+        "form": form, "page_title": "ویرایش مطلب واحد زبان",
+        "back_url": reverse("language_group_detail", args=[item.group_id]),
+    })
+
+
+@login_required
 def create_language_assignment(request, group_id):
     teacher = _language_teacher(request)
     group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
@@ -123,6 +151,30 @@ def create_language_assignment(request, group_id):
     return render(request, "dashboard/form.html", {
         "form": form, "page_title": "تکلیف جدید واحد زبان",
         "back_url": reverse("language_group_detail", args=[group.id]),
+    })
+
+
+@login_required
+def edit_language_assignment(request, assignment_id):
+    teacher = _language_teacher(request)
+    item = get_object_or_404(
+        LanguageAssignment, id=assignment_id, teacher=teacher,
+        group__teachers=teacher, group__is_active=True,
+        group__academic_year__status=AcademicYear.Status.ACTIVE,
+    )
+    form = LanguageAssignmentForm(
+        request.POST if request.method == "POST" else None,
+        request.FILES or None, instance=item,
+    )
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        log_activity(request, action="language_assignment_updated",
+                     description=f"تکلیف زبان «{item.title}» ویرایش شد.")
+        messages.success(request, "تکلیف واحد زبان ویرایش شد.")
+        return redirect("language_group_detail", group_id=item.group_id)
+    return render(request, "dashboard/form.html", {
+        "form": form, "page_title": "ویرایش تکلیف واحد زبان",
+        "back_url": reverse("language_group_detail", args=[item.group_id]),
     })
 
 
@@ -187,12 +239,42 @@ def language_group_form(request, group_id=None):
                      description=f"گروه زبان «{group.title}» ذخیره شد.")
         messages.success(request, "گروه زبان ذخیره شد.")
         return redirect("manage_language_groups")
-    return render(request, "dashboard/form.html", {
+    return render(request, "language_unit/group_form.html", {
         "form": form, "wide": True,
         "page_title": "ویرایش گروه زبان" if instance else "گروه زبان جدید",
         "page_subtitle": "معلمان و دانش‌آموزان این گروه را انتخاب کنید.",
         "back_url": reverse("manage_language_groups"),
     })
+
+
+@login_required
+def search_language_students(request):
+    if not is_school_admin(request.user):
+        return HttpResponseForbidden("دسترسی مدیریت لازم است.")
+    year_id = request.GET.get("academic_year")
+    query = (request.GET.get("q") or "").strip()
+    if not year_id or not query:
+        return JsonResponse({"students": []})
+    try:
+        UUID(year_id)
+    except (ValueError, TypeError):
+        return JsonResponse({"students": []})
+    if not AcademicYear.objects.filter(pk=year_id).exists():
+        return JsonResponse({"students": []})
+    students = StudentProfile.objects.filter(
+        enrollments__academic_year_id=year_id, enrollments__is_active=True
+    ).select_related("user")
+    for word in query.split():
+        students = students.filter(
+            Q(user__first_name__icontains=word) |
+            Q(user__last_name__icontains=word) |
+            Q(user__username__icontains=word)
+        )
+    results = [{"id": str(student.pk), "name": str(student)}
+               for student in students.distinct().order_by(
+                   "user__last_name", "user__first_name"
+               )[:20]]
+    return JsonResponse({"students": results})
 
 
 @login_required

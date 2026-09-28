@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ page_title }}</h1><p>{{ page_subtitle }}</p></div>
+<a class="btn btn-ghost" href="{{ back_url }}">بازگشت</a></div>
+<div class="card form-card wide">
+  <form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      {% if field.name == "students" %}
+        <p><label for="language-student-search">دانش‌آموزان</label><br>
+        <input id="language-student-search" type="search" autocomplete="off"
+               placeholder="بخشی از نام یا نام خانوادگی را بنویسید" aria-controls="language-student-results">
+        <small>نام کامل را از نتایج انتخاب کنید؛ با کلیک یا Enter به گروه اضافه می‌شود.</small></p>
+        <div id="language-student-results" role="listbox" aria-label="نتایج جستجوی دانش‌آموز"></div>
+        <div id="language-student-selected" aria-live="polite"></div>
+        {{ field }}{{ field.errors }}
+      {% else %}
+        <p>{{ field.label_tag }} {{ field }} {{ field.errors }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}</p>
+      {% endif %}
+    {% endfor %}
+    <button class="btn btn-primary" type="submit">ذخیره</button>
+  </form>
+</div>
+<style>
+  #language-student-search { width: min(100%, 32rem); }
+  #language-student-results { max-height: 16rem; overflow-y: auto; margin: .5rem 0; }
+  #language-student-results button { display: block; width: min(100%, 32rem); text-align: right; padding: .6rem; cursor: pointer; }
+  #language-student-selected { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0 1.5rem; }
+  #language-student-selected button { padding: .4rem .7rem; cursor: pointer; }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const search = document.getElementById("language-student-search");
+  const year = document.getElementById("id_academic_year");
+  const select = document.getElementById("id_students");
+  const results = document.getElementById("language-student-results");
+  const selected = document.getElementById("language-student-selected");
+  const endpoint = "{% url 'search_language_students' %}";
+  let timer, controller, matches = [];
+
+  function renderSelected() {
+    selected.replaceChildren();
+    for (const option of select.selectedOptions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = option.textContent + " ×";
+      button.setAttribute("aria-label", "حذف " + option.textContent);
+      button.addEventListener("click", function () {
+        option.remove();
+        renderSelected();
+      });
+      selected.appendChild(button);
+    }
+  }
+  function addStudent(student) {
+    let option = Array.from(select.options).find(item => item.value === student.id);
+    if (!option) {
+      option = new Option(student.name, student.id);
+      select.add(option);
+    }
+    option.selected = true;
+    renderSelected();
+    search.value = "";
+    matches = [];
+    results.replaceChildren();
+    search.focus();
+  }
+  function renderResults() {
+    results.replaceChildren();
+    for (const student of matches) {
+      if (Array.from(select.selectedOptions).some(option => option.value === student.id)) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("role", "option");
+      button.textContent = student.name;
+      button.addEventListener("click", () => addStudent(student));
+      results.appendChild(button);
+    }
+  }
+  search.addEventListener("input", function () {
+    clearTimeout(timer);
+    if (controller) controller.abort();
+    const term = search.value.trim();
+    matches = [];
+    results.replaceChildren();
+    if (!term || !year.value) return;
+    const yearId = year.value;
+    timer = setTimeout(async function () {
+      controller = new AbortController();
+      try {
+        const response = await fetch(endpoint + "?academic_year=" + encodeURIComponent(yearId)
+          + "&q=" + encodeURIComponent(term), {signal: controller.signal});
+        if (!response.ok) return;
+        const data = await response.json();
+        if (search.value.trim() !== term || year.value !== yearId) return;
+        matches = data.students || [];
+        renderResults();
+      } catch (error) { if (error.name !== "AbortError") results.textContent = "جستجو انجام نشد؛ دوباره امتحان کنید."; }
+    }, 200);
+  });
+  search.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const first = matches.find(student => !Array.from(select.selectedOptions)
+        .some(option => option.value === student.id));
+      if (first) addStudent(first);
+    }
+  });
+  year.addEventListener("change", function () {
+    if (controller) controller.abort();
+    clearTimeout(timer);
+    select.replaceChildren();
+    matches = [];
+    search.value = "";
+    results.replaceChildren();
+    renderSelected();
+  });
+  // Only chosen students are submitted; other options are search candidates.
+  for (const option of Array.from(select.options)) if (!option.selected) option.remove();
+  renderSelected();
+});
+</script>
+{% endblock %}
