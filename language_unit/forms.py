@@ -13,7 +13,7 @@ class LanguageGroupForm(forms.ModelForm):
         fields = ("title", "academic_year", "teachers", "students", "is_active")
         widgets = {
             "teachers": forms.CheckboxSelectMultiple,
-            "students": forms.CheckboxSelectMultiple,
+            "students": forms.SelectMultiple(attrs={"hidden": "hidden"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -27,6 +27,8 @@ class LanguageGroupForm(forms.ModelForm):
             students = students.filter(
                 enrollments__academic_year_id=year_id, enrollments__is_active=True
             ).distinct()
+        else:
+            students = students.none()
         self.fields["students"].queryset = students.order_by("user__last_name", "user__first_name")
 
 
