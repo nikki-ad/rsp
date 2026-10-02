@@ -1,0 +1,5 @@
+{% if announcement.image %}
+<a href="{{ announcement.image.url }}" target="_blank" rel="noopener">
+    <img src="{{ announcement.image.url }}" alt="تصویر اطلاعیه: {{ announcement.title }}" loading="lazy" style="display:block;max-width:100%;height:auto;max-height:600px;object-fit:contain;border-radius:12px;margin:12px auto;">
+</a>
+{% endif %}

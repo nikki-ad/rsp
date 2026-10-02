@@ -8,6 +8,7 @@ def create_notification(
     title,
     message="",
     url="",
+    announcement=None,
 ):
     return Notification.objects.create(
         recipient=recipient,
@@ -15,4 +16,5 @@ def create_notification(
         title=title,
         message=message,
         url=url,
+        announcement=announcement,
     )

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.core.validators import FileExtensionValidator
 from . import constants
 from core.models import BaseModel
 
@@ -45,6 +46,15 @@ class Notification(BaseModel):
         verbose_name="لینک مقصد",
     )
 
+    announcement = models.ForeignKey(
+        "Announcement",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="notifications",
+        verbose_name="اطلاعیه مرتبط",
+    )
+
     is_read = models.BooleanField(
         default=False,
         verbose_name="خوانده شده",
@@ -77,6 +87,14 @@ class Announcement(BaseModel):
 
     message = models.TextField(
         verbose_name="متن اطلاعیه",
+    )
+
+    image = models.ImageField(
+        upload_to="announcements/%Y/%m/",
+        blank=True,
+        validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp", "gif"])],
+        verbose_name="تصویر اطلاعیه (اختیاری)",
+        help_text="تصویر JPG، PNG، WebP یا GIF؛ برای اطلاعیه متنی، این بخش را خالی بگذارید.",
     )
 
     audience = models.CharField(

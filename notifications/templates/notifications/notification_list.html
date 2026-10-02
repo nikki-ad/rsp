@@ -37,6 +37,10 @@
                 <p>{{ notification.message }}</p>
             {% endif %}
 
+            {% if notification.announcement %}
+                {% include "notifications/announcement_image.html" with announcement=notification.announcement %}
+            {% endif %}
+
             <small>{{ notification.created_at|date:"Y/m/d H:i" }}</small>
 
             {% if notification.url %}

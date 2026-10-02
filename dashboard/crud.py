@@ -641,6 +641,7 @@ def _notify_announcement(announcement):
             title=announcement.title,
             message=announcement.message,
             url=reverse("notification_list"),
+            announcement=announcement,
         )
 
 
@@ -649,7 +650,7 @@ def announcement_form(request, announcement_id=None):
     instance = get_object_or_404(Announcement, id=announcement_id) if announcement_id else None
     is_new = instance is None
     if request.method == "POST":
-        form = AnnouncementForm(request.POST, instance=instance)
+        form = AnnouncementForm(request.POST, request.FILES, instance=instance)
         if form.is_valid():
             announcement = form.save(commit=False)
             announcement.full_clean()
