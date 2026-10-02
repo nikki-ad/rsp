@@ -28,7 +28,7 @@
         <tbody>
             {% for item in announcements %}
                 <tr>
-                    <td>{{ item.title }}</td>
+                    <td>{{ item.title }}{% include "notifications/announcement_image.html" with announcement=item %}</td>
                     <td>
                         {{ item.get_audience_display }}
                         {% if item.classroom %} — {{ item.classroom }}{% endif %}

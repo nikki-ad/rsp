@@ -322,12 +322,14 @@ class AnnouncementForm(forms.ModelForm):
         fields = (
             "title",
             "message",
+            "image",
             "audience",
             "classroom",
             "publish_at",
             "is_active",
         )
         widgets = {
+            "image": forms.ClearableFileInput(attrs={"accept": "image/jpeg,image/png,image/webp,image/gif"}),
             "message": forms.Textarea(attrs={"rows": 5}),
             "publish_at": forms.DateTimeInput(
                 attrs={"type": "datetime-local"},
@@ -337,6 +339,10 @@ class AnnouncementForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["classroom"].help_text = (
+            "فقط برای مخاطب «یک کلاس خاص» کلاس انتخاب کنید. "
+            "مخاطب «دانش‌آموزان» بدون انتخاب کلاس، شامل تمام دانش‌آموزان همه کلاس‌هاست."
+        )
         self.fields["publish_at"].input_formats = [
             "%Y-%m-%dT%H:%M",
             "%Y-%m-%d %H:%M:%S",

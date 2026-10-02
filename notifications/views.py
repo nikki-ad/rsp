@@ -10,7 +10,7 @@ def notification_list(request):
 
     notifications = Notification.objects.filter(
         recipient=request.user,
-    )
+    ).select_related("announcement")
 
     unread_count = notifications.filter(
         is_read=False,

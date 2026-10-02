@@ -90,7 +90,7 @@
 <div class="dashboard-section">
     <h2>📢 اطلاعیه‌های مدرسه</h2>
     {% if announcements %}<div class="announcement-list">
-    {% for announcement in announcements %}<div class="announcement-card"><strong>{{ announcement.title }}</strong><p>{{ announcement.message }}</p><small>{{ announcement.publish_at|date:"Y/m/d H:i" }}</small></div>{% endfor %}
+    {% for announcement in announcements %}<div class="announcement-card"><strong>{{ announcement.title }}</strong><p>{{ announcement.message }}</p>{% include "notifications/announcement_image.html" %}<small>{{ announcement.publish_at|date:"Y/m/d H:i" }}</small></div>{% endfor %}
     </div>{% else %}<p>اطلاعیه جدیدی برای شما وجود ندارد.</p>{% endif %}
 </div>
 
