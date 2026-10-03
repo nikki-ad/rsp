@@ -1,3 +1,4 @@
+from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -108,7 +109,8 @@ def create_assignment(request, classroom_id):
                     url=reverse("student_assignment_list"),
                 )
 
-            return redirect(
+            return upload_success(
+                request,
                 "teacher_class_detail",
                 classroom_id=classroom.id,
             )
@@ -117,7 +119,7 @@ def create_assignment(request, classroom_id):
 
         form = AssignmentCreateForm()
 
-    return render(
+    return render_upload_form(
         request,
         "assignments/create_assignment.html",
         {
@@ -420,7 +422,7 @@ def edit_assignment(request, assignment_id):
     if request.method == "POST" and form.is_valid():
         form.save()
         log_activity(request, action="assignment_updated", description=f"تکلیف «{assignment.title}» ویرایش شد.")
-        return redirect("teacher_class_detail", classroom_id=assignment.classroom_id)
-    return render(request, "assignments/create_assignment.html", {
+        return upload_success(request, "teacher_class_detail", classroom_id=assignment.classroom_id)
+    return render_upload_form(request, "assignments/create_assignment.html", {
         "form": form, "classroom": assignment.classroom, "editing": True,
     })
