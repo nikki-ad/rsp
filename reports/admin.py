@@ -1,10 +1,11 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 
 from .models import StudentReportCard
 from activitylog.utils import log_activity
 
 @admin.register(StudentReportCard)
-class StudentReportCardAdmin(admin.ModelAdmin):
+class StudentReportCardAdmin(JalaliAdminMixin, admin.ModelAdmin):
 
     list_display = (
         "student",

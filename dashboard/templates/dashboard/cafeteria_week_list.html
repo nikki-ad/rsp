@@ -15,7 +15,7 @@
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
             <div>
                 <strong>{{ week.title }}</strong>
-                <p>شروع هفته: {{ week.start_date|date:"Y/m/d" }} · {{ week.menus.count }} غذای ثبت‌شده</p>
+                <p>شروع هفته: {{ week.start_date|jalali_date }} · {{ week.menus.count }} غذای ثبت‌شده</p>
                 {% if week.is_active %}<span class="badge badge-success">فعال</span>{% else %}<span class="badge badge-muted">غیرفعال</span>{% endif %}
             </div>
             <div class="page-header-actions">

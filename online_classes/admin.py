@@ -1,3 +1,4 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 
 from .models import (
@@ -11,7 +12,7 @@ from activitylog.utils import log_activity
 
 
 @admin.register(BBBConfiguration)
-class BBBConfigurationAdmin(admin.ModelAdmin):
+class BBBConfigurationAdmin(JalaliAdminMixin, admin.ModelAdmin):
 
     list_display = (
         "name",
@@ -30,7 +31,7 @@ class BBBConfigurationAdmin(admin.ModelAdmin):
 
 
 @admin.register(OnlineClass)
-class OnlineClassAdmin(admin.ModelAdmin):
+class OnlineClassAdmin(JalaliAdminMixin, admin.ModelAdmin):
 
     list_display = (
         "title",

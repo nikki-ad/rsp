@@ -13,7 +13,8 @@ from django.urls import reverse
 from activitylog.utils import log_activity
 from notifications import constants as notification_constants
 from notifications.services import create_notification
-from django.http import FileResponse, HttpResponseForbidden
+from django.http import FileResponse, HttpResponseForbidden, Http404
+from core.uploads import attachment_response
 
 
 def _teacher_or_denied(request):
@@ -345,7 +346,7 @@ def delete_assignment(request, assignment_id):
     )
 
 @login_required
-def download_assignment_file(request, assignment_id):
+def download_assignment_file(request, assignment_id, attachment="file"):
 
     student, forbidden = _student_or_forbidden(request)
     if forbidden:
@@ -360,16 +361,10 @@ def download_assignment_file(request, assignment_id):
         classroom__enrollments__is_active=True,
     )
 
-    if not assignment.file:
-        return HttpResponseForbidden(
-            "فایلی برای این تکلیف وجود ندارد."
-        )
+    if attachment not in {"file", "image", "video"}:
+        raise Http404()
+    return attachment_response(getattr(assignment, attachment))
 
-    return FileResponse(
-        assignment.file.open("rb"),
-        as_attachment=True,
-        filename=assignment.file.name.split("/")[-1],
-    )
 
 
 @login_required

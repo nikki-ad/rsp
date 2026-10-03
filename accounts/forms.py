@@ -1,4 +1,5 @@
 from django import forms
+from core.jalali import JalaliDateField, JalaliDateInput
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -24,10 +25,10 @@ class StudentCreateForm(forms.Form):
         required=False,
         label="کد ملی",
     )
-    birth_date = forms.DateField(
+    birth_date = JalaliDateField(
         required=False,
         label="تاریخ تولد",
-        widget=forms.DateInput(attrs={"type": "date"}),
+        widget=JalaliDateInput(),
     )
     guardian_name = forms.CharField(
         max_length=100,
@@ -304,6 +305,7 @@ class ProfileForm(forms.ModelForm):
 
 
 class StudentSelfProfileForm(forms.ModelForm):
+    birth_date = JalaliDateField(required=False, label="تاریخ تولد")
     class Meta:
         model = StudentProfile
         fields = (
@@ -314,10 +316,7 @@ class StudentSelfProfileForm(forms.ModelForm):
             "address",
         )
         widgets = {
-            "birth_date": forms.DateInput(
-                attrs={"type": "date"},
-                format="%Y-%m-%d",
-            ),
+            "birth_date": JalaliDateInput(),
             "address": forms.Textarea(attrs={"rows": 3}),
         }
 
@@ -369,10 +368,10 @@ class StudentEditForm(forms.Form):
         required=False,
         label="کد ملی",
     )
-    birth_date = forms.DateField(
+    birth_date = JalaliDateField(
         required=False,
         label="تاریخ تولد",
-        widget=forms.DateInput(attrs={"type": "date"}),
+        widget=JalaliDateInput(),
     )
     guardian_name = forms.CharField(
         max_length=100,

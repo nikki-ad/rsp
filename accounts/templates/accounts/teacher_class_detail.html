@@ -30,7 +30,7 @@
 
                 {% if material.content_type == "text" %}
                     <p>{{ material.content }}</p>
-                {% elif material.content_type == "file" and material.file %}
+                {% elif material.content_type == "file" or material.content_type == "image" or material.content_type == "video" and material.file %}
                     <a href="{{ material.file.url }}">دریافت فایل</a>
                 {% elif material.content_type == "link" %}
                     <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
