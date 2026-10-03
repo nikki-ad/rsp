@@ -1,7 +1,8 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 
 
-class BaseAdmin(admin.ModelAdmin):
+class BaseAdmin(JalaliAdminMixin, admin.ModelAdmin):
     readonly_fields = (
         "id",
         "created_at",

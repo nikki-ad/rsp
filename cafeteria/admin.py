@@ -1,3 +1,4 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 
 from .models import (
@@ -46,7 +47,7 @@ class CafeteriaPaymentCardInline(admin.TabularInline):
 
 
 @admin.register(CafeteriaWeek)
-class CafeteriaWeekAdmin(admin.ModelAdmin):
+class CafeteriaWeekAdmin(JalaliAdminMixin, admin.ModelAdmin):
 
     list_display = (
         "title",
@@ -80,7 +81,7 @@ class CafeteriaReservationItemInline(admin.TabularInline):
 
 
 @admin.register(CafeteriaReservation)
-class CafeteriaReservationAdmin(admin.ModelAdmin):
+class CafeteriaReservationAdmin(JalaliAdminMixin, admin.ModelAdmin):
 
     list_display = (
         "student",

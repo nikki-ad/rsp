@@ -1,3 +1,4 @@
+from notifications.announcements import announcements_for, ensure_announcement_notifications
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -74,7 +75,9 @@ def teacher_dashboard(request):
         academic_year__status=AcademicYear.Status.ACTIVE,
     ).select_related("grade", "academic_year")
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
-    announcements = Announcement.objects.filter(is_active=True, publish_at__lte=timezone.now()).filter(Q(audience=Announcement.Audience.ALL) | Q(audience=Announcement.Audience.TEACHERS)).order_by("-publish_at")
+    announcements = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, announcements)
+    unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(Q(announcement__isnull=True) | Q(announcement__in=announcements)).count()
     return render(request, "accounts/teacher_dashboard.html", {"classrooms": classrooms, "report_classrooms": report_classrooms, "unread_notification_count": unread_notification_count, "announcements": announcements})
 
 
@@ -222,11 +225,9 @@ def student_dashboard(request):
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
     cafeteria_reservation = student.cafeteria_reservations.select_related("week").order_by("-created_at").first()
     report_cards = StudentReportCard.objects.filter(student=student, is_active=True).order_by("-created_at")
-    announcements = Announcement.objects.filter(is_active=True, publish_at__lte=timezone.now()).filter(
-        Q(audience=Announcement.Audience.ALL)
-        | Q(audience=Announcement.Audience.STUDENTS)
-        | Q(audience=Announcement.Audience.CLASSROOM, classroom=enrollment.classroom if enrollment else None)
-    ).order_by("-publish_at")
+    announcements = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, announcements)
+    unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(Q(announcement__isnull=True) | Q(announcement__in=announcements)).count()
 
     return render(request, "accounts/student_dashboard.html", {
         "student": student,

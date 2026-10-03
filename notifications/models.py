@@ -122,6 +122,20 @@ class Announcement(BaseModel):
         verbose_name="کلاس مخاطب",
     )
 
+    classrooms = models.ManyToManyField(
+        "academic.Classroom", blank=True, related_name="targeted_announcements",
+        verbose_name="کلاس‌های مخاطب",
+    )
+    teachers = models.ManyToManyField(
+        "accounts.TeacherProfile", blank=True, related_name="targeted_announcements",
+        verbose_name="معلمان مخاطب",
+    )
+    targeted = models.BooleanField(default=False, editable=False)
+    notified_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, editable=False,
+        related_name="delivered_announcements",
+    )
+
 
     def clean(self):
         super().clean()

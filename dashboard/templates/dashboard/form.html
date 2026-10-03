@@ -39,7 +39,14 @@ document.addEventListener("DOMContentLoaded", function () {
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.non_field_errors }}
-        {{ form.as_p }}
+        {% if form.audience %}
+        {% for field in form %}
+        <div class="form-field" data-field="{{ field.name }}">
+            {{ field.errors }}{{ field.label_tag }}{{ field }}
+            {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+        </div>
+        {% endfor %}
+        {% else %}{{ form.as_p }}{% endif %}
         <button class="btn btn-primary" type="submit">ذخیره</button>
     </form>
 </div>

@@ -600,7 +600,7 @@ def enrollment_delete(request, enrollment_id):
 
 @manager_required
 def announcement_list(request):
-    announcements = Announcement.objects.select_related("classroom", "classroom__grade")
+    announcements = Announcement.objects.select_related("classroom", "classroom__grade").prefetch_related("classrooms__grade", "teachers__user")
     return render(
         request,
         "dashboard/announcement_list.html",
@@ -609,40 +609,8 @@ def announcement_list(request):
 
 
 def _notify_announcement(announcement):
-    recipients = []
-    if announcement.audience == Announcement.Audience.ALL:
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        recipients = User.objects.filter(is_active=True).exclude(
-            role__in=[Role.SUPER_ADMIN],
-        )
-    elif announcement.audience == Announcement.Audience.STUDENTS:
-        recipients = [
-            profile.user
-            for profile in StudentProfile.objects.select_related("user").filter(user__is_active=True)
-        ]
-    elif announcement.audience == Announcement.Audience.TEACHERS:
-        recipients = [
-            profile.user
-            for profile in TeacherProfile.objects.select_related("user").filter(user__is_active=True)
-        ]
-    elif announcement.audience == Announcement.Audience.CLASSROOM and announcement.classroom:
-        recipients = [
-            enrollment.student.user
-            for enrollment in announcement.classroom.enrollments.filter(
-                is_active=True,
-            ).select_related("student__user")
-        ]
-
-    for recipient in recipients:
-        create_notification(
-            recipient=recipient,
-            notification_type=notification_constants.ANNOUNCEMENT,
-            title=announcement.title,
-            message=announcement.message,
-            url=reverse("notification_list"),
-            announcement=announcement,
-        )
+    from notifications.announcements import sync_announcement
+    sync_announcement(announcement)
 
 
 @manager_required
@@ -657,13 +625,13 @@ def announcement_form(request, announcement_id=None):
             if is_new:
                 announcement.created_by = request.user
             announcement.save()
+            form.save_m2m()
             log_activity(
                 request,
                 action="announcement_saved",
                 description=f"اطلاعیه «{announcement.title}» ذخیره شد.",
             )
-            if is_new and announcement.is_active and announcement.publish_at <= timezone.now():
-                _notify_announcement(announcement)
+            _notify_announcement(announcement)
             messages.success(request, "اطلاعیه ذخیره شد.")
             return redirect("announcement_list")
     else:
@@ -681,6 +649,7 @@ def announcement_delete(request, announcement_id):
     announcement = get_object_or_404(Announcement, id=announcement_id)
     if request.method == "POST":
         title = announcement.title
+        announcement.notifications.all().delete()
         announcement.delete()
         log_activity(request, action="announcement_deleted", description=f"اطلاعیه «{title}» حذف شد.")
         messages.success(request, "اطلاعیه حذف شد.")

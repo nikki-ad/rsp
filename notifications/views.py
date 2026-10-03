@@ -1,3 +1,5 @@
+from .announcements import announcements_for, ensure_announcement_notifications
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
@@ -8,9 +10,11 @@ from django.contrib import messages
 @login_required
 def notification_list(request):
 
+    visible = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, visible)
     notifications = Notification.objects.filter(
         recipient=request.user,
-    ).select_related("announcement")
+    ).filter(Q(announcement__isnull=True) | Q(announcement__in=visible)).select_related("announcement")
 
     unread_count = notifications.filter(
         is_read=False,
@@ -34,6 +38,9 @@ def open_notification(request, notification_id):
         id=notification_id,
         recipient=request.user,
     )
+    if notification.announcement_id and not announcements_for(request.user).filter(pk=notification.announcement_id).exists():
+        from django.http import Http404
+        raise Http404()
 
     if not notification.is_read:
         notification.is_read = True

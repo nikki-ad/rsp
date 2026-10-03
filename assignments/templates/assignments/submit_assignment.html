@@ -17,6 +17,7 @@
     <div class="info-banner">{{ assignment.description }}</div>
 {% endif %}
 
+{% include "assignments/attachments.html" %}
 <div class="card form-card">
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
