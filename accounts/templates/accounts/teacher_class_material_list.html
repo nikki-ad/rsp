@@ -20,9 +20,8 @@
             <div class="list-card">
                 <strong>{{ material.title }}</strong>
                 <div class="meta-row"><span class="badge badge-primary">{{ material.get_content_type_display }}</span></div>
-                {% if material.content_type == "text" %}
-                    <p>{{ material.content }}</p>
-                {% elif material.content_type == "file" and material.file %}
+                {% if material.content %}<p>{{ material.content|linebreaksbr }}</p>{% endif %}
+                {% if material.content_type == "file" or material.content_type == "image" or material.content_type == "video" %}
                     <a href="{{ material.file.url }}">دریافت فایل</a>
                 {% elif material.content_type == "link" %}
                     <a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>
