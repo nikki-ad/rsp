@@ -1,3 +1,4 @@
+from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import EducationalMaterial
@@ -73,14 +74,14 @@ def create_material(request):
                         url=reverse("student_material_list"),
                     )
 
-            return redirect("teacher_material_list")
+            return upload_success(request, "teacher_material_list")
 
     else:
         form = EducationalMaterialCreateForm(
             teacher=teacher,
         )
 
-    return render(
+    return render_upload_form(
         request,
         "materials/create_material.html",
         {
@@ -126,8 +127,8 @@ def edit_material(request, material_id):
     if request.method == "POST" and form.is_valid():
         form.save()
         log_activity(request, action="material_updated", description=f"مطلب «{material.title}» ویرایش شد.")
-        return redirect("teacher_material_list")
-    return render(request, "materials/create_material.html", {"form": form, "editing": True})
+        return upload_success(request, "teacher_material_list")
+    return render_upload_form(request, "materials/create_material.html", {"form": form, "editing": True})
 
 
 @login_required

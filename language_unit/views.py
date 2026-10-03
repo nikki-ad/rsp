@@ -1,3 +1,4 @@
+from core.upload_progress import render_upload_form, upload_success
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -99,9 +100,8 @@ def create_language_material(request, group_id):
                                 title=f"مطلب جدید واحد زبان: {item.title}",
                                 message=f"در گروه {group.title} مطلب جدیدی منتشر شد.",
                                 url=reverse("student_language_dashboard"))
-        messages.success(request, "مطلب واحد زبان منتشر شد.")
-        return redirect("language_group_detail", group_id=group.id)
-    return render(request, "dashboard/form.html", {
+        return upload_success(request, "language_group_detail", group_id=group.id)
+    return render_upload_form(request, "dashboard/form.html", {
         "form": form, "page_title": "مطلب جدید واحد زبان",
         "back_url": reverse("language_group_detail", args=[group.id]),
     })
@@ -123,9 +123,8 @@ def edit_language_material(request, material_id):
         form.save()
         log_activity(request, action="language_material_updated",
                      description=f"مطلب زبان «{item.title}» ویرایش شد.")
-        messages.success(request, "مطلب واحد زبان ویرایش شد.")
-        return redirect("language_group_detail", group_id=item.group_id)
-    return render(request, "dashboard/form.html", {
+        return upload_success(request, "language_group_detail", group_id=item.group_id)
+    return render_upload_form(request, "dashboard/form.html", {
         "form": form, "page_title": "ویرایش مطلب واحد زبان",
         "back_url": reverse("language_group_detail", args=[item.group_id]),
     })
@@ -146,9 +145,8 @@ def create_language_assignment(request, group_id):
                                 title=f"تکلیف جدید واحد زبان: {item.title}",
                                 message=f"در گروه {group.title} تکلیف جدیدی ثبت شد.",
                                 url=reverse("student_language_dashboard"))
-        messages.success(request, "تکلیف واحد زبان منتشر شد.")
-        return redirect("language_group_detail", group_id=group.id)
-    return render(request, "dashboard/form.html", {
+        return upload_success(request, "language_group_detail", group_id=group.id)
+    return render_upload_form(request, "dashboard/form.html", {
         "form": form, "page_title": "تکلیف جدید واحد زبان",
         "back_url": reverse("language_group_detail", args=[group.id]),
     })
@@ -170,9 +168,8 @@ def edit_language_assignment(request, assignment_id):
         form.save()
         log_activity(request, action="language_assignment_updated",
                      description=f"تکلیف زبان «{item.title}» ویرایش شد.")
-        messages.success(request, "تکلیف واحد زبان ویرایش شد.")
-        return redirect("language_group_detail", group_id=item.group_id)
-    return render(request, "dashboard/form.html", {
+        return upload_success(request, "language_group_detail", group_id=item.group_id)
+    return render_upload_form(request, "dashboard/form.html", {
         "form": form, "page_title": "ویرایش تکلیف واحد زبان",
         "back_url": reverse("language_group_detail", args=[item.group_id]),
     })
