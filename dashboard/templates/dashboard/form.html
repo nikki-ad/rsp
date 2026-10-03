@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
 {% endif %}
 
 <div class="card form-card{% if wide %} wide{% endif %}">
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data"{% if upload_progress %} data-upload-progress{% endif %}>
         {% csrf_token %}
         {{ form.non_field_errors }}
         {% if form.audience %}

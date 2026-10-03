@@ -1,3 +1,4 @@
+from core.upload_progress import render_upload_form, upload_success
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -632,16 +633,14 @@ def announcement_form(request, announcement_id=None):
                 description=f"اطلاعیه «{announcement.title}» ذخیره شد.",
             )
             _notify_announcement(announcement)
-            messages.success(request, "اطلاعیه ذخیره شد.")
-            return redirect("announcement_list")
+            return upload_success(request, "announcement_list")
     else:
         form = AnnouncementForm(instance=instance)
-    return _form_page(
-        request,
-        form=form,
-        title="ویرایش اطلاعیه" if instance else "اطلاعیه جدید",
-        back_url=reverse("announcement_list"),
-    )
+    return render_upload_form(request, "dashboard/form.html", {
+        "form": form,
+        "page_title": "ویرایش اطلاعیه" if instance else "اطلاعیه جدید",
+        "back_url": reverse("announcement_list"),
+    })
 
 
 @manager_required
