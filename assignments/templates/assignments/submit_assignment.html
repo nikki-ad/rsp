@@ -14,7 +14,7 @@
 </div>
 
 {% if assignment.description %}
-    <div class="info-banner">{{ assignment.description }}</div>
+    <div class="info-banner">{{ assignment.description|default:""|linebreaksbr }}</div>
 {% endif %}
 
 {% include "assignments/attachments.html" %}
