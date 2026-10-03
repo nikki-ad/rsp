@@ -1,3 +1,4 @@
+from core.upload_progress import render_upload_form, upload_success
 from notifications.announcements import announcements_for, ensure_announcement_notifications
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, get_user_model
@@ -160,10 +161,10 @@ def create_material(request, classroom_id):
             material.classrooms.add(classroom)
             for enrollment in classroom.enrollments.filter(is_active=True).select_related("student__user"):
                 create_notification(recipient=enrollment.student.user, notification_type=notification_constants.MATERIAL, title=f"مطلب آموزشی جدید: {material.title}", message=f"برای کلاس {classroom} یک مطلب آموزشی جدید منتشر شد.", url=reverse("student_material_list"))
-            return redirect("teacher_class_detail", classroom_id=classroom.id)
+            return upload_success(request, "teacher_class_detail", classroom_id=classroom.id)
     else:
         form = EducationalMaterialCreateForm(teacher=teacher, hide_classrooms=True)
-    return render(request, "accounts/create_material.html", {"form": form, "classroom": classroom})
+    return render_upload_form(request, "accounts/create_material.html", {"form": form, "classroom": classroom})
 
 
 @login_required

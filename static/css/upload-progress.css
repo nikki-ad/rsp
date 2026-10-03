@@ -1,0 +1,43 @@
+.upload-progress {
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid #b8d9df;
+    border-radius: 12px;
+    background: #f1f9fa;
+    overflow-wrap: anywhere;
+}
+.upload-progress[hidden] { display: none; }
+.upload-progress__status { margin: 0 0 .65rem; font-weight: 600; }
+.upload-progress__track {
+    height: 12px;
+    border-radius: 8px;
+    background: #dce7eb;
+    overflow: hidden;
+}
+.upload-progress__fill {
+    height: 100%;
+    width: 0;
+    background: #168296;
+    border-radius: inherit;
+    transition: width .2s ease;
+}
+.upload-progress__percent { display: block; margin-top: .5rem; font-weight: 700; }
+.upload-progress__percent[hidden] { display: none; }
+.upload-progress.is-saving .upload-progress__fill {
+    width: 100% !important;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 8px, #ffffff55 8px, #ffffff55 16px);
+    background-size: 23px 23px;
+    animation: upload-saving .7s linear infinite;
+}
+.upload-progress.is-success { background: #eef9f0; border-color: #8dc99b; }
+.upload-progress.is-success .upload-progress__fill { background: #258441; }
+.upload-progress.is-error { background: #fff4f3; border-color: #dba5a0; }
+.upload-progress.is-error .upload-progress__fill { background: #a3362b; }
+.upload-progress__errors:empty { display: none; }
+.upload-progress__field-error { display: block; color: #a3362b; }
+[aria-invalid="true"] { outline: 2px solid #a3362b; }
+@keyframes upload-saving { to { background-position: 23px 0; } }
+@media (prefers-reduced-motion: reduce) {
+    .upload-progress__fill { transition: none; }
+    .upload-progress.is-saving .upload-progress__fill { animation: none; }
+}
