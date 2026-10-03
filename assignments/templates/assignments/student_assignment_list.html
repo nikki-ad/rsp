@@ -11,7 +11,7 @@
 {% for item in assignment_items %}{% with assignment=item.assignment submission=item.submission %}
     <div class="announcement-card">
         <strong>{{ assignment.title }}</strong><p class="content-author">معلم: {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</p>
-        <p>{{ assignment.description }}</p>
+        <p>{{ assignment.description|default:""|linebreaksbr }}</p>
         <small>{{ assignment.classroom }} · {{ assignment.created_at|jalali_datetime }}</small><br>
         {% include "assignments/attachments.html" %}
         {% if submission %}

@@ -23,8 +23,8 @@
   <div class="announcement-list">
   {% for material in materials %}<div class="announcement-card"><strong>{{ material.title }}</strong>
     <small>{{ material.group.title }} | معلم: {{ material.teacher.user.get_full_name|default:material.teacher.user.username }}</small>
-    {% if material.content_type == 'text' %}<p>{{ material.content }}</p>
-    {% elif material.content_type == 'file' or material.content_type == 'image' or material.content_type == 'video' %}<a href="{% url 'download_language_material' material.id %}">دریافت فایل</a>
+    {% if material.content %}<p>{{ material.content|linebreaksbr }}</p>{% endif %}
+    {% if material.content_type == 'file' or material.content_type == 'image' or material.content_type == 'video' %}<a href="{% url 'download_language_material' material.id %}">دریافت فایل</a>
     {% elif material.content_type == 'link' %}<a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
   </div>{% empty %}<p>هنوز مطلبی ثبت نشده است.</p>{% endfor %}
   </div>
@@ -33,7 +33,7 @@
 <section class="dashboard-section" id="language-assignments"><h2>✍️ تکالیف زبان</h2>
   <div class="announcement-list">
   {% for item in assignment_items %}<div class="announcement-card"><strong>{{ item.assignment.title }}</strong><p>معلم: {{ item.assignment.teacher.user.get_full_name|default:item.assignment.teacher.user.username }}</p>
-    <p>{{ item.assignment.description }}</p>
+    <p>{{ item.assignment.description|default:""|linebreaksbr }}</p>
     {% if item.assignment.image %}<a href="{% url 'download_language_assignment' item.assignment.id 'image' %}">دریافت عکس تکلیف</a>{% endif %}
     {% if item.assignment.video %}<a href="{% url 'download_language_assignment' item.assignment.id 'video' %}">دریافت فیلم تکلیف</a>{% endif %}
     {% if item.assignment.file %}<a href="{% url 'download_language_assignment' item.assignment.id 'file' %}">دریافت فایل تکلیف</a><br>{% endif %}

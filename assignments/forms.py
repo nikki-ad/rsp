@@ -1,9 +1,9 @@
 from django import forms
-from core.uploads import AttachmentFormMixin
+from core.uploads import AssignmentContentFormMixin
 
 from .models import Assignment, AssignmentSubmission
 
-class AssignmentCreateForm(AttachmentFormMixin, forms.ModelForm):
+class AssignmentCreateForm(AssignmentContentFormMixin, forms.ModelForm):
 
     class Meta:
         model = Assignment

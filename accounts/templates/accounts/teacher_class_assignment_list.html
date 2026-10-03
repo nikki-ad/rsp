@@ -19,7 +19,7 @@
         {% for assignment in assignments %}
             <div class="list-card">
                 <strong>{{ assignment.title }}</strong>
-                <p>{{ assignment.description|default:"" }}</p>
+                <p>{{ assignment.description|default:""|linebreaksbr }}</p>
                 <div class="card-actions">
                     {% if assignment.file %}
                         <a class="btn btn-ghost" href="{{ assignment.file.url }}">فایل تکلیف</a>
