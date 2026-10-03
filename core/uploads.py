@@ -43,6 +43,25 @@ class AttachmentFormMixin:
         return data
 
 
+class AssignmentContentFormMixin(AttachmentFormMixin):
+    """Allow instructions, attachments, or both, but reject empty assignments."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["description"].help_text = (
+            "می‌توانید متن تکلیف یا توضیح فایل، عکس و فیلم را اینجا بنویسید. "
+            "اگر پیوست دارید، نوشتن توضیحات اختیاری است."
+        )
+
+    def clean(self):
+        data = super().clean()
+        if not (data.get("description") or "").strip() and not any(
+            data.get(name) for name in ("file", "image", "video")
+        ):
+            raise forms.ValidationError("حداقل متن تکلیف یا یک فایل، عکس یا فیلم وارد کنید.")
+        return data
+
+
 def attachment_response(field):
     if not field:
         raise Http404("فایلی برای دریافت وجود ندارد.")

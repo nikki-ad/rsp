@@ -12,8 +12,8 @@
     <div class="announcement-card">
         <strong>{{ material.title }}</strong>
         <p>نوع: {{ material.get_content_type_display }} · معلم: {{ material.teacher.user.get_full_name|default:material.teacher.user.username }}</p>
-        {% if material.content_type == "text" %}<p>{{ material.content }}</p>
-        {% elif material.content_type == "file" or material.content_type == "image" or material.content_type == "video" %}<a class="btn btn-secondary" href="{% url 'download_material' material.id %}">دریافت فایل</a>
+        {% if material.content %}<p>{{ material.content|linebreaksbr }}</p>{% endif %}
+        {% if material.content_type == "file" or material.content_type == "image" or material.content_type == "video" %}<a class="btn btn-secondary" href="{% url 'download_material' material.id %}">دریافت فایل</a>
         {% elif material.content_type == "link" %}<a class="btn btn-secondary" href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
         <small>{{ material.created_at|jalali_datetime }}</small>
     </div>
