@@ -10,6 +10,7 @@ from notifications.services import create_notification
 from django.http import HttpResponseForbidden , FileResponse
 from academic.models import AcademicYear
 from academic.models import Enrollment
+from core.uploads import attachment_response
 
 
 @login_required
@@ -101,22 +102,14 @@ def download_material(request, material_id):
     material = get_object_or_404(
         EducationalMaterial,
         id=material_id,
-        content_type="file",
+        content_type__in=["file", "image", "video"],
         classrooms__academic_year__status=AcademicYear.Status.ACTIVE,
         classrooms__enrollments__student=student,
         classrooms__enrollments__is_active=True,
     )
 
-    if not material.file:
-        return HttpResponseForbidden(
-            "فایلی برای این مطلب وجود ندارد."
-        )
+    return attachment_response(material.file)
 
-    return FileResponse(
-        material.file.open("rb"),
-        as_attachment=True,
-        filename=material.file.name.split("/")[-1],
-    )
 
 
 @login_required

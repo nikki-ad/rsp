@@ -6,7 +6,7 @@ class EducationalMaterial(BaseModel):
 
     TYPE_CHOICES = (
         ("text", "متن"),
-        ("file", "فایل"),
+        ("file", "فایل"), ("image", "عکس"), ("video", "فیلم"),
         ("link", "لینک"),
     )
 
@@ -54,6 +54,16 @@ class EducationalMaterial(BaseModel):
         verbose_name="کلاس‌ها",
     )
 
+
+    def clean(self):
+        super().clean()
+        if self.content_type == "video" and self.file:
+            from core.uploads import validate_video
+            from django.core.exceptions import ValidationError
+            try:
+                validate_video(self.file)
+            except ValidationError as error:
+                raise ValidationError({"file": error})
 
     class Meta:
         verbose_name = "مطلب آموزشی"

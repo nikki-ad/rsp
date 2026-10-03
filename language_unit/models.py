@@ -1,4 +1,5 @@
 from django.db import models
+from core.uploads import validate_video
 
 from core.models import BaseModel
 
@@ -32,7 +33,7 @@ class LanguageGroup(BaseModel):
 
 
 class LanguageMaterial(BaseModel):
-    TYPE_CHOICES = (("text", "متن"), ("file", "فایل"), ("link", "لینک"))
+    TYPE_CHOICES = (("text", "متن"), ("file", "فایل"), ("image", "عکس"), ("video", "فیلم"), ("link", "لینک"))
     group = models.ForeignKey(LanguageGroup, on_delete=models.CASCADE,
                               related_name="materials", verbose_name="گروه زبان")
     teacher = models.ForeignKey("accounts.TeacherProfile", on_delete=models.CASCADE,
@@ -44,6 +45,16 @@ class LanguageMaterial(BaseModel):
     file = models.FileField(upload_to="language_materials/", blank=True, null=True,
                             verbose_name="فایل")
     link = models.URLField(blank=True, verbose_name="لینک")
+
+    def clean(self):
+        super().clean()
+        if self.content_type == "video" and self.file:
+            from core.uploads import validate_video
+            from django.core.exceptions import ValidationError
+            try:
+                validate_video(self.file)
+            except ValidationError as error:
+                raise ValidationError({"file": error})
 
     class Meta:
         ordering = ("-created_at",)
@@ -63,6 +74,9 @@ class LanguageAssignment(BaseModel):
     description = models.TextField(blank=True, verbose_name="توضیحات")
     file = models.FileField(upload_to="language_assignments/", blank=True, null=True,
                             verbose_name="فایل تکلیف")
+
+    image = models.ImageField(upload_to="language_assignments/images/", blank=True, verbose_name="عکس تکلیف")
+    video = models.FileField(upload_to="language_assignments/videos/", blank=True, validators=[validate_video], verbose_name="فیلم تکلیف")
 
     class Meta:
         ordering = ("-created_at",)

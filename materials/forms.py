@@ -1,4 +1,5 @@
 from django import forms
+from core.uploads import AttachmentFormMixin, validate_video
 from .models import EducationalMaterial
 from academic.models import AcademicYear, Classroom
 
@@ -18,7 +19,7 @@ def assigned_active_classrooms(teacher):
     )
 
 
-class EducationalMaterialCreateForm(forms.ModelForm):
+class EducationalMaterialCreateForm(AttachmentFormMixin, forms.ModelForm):
 
     classrooms = forms.ModelMultipleChoiceField(
         queryset=Classroom.objects.none(),
@@ -66,12 +67,23 @@ class EducationalMaterialCreateForm(forms.ModelForm):
         if content_type == "text" and not (cleaned_data.get("content") or "").strip():
             self.add_error("content", "متن مطلب را وارد کنید.")
 
-        if content_type == "file" and not cleaned_data.get("file"):
+        if content_type in {"file", "image", "video"} and not cleaned_data.get("file"):
             self.add_error("file", "فایل مطلب را انتخاب کنید.")
 
         if content_type == "link" and not cleaned_data.get("link"):
             self.add_error("link", "لینک مطلب را وارد کنید.")
 
+        upload = cleaned_data.get("file")
+        if content_type == "video" and upload and "file" in self.files:
+            try:
+                validate_video(upload)
+            except forms.ValidationError as error:
+                self.add_error("file", error)
+        if content_type == "image" and upload and "file" in self.files:
+            try:
+                forms.ImageField().clean(upload)
+            except forms.ValidationError as error:
+                self.add_error("file", error)
         return cleaned_data
 
     class Meta:

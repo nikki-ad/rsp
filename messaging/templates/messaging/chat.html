@@ -34,7 +34,7 @@
                     <p><a href="{{ message.file.url }}">دریافت فایل</a></p>
                 {% endif %}
 
-                <small>{{ message.created_at|date:"Y/m/d H:i" }}</small>
+                <small>{{ message.created_at|jalali_datetime }}</small>
             </div>
         {% empty %}
             <div class="empty-state">هنوز پیامی در این گفت‌وگو وجود ندارد.</div>

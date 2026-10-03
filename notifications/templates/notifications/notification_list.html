@@ -41,7 +41,7 @@
                 {% include "notifications/announcement_image.html" with announcement=notification.announcement %}
             {% endif %}
 
-            <small>{{ notification.created_at|date:"Y/m/d H:i" }}</small>
+            <small>{{ notification.created_at|jalali_datetime }}</small>
 
             {% if notification.url %}
                 <div class="card-actions">

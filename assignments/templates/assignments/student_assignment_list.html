@@ -12,7 +12,8 @@
     <div class="announcement-card">
         <strong>{{ assignment.title }}</strong><p class="content-author">معلم: {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</p>
         <p>{{ assignment.description }}</p>
-        <small>{{ assignment.classroom }} · {{ assignment.created_at|date:"Y/m/d H:i" }}</small><br>
+        <small>{{ assignment.classroom }} · {{ assignment.created_at|jalali_datetime }}</small><br>
+        {% include "assignments/attachments.html" %}
         {% if submission %}
             <span class="badge badge-success">پاسخ ارسال شده</span>
             <a class="btn btn-secondary" href="{% url 'submit_assignment' assignment.id %}">ویرایش پاسخ</a>

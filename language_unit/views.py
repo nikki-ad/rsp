@@ -290,3 +290,28 @@ def language_group_delete(request, group_id):
         "object_label": f"گروه زبان {group.title}",
         "back_url": reverse("manage_language_groups"),
     })
+
+
+@login_required
+def download_language_material(request, material_id):
+    from core.uploads import attachment_response
+    student = getattr(request.user, "student_profile", None)
+    if not student:
+        return HttpResponseForbidden()
+    item = get_object_or_404(LanguageMaterial, pk=material_id, group__students=student,
+                             group__is_active=True, group__academic_year__status=AcademicYear.Status.ACTIVE)
+    return attachment_response(item.file)
+
+
+@login_required
+def download_language_assignment(request, assignment_id, attachment="file"):
+    from core.uploads import attachment_response
+    from django.http import Http404
+    student = getattr(request.user, "student_profile", None)
+    if not student:
+        return HttpResponseForbidden()
+    item = get_object_or_404(LanguageAssignment, pk=assignment_id, group__students=student,
+                             group__is_active=True, group__academic_year__status=AcademicYear.Status.ACTIVE)
+    if attachment not in {"file", "image", "video"}:
+        raise Http404()
+    return attachment_response(getattr(item, attachment))

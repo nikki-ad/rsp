@@ -191,4 +191,5 @@ class StudentDailyRoutine(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.student} | {self.record_date}"
+        from core.jalali import jalali_format
+        return f"{self.student} | {jalali_format(self.record_date)}"

@@ -1,4 +1,5 @@
 from django import forms
+from core.jalali import JalaliDateField, JalaliDateTimeField
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -70,10 +71,10 @@ class GeneralUserForm(forms.ModelForm):
 
 
 class CafeteriaWeekForm(forms.ModelForm):
+    start_date = JalaliDateField(label="تاریخ شروع هفته")
     class Meta:
         model = CafeteriaWeek
         fields = ("title", "start_date", "is_active")
-        widgets = {"start_date": forms.DateInput(attrs={"type": "date"})}
 
     def clean_is_active(self):
         is_active = self.cleaned_data["is_active"]
@@ -116,6 +117,8 @@ CafeteriaPaymentCardFormSet = inlineformset_factory(
 
 
 class AcademicYearForm(forms.ModelForm):
+    start_date = JalaliDateField(required=False, label="تاریخ شروع")
+    end_date = JalaliDateField(required=False, label="تاریخ پایان")
     class Meta:
         model = AcademicYear
         fields = (
@@ -126,8 +129,6 @@ class AcademicYearForm(forms.ModelForm):
             "end_date",
         )
         widgets = {
-            "start_date": forms.DateInput(attrs={"type": "date"}),
-            "end_date": forms.DateInput(attrs={"type": "date"}),
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 
@@ -317,58 +318,48 @@ class EnrollmentManageForm(forms.ModelForm):
 
 
 class AnnouncementForm(forms.ModelForm):
+    publish_at = JalaliDateTimeField(label="زمان انتشار (شمسی)", initial=timezone.now)
+
     class Meta:
         model = Announcement
-        fields = (
-            "title",
-            "message",
-            "image",
-            "audience",
-            "classroom",
-            "publish_at",
-            "is_active",
-        )
+        fields = ("title", "message", "image", "audience", "classrooms", "teachers", "publish_at", "is_active")
         widgets = {
             "image": forms.ClearableFileInput(attrs={"accept": "image/jpeg,image/png,image/webp,image/gif"}),
             "message": forms.Textarea(attrs={"rows": 5}),
-            "publish_at": forms.DateTimeInput(
-                attrs={"type": "datetime-local"},
-                format="%Y-%m-%dT%H:%M",
-            ),
+            "classrooms": forms.CheckboxSelectMultiple,
+            "teachers": forms.CheckboxSelectMultiple,
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["classroom"].help_text = (
-            "فقط برای مخاطب «یک کلاس خاص» کلاس انتخاب کنید. "
-            "مخاطب «دانش‌آموزان» بدون انتخاب کلاس، شامل تمام دانش‌آموزان همه کلاس‌هاست."
-        )
-        self.fields["publish_at"].input_formats = [
-            "%Y-%m-%dT%H:%M",
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d %H:%M",
+        self.fields["audience"].choices = [
+            (value, label) for value, label in Announcement.Audience.choices
+            if value != Announcement.Audience.CLASSROOM
         ]
-        self.fields["classroom"].queryset = Classroom.objects.select_related(
-            "academic_year",
-            "grade",
-        )
-        if not self.initial.get("publish_at") and not self.instance.pk:
-            self.initial["publish_at"] = timezone.localtime().strftime(
-                "%Y-%m-%dT%H:%M"
-            )
+        self.fields["classrooms"].queryset = Classroom.objects.filter(
+            academic_year__status=AcademicYear.Status.ACTIVE
+        ).select_related("grade", "academic_year").order_by("grade__order", "name")
+        self.fields["teachers"].queryset = TeacherProfile.objects.filter(
+            user__is_active=True
+        ).select_related("user").order_by("user__last_name", "user__first_name")
+        self.fields["classrooms"].help_text = "اطلاعیه فقط برای دانش‌آموزان کلاس‌های تیک‌خورده ارسال می‌شود."
+        self.fields["teachers"].help_text = "اطلاعیه فقط برای معلمان تیک‌خورده ارسال می‌شود."
+        if not self.is_bound and self.instance.audience == Announcement.Audience.CLASSROOM:
+            self.initial["audience"] = Announcement.Audience.STUDENTS
+            self.initial["classrooms"] = [self.instance.classroom_id]
 
     def clean(self):
-        cleaned_data = super().clean()
-        audience = cleaned_data.get("audience")
-        classroom = cleaned_data.get("classroom")
-        if audience == Announcement.Audience.CLASSROOM and not classroom:
-            self.add_error(
-                "classroom",
-                "برای اطلاعیه مخصوص کلاس، انتخاب کلاس الزامی است.",
-            )
-        if audience != Announcement.Audience.CLASSROOM:
-            cleaned_data["classroom"] = None
-        return cleaned_data
+        data = super().clean()
+        audience = data.get("audience")
+        for name, relevant in (("classrooms", Announcement.Audience.STUDENTS), ("teachers", Announcement.Audience.TEACHERS)):
+            if audience == relevant:
+                if not data.get(name):
+                    self.add_error(name, "حداقل یک گیرنده انتخاب کنید.")
+            else:
+                data[name] = self.fields[name].queryset.none()
+        self.instance.classroom = None
+        self.instance.targeted = audience in {Announcement.Audience.STUDENTS, Announcement.Audience.TEACHERS}
+        return data
 
 
 class ReportCardForm(forms.ModelForm):

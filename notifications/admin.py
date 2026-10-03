@@ -1,3 +1,4 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 
 from core.admin import BaseAdmin
@@ -44,28 +45,13 @@ class ClassroomChoiceField(forms.ModelChoiceField):
         )
 
 
-class AnnouncementAdminForm(forms.ModelForm):
-
-    classroom = ClassroomChoiceField(
-        queryset=Classroom.objects.select_related(
-            "academic_year",
-            "grade",
-        ).all(),
-        required=False,
-        label="کلاس مخاطب",
-    )
-
-    class Meta:
-        model = Announcement
-        fields = "__all__"
-
-
+from dashboard.forms import AnnouncementForm
 
 
 @admin.register(Announcement)
-class AnnouncementAdmin(admin.ModelAdmin):
+class AnnouncementAdmin(JalaliAdminMixin, admin.ModelAdmin):
     
-    form = AnnouncementAdminForm
+    form = AnnouncementForm
 
     list_display = (
         "title",
@@ -110,9 +96,15 @@ class AnnouncementAdmin(admin.ModelAdmin):
             description=description,
         )
 
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        from .announcements import sync_announcement
+        sync_announcement(form.instance)
+
     def delete_model(self, request, obj):
 
         title = obj.title
+        obj.notifications.all().delete()
 
         super().delete_model(
             request,
@@ -128,6 +120,7 @@ class AnnouncementAdmin(admin.ModelAdmin):
 
     def delete_queryset(self, request, queryset):
 
+        Notification.objects.filter(announcement__in=queryset).delete()
         titles = list(
             queryset.values_list(
                 "title",
