@@ -1,3 +1,4 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 from django import forms
 from core.admin import BaseAdmin
@@ -59,7 +60,7 @@ class ClassroomAdmin(BaseAdmin):
 
 
 @admin.register(ClassroomSchedule)
-class ClassroomScheduleAdmin(admin.ModelAdmin):
+class ClassroomScheduleAdmin(JalaliAdminMixin, admin.ModelAdmin):
     list_display = ("classroom", "day", "period", "subject")
     list_filter = ("day", "classroom__academic_year", "classroom")
     search_fields = ("subject", "classroom__name", "classroom__grade__title")

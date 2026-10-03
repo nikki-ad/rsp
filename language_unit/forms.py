@@ -1,4 +1,5 @@
 from django import forms
+from core.uploads import AttachmentFormMixin, validate_video
 
 from accounts.models import StudentProfile, TeacherProfile
 from academic.models import AcademicYear
@@ -32,7 +33,7 @@ class LanguageGroupForm(forms.ModelForm):
         self.fields["students"].queryset = students.order_by("user__last_name", "user__first_name")
 
 
-class LanguageMaterialForm(forms.ModelForm):
+class LanguageMaterialForm(AttachmentFormMixin, forms.ModelForm):
     class Meta:
         model = LanguageMaterial
         fields = ("title", "content_type", "content", "file", "link")
@@ -42,17 +43,28 @@ class LanguageMaterialForm(forms.ModelForm):
         kind = data.get("content_type")
         if kind == "text" and not (data.get("content") or "").strip():
             self.add_error("content", "متن مطلب را وارد کنید.")
-        if kind == "file" and not data.get("file") and not self.instance.file:
+        if kind in {"file", "image", "video"} and not data.get("file"):
             self.add_error("file", "فایل را انتخاب کنید.")
         if kind == "link" and not data.get("link"):
             self.add_error("link", "لینک را وارد کنید.")
+        upload = data.get("file")
+        if kind == "video" and upload and "file" in self.files:
+            try:
+                validate_video(upload)
+            except forms.ValidationError as error:
+                self.add_error("file", error)
+        if kind == "image" and upload and "file" in self.files:
+            try:
+                forms.ImageField().clean(upload)
+            except forms.ValidationError as error:
+                self.add_error("file", error)
         return data
 
 
-class LanguageAssignmentForm(forms.ModelForm):
+class LanguageAssignmentForm(AttachmentFormMixin, forms.ModelForm):
     class Meta:
         model = LanguageAssignment
-        fields = ("title", "description", "file")
+        fields = ("title", "description", "file", "image", "video")
 
 
 class LanguageSubmissionForm(forms.ModelForm):
@@ -62,6 +74,6 @@ class LanguageSubmissionForm(forms.ModelForm):
 
     def clean(self):
         data = super().clean()
-        if not (data.get("answer_text") or "").strip() and not data.get("file") and not self.instance.file:
+        if not (data.get("answer_text") or "").strip() and not data.get("file"):
             raise forms.ValidationError("حداقل متن پاسخ یا یک فایل ارسال کنید.")
         return data

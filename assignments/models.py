@@ -1,4 +1,5 @@
 from django.db import models
+from core.uploads import validate_video
 
 from core.models import BaseModel
 
@@ -37,6 +38,9 @@ class Assignment(BaseModel):
         verbose_name="فایل تکلیف",
     )
 
+
+    image = models.ImageField(upload_to="assignments/images/", blank=True, verbose_name="عکس تکلیف")
+    video = models.FileField(upload_to="assignments/videos/", blank=True, validators=[validate_video], verbose_name="فیلم تکلیف")
 
     class Meta:
         verbose_name = "تکلیف"

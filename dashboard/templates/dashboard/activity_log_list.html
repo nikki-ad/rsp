@@ -30,7 +30,7 @@
         <tbody>
             {% for item in logs %}
                 <tr>
-                    <td>{{ item.created_at }}</td>
+                    <td>{{ item.created_at|jalali_datetime }}</td>
                     <td>{{ item.user|default:"—" }}</td>
                     <td>{{ item.action }}</td>
                     <td>{{ item.description }}</td>

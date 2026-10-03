@@ -1,8 +1,9 @@
 from django import forms
+from core.uploads import AttachmentFormMixin
 
 from .models import Assignment, AssignmentSubmission
 
-class AssignmentCreateForm(forms.ModelForm):
+class AssignmentCreateForm(AttachmentFormMixin, forms.ModelForm):
 
     class Meta:
         model = Assignment
@@ -10,7 +11,7 @@ class AssignmentCreateForm(forms.ModelForm):
         fields = [
             "title",
             "description",
-            "file",
+            "file", "image", "video",
         ]
 
         labels = {

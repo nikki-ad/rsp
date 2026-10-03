@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-header">
-    <div><h1>گزارش برنامه روزانه {{ report.classroom }}</h1><p>{{ report.start_date|date:"Y/m/d" }} تا {{ report.end_date|date:"Y/m/d" }}؛ این گزارش فقط برای مسئول تعیین‌شده کلاس قابل مشاهده است.</p></div>
+    <div><h1>گزارش برنامه روزانه {{ report.classroom }}</h1><p>{{ report.start_date|jalali_date }} تا {{ report.end_date|jalali_date }}؛ این گزارش فقط برای مسئول تعیین‌شده کلاس قابل مشاهده است.</p></div>
     <div class="page-header-actions"><a class="btn btn-ghost" href="{% url 'teacher_dashboard' %}">بازگشت</a></div>
 </div>
 

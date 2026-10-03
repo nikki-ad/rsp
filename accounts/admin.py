@@ -1,3 +1,4 @@
+from core.jalali_admin import JalaliAdminMixin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from core.admin import BaseAdmin
@@ -5,7 +6,7 @@ from .models import *
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(JalaliAdminMixin, UserAdmin):
     list_display = (
         "username",
         "first_name",
@@ -42,7 +43,7 @@ class CustomUserAdmin(UserAdmin):
 
 
 @admin.register(StudentProfile)
-class StudentProfileAdmin(admin.ModelAdmin):
+class StudentProfileAdmin(JalaliAdminMixin, admin.ModelAdmin):
     list_display = (
         "user",
         "national_code",

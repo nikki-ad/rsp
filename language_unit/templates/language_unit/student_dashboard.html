@@ -24,7 +24,7 @@
   {% for material in materials %}<div class="announcement-card"><strong>{{ material.title }}</strong>
     <small>{{ material.group.title }} | معلم: {{ material.teacher.user.get_full_name|default:material.teacher.user.username }}</small>
     {% if material.content_type == 'text' %}<p>{{ material.content }}</p>
-    {% elif material.content_type == 'file' %}<a href="{{ material.file.url }}">دریافت فایل</a>
+    {% elif material.content_type == 'file' or material.content_type == 'image' or material.content_type == 'video' %}<a href="{% url 'download_language_material' material.id %}">دریافت فایل</a>
     {% elif material.content_type == 'link' %}<a href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
   </div>{% empty %}<p>هنوز مطلبی ثبت نشده است.</p>{% endfor %}
   </div>
@@ -34,7 +34,9 @@
   <div class="announcement-list">
   {% for item in assignment_items %}<div class="announcement-card"><strong>{{ item.assignment.title }}</strong><p>معلم: {{ item.assignment.teacher.user.get_full_name|default:item.assignment.teacher.user.username }}</p>
     <p>{{ item.assignment.description }}</p>
-    {% if item.assignment.file %}<a href="{{ item.assignment.file.url }}">دریافت فایل تکلیف</a><br>{% endif %}
+    {% if item.assignment.image %}<a href="{% url 'download_language_assignment' item.assignment.id 'image' %}">دریافت عکس تکلیف</a>{% endif %}
+    {% if item.assignment.video %}<a href="{% url 'download_language_assignment' item.assignment.id 'video' %}">دریافت فیلم تکلیف</a>{% endif %}
+    {% if item.assignment.file %}<a href="{% url 'download_language_assignment' item.assignment.id 'file' %}">دریافت فایل تکلیف</a><br>{% endif %}
     {% if item.submission %}<span class="badge badge-success">پاسخ ارسال شده</span>{% endif %}
     <a href="{% url 'submit_language_assignment' item.assignment.id %}">{% if item.submission %}ویرایش پاسخ{% else %}ارسال پاسخ{% endif %}</a>
   </div>{% empty %}<p>هنوز تکلیفی ثبت نشده است.</p>{% endfor %}

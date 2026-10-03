@@ -3,3 +3,4 @@ Pillow==12.3.0
 requests==2.34.2
 gunicorn==23.0.0
 psycopg[binary]==3.3.5
+jdatetime==5.2.0
