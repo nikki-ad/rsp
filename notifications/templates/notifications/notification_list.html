@@ -33,17 +33,15 @@
                 {% endif %}
             </div>
 
-            {% if notification.message %}
+            {% if notification.summary_message %}
+                <p>{{ notification.summary_message }}</p>
+            {% elif notification.message %}
                 <p>{{ notification.message }}</p>
-            {% endif %}
-
-            {% if notification.announcement %}
-                {% include "notifications/announcement_image.html" with announcement=notification.announcement %}
             {% endif %}
 
             <small>{{ notification.created_at|jalali_datetime }}</small>
 
-            {% if notification.url %}
+            {% if notification.url and not notification.summary_message %}
                 <div class="card-actions">
                     <a class="btn btn-secondary" href="{% url 'open_notification' notification.id %}">مشاهده</a>
                 </div>

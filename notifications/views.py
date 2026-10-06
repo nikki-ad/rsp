@@ -16,9 +16,16 @@ def notification_list(request):
         recipient=request.user,
     ).filter(Q(announcement__isnull=True) | Q(announcement__in=visible)).select_related("announcement")
 
-    unread_count = notifications.filter(
-        is_read=False,
-    ).count()
+    # These cards have no open button: viewing the list acknowledges only
+    # the visible summaries, while other notification types retain their flow.
+    notifications = list(notifications)
+    summary_ids = [item.pk for item in notifications if item.summary_message and not item.is_read]
+    if summary_ids:
+        from django.utils import timezone
+        Notification.objects.filter(recipient=request.user, pk__in=summary_ids).update(
+            is_read=True, updated_at=timezone.now(),
+        )
+    unread_count = sum(not item.is_read and not item.summary_message for item in notifications)
 
     return render(
         request,
