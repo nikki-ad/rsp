@@ -106,7 +106,7 @@ class LanguageUnitTests(TestCase):
         self.group.teachers.add(other_teacher)
         self.assertEqual(self.client.get(material_url).status_code, 404)
         self.client.force_login(self.teacher_user)
-        self.assertContains(self.client.get(reverse("language_group_detail", args=[self.group.id])),
+        self.assertContains(self.client.get(reverse("language_group_material_list", args=[self.group.id])),
                             material_url)
         self.assertEqual(self.client.post(material_url, {
             "title": "New material", "content_type": "text", "content": "Edited",

@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
 from accounts.permissions import is_school_admin
 from academic.models import AcademicYear
@@ -22,7 +23,7 @@ def teacher_language_content(request, kind):
         return HttpResponseForbidden()
     groups = active_teacher_groups(request.user)
     model = LanguageMaterial if kind == "materials" else LanguageAssignment
-    items = model.objects.filter(group__in=groups, teacher=teacher).select_related("group", "teacher__user")
+    items = model.objects.filter(group__in=groups, teacher=teacher).select_related("group", "teacher__user").order_by("-created_at", "-id")
     return render(request, "language_unit/content_list.html", {
         "groups": groups, "items": items, "kind": kind,
         "page_title": "مطالب زبان" if kind == "materials" else "تکالیف زبان",
@@ -36,6 +37,28 @@ def manager_language_group_content(request, group_id):
     group = get_object_or_404(LanguageGroup.objects.select_related("academic_year"), pk=group_id)
     return render(request, "language_unit/group_detail.html", {
         "group": group, "students": group.students.select_related("user"), "manager_view": True,
-        "materials": group.materials.select_related("teacher__user"),
-        "assignments": group.assignments.select_related("teacher__user"),
+    })
+
+
+@login_required
+def language_group_content(request, group_id, kind):
+    manager_view = is_school_admin(request.user)
+    if manager_view:
+        group = get_object_or_404(LanguageGroup.objects.select_related("academic_year"), pk=group_id)
+        back_url = reverse("manager_language_group_content", args=[group.id])
+    else:
+        teacher = getattr(request.user, "teacher_profile", None)
+        if teacher is None:
+            return HttpResponseForbidden()
+        group = get_object_or_404(active_teacher_groups(request.user), pk=group_id)
+        back_url = reverse("language_group_detail", args=[group.id])
+    model = LanguageMaterial if kind == "materials" else LanguageAssignment
+    items = model.objects.filter(group=group)
+    if not manager_view:
+        items = items.filter(teacher=teacher)
+    items = items.select_related("group", "teacher__user").order_by("-created_at", "-id")
+    return render(request, "language_unit/content_list.html", {
+        "group": group, "groups": [group], "items": items, "kind": kind,
+        "manager_view": manager_view, "back_url": back_url,
+        "page_title": ("همهٔ مطالب" if kind == "materials" else "همهٔ تکالیف") + " — " + group.title,
     })

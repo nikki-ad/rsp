@@ -9,6 +9,10 @@
 <div class="announcement-list">{% for student in students %}<div class="list-card"><strong>{{ student.user.get_full_name|default:student.user.username }}</strong>
 <div class="card-actions"><a href="{% url 'start_language_conversation' student.user.id %}">پیام واحد زبان</a></div></div>
 {% empty %}<div class="empty-state">دانش‌آموزی یافت نشد.</div>{% endfor %}</div></section>
-<section class="dashboard-section"><h2>مطالب منتشرشده</h2><div class="announcement-list">{% for item in materials %}<div class="list-card"><strong>{{ item.title }}</strong><small>معلم: {{ item.teacher }}</small>{% include 'language_unit/material_attachment.html' with material=item %}{% if item.content %}<p>{{ item.content|linebreaksbr }}</p>{% endif %}{% if not manager_view %}<div class="card-actions"><a href="{% url 'edit_language_material' item.id %}">ویرایش</a></div>{% endif %}</div>{% empty %}<p>مطلبی نیست.</p>{% endfor %}</div></section>
-<section class="dashboard-section"><h2>تکالیف منتشرشده</h2><div class="announcement-list">{% for item in assignments %}<div class="list-card"><strong>{{ item.title }}</strong><small>معلم: {{ item.teacher }}</small>{% include 'language_unit/assignment_attachments.html' with assignment=item %}{% if item.description %}<p>{{ item.description|linebreaksbr }}</p>{% endif %}<span>{{ item.submissions.count }} پاسخ</span>{% if not manager_view %}<div class="card-actions"><a href="{% url 'edit_language_assignment' item.id %}">ویرایش</a></div>{% endif %}</div>{% empty %}<p>تکلیفی نیست.</p>{% endfor %}</div></section>
+<section class="dashboard-section">
+  <div class="page-header-actions">
+    <a class="btn btn-primary" href="{% url 'language_group_material_list' group.id %}">همهٔ مطالب</a>
+    <a class="btn btn-primary" href="{% url 'language_group_assignment_list' group.id %}">همهٔ تکالیف</a>
+  </div>
+</section>
 {% endblock %}

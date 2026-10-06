@@ -88,8 +88,6 @@ def language_group_detail(request, group_id):
         )
     return render(request, "language_unit/group_detail.html", {
         "group": group, "students": students, "query": query,
-        "materials": group.materials.filter(teacher=teacher),
-        "assignments": group.assignments.filter(teacher=teacher),
     })
 
 

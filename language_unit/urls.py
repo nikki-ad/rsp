@@ -2,6 +2,10 @@ from django.urls import path
 from . import views, content_views
 
 urlpatterns = [
+    path("groups/<uuid:group_id>/materials/", content_views.language_group_content,
+         {"kind": "materials"}, name="language_group_material_list"),
+    path("groups/<uuid:group_id>/assignments/", content_views.language_group_content,
+         {"kind": "assignments"}, name="language_group_assignment_list"),
     path("teacher/materials/", content_views.teacher_language_content,
          {"kind": "materials"}, name="teacher_language_material_list"),
     path("teacher/assignments/", content_views.teacher_language_content,

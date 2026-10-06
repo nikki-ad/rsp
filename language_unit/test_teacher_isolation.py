@@ -105,9 +105,10 @@ class LanguageTeacherIsolationTests(TestCase):
         self.assertContains(response, reverse('manager_language_group_content',args=[self.group.pk]))
         for group in [self.group,self.other_group]:
             self.assertEqual(self.client.get(reverse('manager_language_group_content',args=[group.pk])).status_code,200)
-        response=self.client.get(reverse('manager_language_group_content',args=[self.group.pk]))
-        self.assertContains(response,'Language-only material'); self.assertContains(response,'Language-only homework')
+        response=self.client.get(reverse('language_group_material_list',args=[self.group.pk]))
+        self.assertContains(response,'Language-only material')
         self.assertNotContains(response,reverse('edit_language_material',args=[self.material.pk]))
+        self.assertContains(self.client.get(reverse('language_group_assignment_list',args=[self.group.pk])), 'Language-only homework')
         self.client.force_login(self.user)
         self.assertEqual(self.client.get(reverse('manager_language_group_content',args=[self.group.pk])).status_code,403)
 
@@ -164,3 +165,38 @@ class LanguageTeacherIsolationTests(TestCase):
         self.client.force_login(self.user)
         self.assertEqual(self.client.get(reverse('online_class_list')).status_code,403)
         self.assertEqual(self.client.get(reverse('load_classrooms'),{'academic_year':self.year.pk}).status_code,403)
+
+    def test_group_dashboard_shows_buttons_instead_of_full_content(self):
+        for user, name in [(self.user, 'language_group_detail'), (self.manager, 'manager_language_group_content')]:
+            self.client.force_login(user)
+            response=self.client.get(reverse(name,args=[self.group.pk]))
+            self.assertContains(response, reverse('language_group_material_list',args=[self.group.pk]))
+            self.assertContains(response, reverse('language_group_assignment_list',args=[self.group.pk]))
+            self.assertNotContains(response, 'Language-only material')
+            self.assertNotContains(response, 'Language-only homework')
+            self.assertContains(response, 'پیام واحد زبان')
+
+    def test_group_lists_are_newest_first_and_group_scoped(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        for model, name in [(LanguageMaterial,'language_group_material_list'), (LanguageAssignment,'language_group_assignment_list')]:
+            older=model.objects.create(group=self.group,teacher=self.teacher,title='Older title')
+            newer=model.objects.create(group=self.group,teacher=self.teacher,title='Newest title')
+            model.objects.filter(pk=older.pk).update(created_at=timezone.now()-timedelta(days=2))
+            self.client.force_login(self.user)
+            response=self.client.get(reverse(name,args=[self.group.pk]))
+            self.assertEqual(response.context['items'][0],newer)
+            self.assertLess(response.content.index(b'Newest title'),response.content.index(b'Older title'))
+            self.assertNotContains(response,'Other group secret')
+            self.assertEqual(self.client.get(reverse(name,args=[self.other_group.pk])).status_code,404)
+            self.client.force_login(self.student_user)
+            self.assertEqual(self.client.get(reverse(name,args=[self.group.pk])).status_code,403)
+
+    def test_manager_group_lists_include_other_authors(self):
+        LanguageMaterial.objects.create(group=self.group,teacher=self.regular,title='Second author')
+        self.client.force_login(self.user)
+        self.assertNotContains(self.client.get(reverse('language_group_material_list',args=[self.group.pk])),'Second author')
+        self.client.force_login(self.manager)
+        response=self.client.get(reverse('language_group_material_list',args=[self.group.pk]))
+        self.assertContains(response,'Second author')
+        self.assertNotContains(response, 'مطلب جدید')
