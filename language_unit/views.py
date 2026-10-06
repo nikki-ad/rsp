@@ -12,6 +12,8 @@ from accounts.permissions import is_school_admin
 from activitylog.utils import log_activity
 from notifications import constants as notification_constants
 from notifications.services import create_notification
+from notifications.announcements import announcements_for, ensure_announcement_notifications
+from notifications.models import Notification
 from .forms import (
     LanguageAssignmentForm, LanguageGroupForm, LanguageMaterialForm, LanguageSubmissionForm,
 )
@@ -73,7 +75,15 @@ def teacher_language_dashboard(request):
     groups = LanguageGroup.objects.filter(
         teachers=teacher, is_active=True, academic_year__status="active"
     ).prefetch_related("students__user")
-    return render(request, "language_unit/teacher_dashboard.html", {"groups": groups})
+    announcements = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, announcements)
+    unread_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(
+        Q(announcement__isnull=True) | Q(announcement__in=announcements)
+    ).count()
+    return render(request, "language_unit/teacher_dashboard.html", {
+        "groups": groups, "announcements": announcements[:1],
+        "unread_notification_count": unread_count,
+    })
 
 
 @login_required

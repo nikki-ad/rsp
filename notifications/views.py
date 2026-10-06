@@ -64,3 +64,20 @@ def delete_all_notifications(request):
     deleted_count, _ = Notification.objects.filter(recipient=request.user).delete()
     messages.success(request, f"{deleted_count} اعلان حذف شد.")
     return redirect("notification_list")
+
+
+@login_required
+def recipient_announcement_list(request):
+    from accounts.choices import Role
+    from accounts.permissions import post_login_redirect_name
+    from django.http import HttpResponseForbidden
+    from django.urls import reverse
+
+    if request.user.role not in {Role.STUDENT, Role.TEACHER}:
+        return HttpResponseForbidden()
+    visible = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, visible)
+    return render(request, "notifications/announcement_list.html", {
+        "announcements": visible,
+        "back_url": reverse(post_login_redirect_name(request.user)),
+    })

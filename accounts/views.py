@@ -82,7 +82,7 @@ def teacher_dashboard(request):
     announcements = announcements_for(request.user)
     ensure_announcement_notifications(request.user, announcements)
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(Q(announcement__isnull=True) | Q(announcement__in=announcements)).count()
-    return render(request, "accounts/teacher_dashboard.html", {"classrooms": classrooms, "report_classrooms": report_classrooms, "unread_notification_count": unread_notification_count, "announcements": announcements})
+    return render(request, "accounts/teacher_dashboard.html", {"classrooms": classrooms, "report_classrooms": report_classrooms, "unread_notification_count": unread_notification_count, "announcements": announcements[:1]})
 
 
 @login_required
@@ -250,7 +250,7 @@ def student_dashboard(request):
         "assignment_items": assignment_items,
         "cafeteria_reservation": cafeteria_reservation,
         "report_cards": report_cards,
-        "announcements": announcements,
+        "announcements": announcements[:1],
         "weekly_schedule": weekly_schedule,
         "routine_form": routine_form,
         "today_routine": today_routine,

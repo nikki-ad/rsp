@@ -8,4 +8,5 @@
 <span>{{ group.academic_year }}</span><strong>{{ group.title }}</strong><small>{{ group.students.count }} دانش‌آموز</small>
 </a>{% empty %}<p>هنوز گروه زبانی به شما اختصاص داده نشده است.</p>{% endfor %}
 </div></section>
+{% include "notifications/latest_announcement.html" %}
 {% endblock %}

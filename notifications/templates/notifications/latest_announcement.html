@@ -1,0 +1,9 @@
+<section class="dashboard-section">
+  <div class="page-header"><div><h2>📢 آخرین اطلاعیهٔ مدرسه</h2></div>
+    <a class="btn btn-ghost" href="{% url 'recipient_announcement_list' %}">مشاهدهٔ همه</a>
+  </div>
+  <div class="announcement-list">
+    {% for announcement in announcements %}{% include "notifications/announcement_card.html" %}
+    {% empty %}<p>اطلاعیه‌ای برای شما وجود ندارد.</p>{% endfor %}
+  </div>
+</section>

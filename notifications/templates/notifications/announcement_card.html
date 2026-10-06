@@ -1,0 +1,6 @@
+<div class="announcement-card">
+  <strong>{{ announcement.title }}</strong>
+  <p>{{ announcement.message|linebreaksbr }}</p>
+  {% include "notifications/announcement_image.html" %}
+  <small>{{ announcement.publish_at|jalali_datetime }}</small>
+</div>
