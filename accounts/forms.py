@@ -172,6 +172,8 @@ class StudentCreateForm(forms.Form):
 
 
 class TeacherCreateForm(forms.Form):
+    is_language_teacher = forms.BooleanField(required=False, label="معلم واحد زبان",
+        help_text="با انتخاب این گزینه، معلم فقط به گروه‌های زبان خودش دسترسی دارد.")
     username = forms.CharField(max_length=150, required=False, label="نام کاربری دلخواه", help_text="اگر خالی بماند، سامانه آن را می‌سازد.")
     password1 = forms.CharField(required=False, label="رمز عبور دلخواه", widget=forms.PasswordInput, help_text="اگر خالی بماند، رمز اولیه 12345678 خواهد بود.")
     password2 = forms.CharField(required=False, label="تکرار رمز عبور", widget=forms.PasswordInput)
@@ -232,6 +234,9 @@ class TeacherCreateForm(forms.Form):
             raise forms.ValidationError("این نام کاربری قبلاً استفاده شده است.")
         return username
 
+    def clean_classrooms(self):
+        return Classroom.objects.none() if self.cleaned_data.get("is_language_teacher") else self.cleaned_data.get("classrooms")
+
     def clean(self):
         cleaned_data = super().clean()
         password1 = cleaned_data.get("password1") or ""
@@ -269,6 +274,7 @@ class TeacherCreateForm(forms.Form):
             personnel_code=self.cleaned_data.get("personnel_code") or None,
             expertise=self.cleaned_data.get("expertise") or "",
             description=self.cleaned_data.get("description") or "",
+            is_language_teacher=self.cleaned_data.get("is_language_teacher", False),
             created_by=created_by,
         )
 
@@ -495,6 +501,8 @@ class StudentEditForm(forms.Form):
 
 
 class TeacherEditForm(forms.Form):
+    is_language_teacher = forms.BooleanField(required=False, label="معلم واحد زبان",
+        help_text="با انتخاب این گزینه، معلم فقط به گروه‌های زبان خودش دسترسی دارد.")
     username = forms.CharField(max_length=150, label="نام کاربری")
     new_password1 = forms.CharField(required=False, label="رمز عبور جدید", widget=forms.PasswordInput)
     new_password2 = forms.CharField(required=False, label="تکرار رمز جدید", widget=forms.PasswordInput)
@@ -552,6 +560,9 @@ class TeacherEditForm(forms.Form):
             raise forms.ValidationError("این نام کاربری قبلاً استفاده شده است.")
         return username
 
+    def clean_classrooms(self):
+        return Classroom.objects.none() if self.cleaned_data.get("is_language_teacher") else self.cleaned_data.get("classrooms")
+
     def clean(self):
         cleaned_data = super().clean()
         password1 = cleaned_data.get("new_password1") or ""
@@ -582,6 +593,7 @@ class TeacherEditForm(forms.Form):
         self.teacher.personnel_code = self.cleaned_data.get("personnel_code") or None
         self.teacher.expertise = self.cleaned_data.get("expertise") or ""
         self.teacher.description = self.cleaned_data.get("description") or ""
+        self.teacher.is_language_teacher = self.cleaned_data.get("is_language_teacher", False)
         self.teacher.save()
 
         selected = set(self.cleaned_data.get("classrooms") or [])

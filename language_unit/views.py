@@ -24,6 +24,14 @@ def _language_teacher(request):
     return getattr(request.user, "teacher_profile", None)
 
 
+def _teacher_group_or_404(teacher, group_id):
+    if teacher is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied()
+    return get_object_or_404(LanguageGroup, id=group_id, teachers=teacher,
+        is_active=True, academic_year__status=AcademicYear.Status.ACTIVE)
+
+
 @login_required
 def student_language_dashboard(request):
     student = getattr(request.user, "student_profile", None)
@@ -71,7 +79,7 @@ def teacher_language_dashboard(request):
 @login_required
 def language_group_detail(request, group_id):
     teacher = _language_teacher(request)
-    group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
+    group = _teacher_group_or_404(teacher, group_id)
     query = (request.GET.get("q") or "").strip()
     students = group.students.select_related("user")
     if query:
@@ -88,7 +96,7 @@ def language_group_detail(request, group_id):
 @login_required
 def create_language_material(request, group_id):
     teacher = _language_teacher(request)
-    group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
+    group = _teacher_group_or_404(teacher, group_id)
     form = LanguageMaterialForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
@@ -133,7 +141,7 @@ def edit_language_material(request, material_id):
 @login_required
 def create_language_assignment(request, group_id):
     teacher = _language_teacher(request)
-    group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
+    group = _teacher_group_or_404(teacher, group_id)
     form = LanguageAssignmentForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
@@ -289,14 +297,26 @@ def language_group_delete(request, group_id):
     })
 
 
+def _language_content_for_download(request, model, item_id):
+    if is_school_admin(request.user):
+        return get_object_or_404(model, pk=item_id)
+    student = getattr(request.user, "student_profile", None)
+    teacher = _language_teacher(request)
+    filters = {"group__is_active": True, "group__academic_year__status": AcademicYear.Status.ACTIVE}
+    if student:
+        filters["group__students"] = student
+    elif teacher:
+        filters.update(teacher=teacher, group__teachers=teacher)
+    else:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied()
+    return get_object_or_404(model, pk=item_id, **filters)
+
+
 @login_required
 def download_language_material(request, material_id):
     from core.uploads import attachment_response
-    student = getattr(request.user, "student_profile", None)
-    if not student:
-        return HttpResponseForbidden()
-    item = get_object_or_404(LanguageMaterial, pk=material_id, group__students=student,
-                             group__is_active=True, group__academic_year__status=AcademicYear.Status.ACTIVE)
+    item = _language_content_for_download(request, LanguageMaterial, material_id)
     return attachment_response(item.file)
 
 
@@ -304,11 +324,7 @@ def download_language_material(request, material_id):
 def download_language_assignment(request, assignment_id, attachment="file"):
     from core.uploads import attachment_response
     from django.http import Http404
-    student = getattr(request.user, "student_profile", None)
-    if not student:
-        return HttpResponseForbidden()
-    item = get_object_or_404(LanguageAssignment, pk=assignment_id, group__students=student,
-                             group__is_active=True, group__academic_year__status=AcademicYear.Status.ACTIVE)
     if attachment not in {"file", "image", "video"}:
         raise Http404()
+    item = _language_content_for_download(request, LanguageAssignment, assignment_id)
     return attachment_response(getattr(item, attachment))

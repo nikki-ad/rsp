@@ -337,6 +337,7 @@ def edit_teacher(request, teacher_id):
         "first_name": teacher.user.first_name,
         "last_name": teacher.user.last_name,
         "is_active": teacher.user.is_active,
+        "is_language_teacher": teacher.is_language_teacher,
         "personnel_code": teacher.personnel_code or "",
         "expertise": teacher.expertise or "",
         "description": teacher.description or "",

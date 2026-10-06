@@ -5,7 +5,7 @@ from academic.models import AcademicYear, Classroom
 
 
 def assigned_active_classrooms(teacher):
-    if teacher is None:
+    if teacher is None or teacher.is_language_teacher:
         return Classroom.objects.none()
 
     return (

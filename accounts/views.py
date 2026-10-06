@@ -1,3 +1,4 @@
+from accounts.permissions import school_teacher_only, language_teacher_redirect
 from core.upload_progress import render_upload_form, upload_success
 from notifications.announcements import announcements_for, ensure_announcement_notifications
 from django.contrib import messages
@@ -59,6 +60,7 @@ def profile(request):
 
 
 @login_required
+@school_teacher_only
 def load_classrooms(request):
     academic_year_id = request.GET.get("academic_year")
     classrooms = Classroom.objects.filter(academic_year_id=academic_year_id).order_by("grade__order", "name")
@@ -66,6 +68,7 @@ def load_classrooms(request):
 
 
 @login_required
+@language_teacher_redirect("teacher_language_dashboard")
 def teacher_dashboard(request):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
@@ -83,6 +86,7 @@ def teacher_dashboard(request):
 
 
 @login_required
+@school_teacher_only
 def teacher_routine_report(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
@@ -100,6 +104,7 @@ def teacher_routine_report(request, classroom_id):
 
 
 @login_required
+@school_teacher_only
 def teacher_class_detail(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
@@ -123,6 +128,7 @@ def _teacher_classroom_or_404(request, classroom_id):
 
 
 @login_required
+@school_teacher_only
 def teacher_class_material_list(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
@@ -135,6 +141,7 @@ def teacher_class_material_list(request, classroom_id):
 
 
 @login_required
+@school_teacher_only
 def teacher_class_assignment_list(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
@@ -147,6 +154,7 @@ def teacher_class_assignment_list(request, classroom_id):
 
 
 @login_required
+@school_teacher_only
 def create_material(request, classroom_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)
@@ -208,7 +216,7 @@ def student_dashboard(request):
 
     if enrollment:
         classroom = enrollment.classroom
-        teachers = classroom.teacher_assignments.select_related("teacher__user")
+        teachers = classroom.teacher_assignments.filter(teacher__is_language_teacher=False).select_related("teacher__user")
         materials = classroom.materials.select_related("teacher__user").order_by("-created_at")[:1]
         assignments = classroom.assignments.select_related("teacher__user").order_by("-created_at")[:1]
         submitted_assignment_ids = set(student.assignment_submissions.values_list("assignment_id", flat=True))
@@ -256,6 +264,7 @@ def manager_dashboard(request):
 
 
 @login_required
+@school_teacher_only
 def delete_material(request, material_id):
     if not hasattr(request.user, "teacher_profile"):
         return render(request, "dashboard/access_denied.html", status=403)

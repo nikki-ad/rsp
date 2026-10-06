@@ -1,7 +1,13 @@
 from django.urls import path
-from . import views
+from . import views, content_views
 
 urlpatterns = [
+    path("teacher/materials/", content_views.teacher_language_content,
+         {"kind": "materials"}, name="teacher_language_material_list"),
+    path("teacher/assignments/", content_views.teacher_language_content,
+         {"kind": "assignments"}, name="teacher_language_assignment_list"),
+    path("manage/<uuid:group_id>/content/", content_views.manager_language_group_content,
+         name="manager_language_group_content"),
     path("materials/<uuid:material_id>/download/", views.download_language_material, name="download_language_material"),
     path("assignments/<uuid:assignment_id>/download/<str:attachment>/", views.download_language_assignment, name="download_language_assignment"),
     path("", views.student_language_dashboard, name="student_language_dashboard"),

@@ -117,6 +117,10 @@ class StudentProfile(BaseModel):
 
 
 class TeacherProfile(BaseModel):
+    is_language_teacher = models.BooleanField(
+        default=False, verbose_name="معلم واحد زبان",
+        help_text="این معلم فقط به گروه‌های زبان دسترسی دارد و به کلاس‌های مدرسه دسترسی ندارد.",
+    )
 
     user = models.OneToOneField(
         "accounts.CustomUser",

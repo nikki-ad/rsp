@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponseForbidden
 from notifications.services import create_notification
 from accounts.choices import Role
+from accounts.permissions import is_language_teacher
 from django.urls import reverse
 from academic.models import AcademicYear, Enrollment
 
@@ -47,6 +48,7 @@ def conversation_list(request):
             Q(is_superuser=True)
             | Q(role__in=[Role.SUPER_ADMIN, Role.SCHOOL_MANAGER])
             | Q(
+                teacher_profile__is_language_teacher=False,
                 teacher_profile__class_assignments__classroom__enrollments__student=student,
                 teacher_profile__class_assignments__classroom__enrollments__is_active=True,
                 teacher_profile__class_assignments__classroom__academic_year__status=AcademicYear.Status.ACTIVE,
@@ -74,6 +76,10 @@ def start_conversation(request, user_id):
         id=user_id,
         is_active=True,
     )
+
+    if ((is_language_teacher(request.user) and hasattr(other_user, "student_profile"))
+            or (is_language_teacher(other_user) and hasattr(request.user, "student_profile"))):
+        return HttpResponseForbidden("گفت‌وگو با معلم زبان از بخش واحد زبان انجام می‌شود.")
 
     # مدیر و سوپرادمین می‌توانند با هر کاربر فعالی گفتگو کنند.
     if (
@@ -169,6 +175,13 @@ def chat_view(request, conversation_id):
         conversation.participant_2,
     ]:
         return redirect("conversation_list")
+
+    other_user = conversation.participant_2 if conversation.participant_1 == request.user else conversation.participant_1
+    if conversation.channel == Conversation.Channel.GENERAL and (
+        (is_language_teacher(request.user) and hasattr(other_user, "student_profile"))
+        or (is_language_teacher(other_user) and hasattr(request.user, "student_profile"))
+    ):
+        return HttpResponseForbidden("گفت‌وگو با معلم زبان از بخش واحد زبان انجام می‌شود.")
 
     messages = conversation.messages.all().order_by(
         "created_at",

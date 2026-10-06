@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header"><h1>{{ page_title }}</h1><a href="{% url 'teacher_language_dashboard' %}">گروه‌های زبان من</a></div>
+<section class="dashboard-section"><h2>انتخاب گروه برای ثبت محتوا</h2><div class="class-grid">
+{% for group in groups %}<div class="class-card"><strong>{{ group.title }}</strong>
+{% if kind == 'materials' %}<a class="btn btn-primary" href="{% url 'create_language_material' group.id %}">مطلب جدید</a>
+{% else %}<a class="btn btn-primary" href="{% url 'create_language_assignment' group.id %}">تکلیف جدید</a>{% endif %}
+</div>{% empty %}<p>هنوز گروه زبان فعالی به شما اختصاص داده نشده است.</p>{% endfor %}</div></section>
+<section class="dashboard-section"><div class="announcement-list">
+{% for item in items %}<div class="list-card"><strong>{{ item.title }}</strong><small>{{ item.group.title }}</small>
+{% if kind == 'materials' %}<p>{{ item.content|linebreaksbr }}</p>{% include 'language_unit/material_attachment.html' with material=item %}<a href="{% url 'edit_language_material' item.id %}">ویرایش</a>
+{% else %}<p>{{ item.description|linebreaksbr }}</p>{% include 'language_unit/assignment_attachments.html' with assignment=item %}<a href="{% url 'edit_language_assignment' item.id %}">ویرایش</a>{% endif %}
+</div>{% empty %}<p>هنوز محتوایی ثبت نشده است.</p>{% endfor %}</div></section>
+{% endblock %}

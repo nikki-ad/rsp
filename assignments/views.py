@@ -1,3 +1,4 @@
+from accounts.permissions import school_teacher_only, language_teacher_redirect
 from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -56,6 +57,7 @@ def student_assignment_list(request):
 
 
 @login_required
+@school_teacher_only
 def create_assignment(request, classroom_id):
     teacher, denied = _teacher_or_denied(request)
     if denied:
@@ -213,6 +215,7 @@ def submit_assignment(request, assignment_id):
 
 
 @login_required
+@school_teacher_only
 def assignment_submissions(request, assignment_id):
     teacher, denied = _teacher_or_denied(request)
     if denied:
@@ -239,6 +242,7 @@ def assignment_submissions(request, assignment_id):
 
 
 @login_required
+@school_teacher_only
 def evaluate_submission(request, submission_id):
     teacher, denied = _teacher_or_denied(request)
     if denied:
@@ -306,6 +310,7 @@ def evaluate_submission(request, submission_id):
     )
 
 @login_required
+@school_teacher_only
 def delete_assignment(request, assignment_id):
     teacher, denied = _teacher_or_denied(request)
     if denied:
@@ -370,6 +375,7 @@ def download_assignment_file(request, assignment_id, attachment="file"):
 
 
 @login_required
+@school_teacher_only
 def download_submission_file(request, submission_id):
 
     teacher, denied = _teacher_or_denied(request)
@@ -397,6 +403,7 @@ def download_submission_file(request, submission_id):
 
 
 @login_required
+@language_teacher_redirect("teacher_language_assignment_list")
 def teacher_assignment_list(request):
     teacher, denied = _teacher_or_denied(request)
     if denied:
@@ -410,6 +417,7 @@ def teacher_assignment_list(request):
 
 
 @login_required
+@school_teacher_only
 def edit_assignment(request, assignment_id):
     teacher, denied = _teacher_or_denied(request)
     if denied:

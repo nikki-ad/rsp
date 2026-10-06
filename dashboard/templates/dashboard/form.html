@@ -1,8 +1,10 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ page_title }} | RSP{% endblock %}
 
 {% block content %}
+{% if form.is_language_teacher %}<script src="{% static 'js/teacher-unit.js' %}" defer></script>{% endif %}
 <div class="page-header">
     <div>
         <h1>{{ page_title }}</h1>
