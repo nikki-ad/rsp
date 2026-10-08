@@ -4,6 +4,7 @@ from . import views
 
 
 urlpatterns = [
+    path("announcements/", views.recipient_announcement_list, name="recipient_announcement_list"),
     path("delete-all/", views.delete_all_notifications, name="delete_all_notifications"),
     path(
         "",

@@ -11,12 +11,14 @@ from .services import (
     get_bbb_live_attendees,
 )
 from accounts.choices import Role
+from accounts.permissions import school_teacher_only
 from academic.models import AcademicYear
 
 
 
 
 @login_required
+@school_teacher_only
 def online_class_list(request):
 
     user = request.user
@@ -68,6 +70,7 @@ def online_class_list(request):
 
 
 @login_required
+@school_teacher_only
 def join_online_class(request, class_id):
 
     online_class = get_object_or_404(
@@ -144,6 +147,7 @@ def join_online_class(request, class_id):
 
 
 @login_required
+@school_teacher_only
 def live_attendance(request, class_id):
 
     online_class = get_object_or_404(

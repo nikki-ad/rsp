@@ -16,9 +16,16 @@ def notification_list(request):
         recipient=request.user,
     ).filter(Q(announcement__isnull=True) | Q(announcement__in=visible)).select_related("announcement")
 
-    unread_count = notifications.filter(
-        is_read=False,
-    ).count()
+    # These cards have no open button: viewing the list acknowledges only
+    # the visible summaries, while other notification types retain their flow.
+    notifications = list(notifications)
+    summary_ids = [item.pk for item in notifications if item.summary_message and not item.is_read]
+    if summary_ids:
+        from django.utils import timezone
+        Notification.objects.filter(recipient=request.user, pk__in=summary_ids).update(
+            is_read=True, updated_at=timezone.now(),
+        )
+    unread_count = sum(not item.is_read and not item.summary_message for item in notifications)
 
     return render(
         request,
@@ -64,3 +71,20 @@ def delete_all_notifications(request):
     deleted_count, _ = Notification.objects.filter(recipient=request.user).delete()
     messages.success(request, f"{deleted_count} اعلان حذف شد.")
     return redirect("notification_list")
+
+
+@login_required
+def recipient_announcement_list(request):
+    from accounts.choices import Role
+    from accounts.permissions import post_login_redirect_name
+    from django.http import HttpResponseForbidden
+    from django.urls import reverse
+
+    if request.user.role not in {Role.STUDENT, Role.TEACHER}:
+        return HttpResponseForbidden()
+    visible = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, visible)
+    return render(request, "notifications/announcement_list.html", {
+        "announcements": visible,
+        "back_url": reverse(post_login_redirect_name(request.user)),
+    })

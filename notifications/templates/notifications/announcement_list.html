@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}همهٔ اطلاعیه‌ها | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>همهٔ اطلاعیه‌ها</h1><p>از جدیدترین به قدیمی‌ترین</p></div>
+<a class="btn btn-ghost" href="{{ back_url }}">بازگشت به داشبورد</a></div>
+<section class="dashboard-section"><div class="announcement-list">
+{% for announcement in announcements %}{% include "notifications/announcement_card.html" %}
+{% empty %}<p>اطلاعیه‌ای برای شما وجود ندارد.</p>{% endfor %}
+</div></section>
+{% endblock %}

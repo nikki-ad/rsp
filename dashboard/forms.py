@@ -157,7 +157,7 @@ class GradeForm(forms.ModelForm):
 
 class ClassroomForm(forms.ModelForm):
     teachers = forms.ModelMultipleChoiceField(
-        queryset=TeacherProfile.objects.select_related("user").all(),
+        queryset=TeacherProfile.objects.select_related("user").filter(is_language_teacher=False),
         required=False,
         label="معلمان کلاس",
         widget=forms.CheckboxSelectMultiple,
@@ -189,7 +189,7 @@ class ClassroomForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["daily_report_responsible"].queryset = (
             TeacherProfile.objects.select_related("user")
-            .filter(user__is_active=True)
+            .filter(user__is_active=True, is_language_teacher=False)
             .order_by("user__last_name", "user__first_name")
         )
         self.fields["daily_report_responsible"].help_text = (

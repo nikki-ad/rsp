@@ -1,7 +1,25 @@
 from django.urls import path
-from . import views
+from . import views, content_views
 
 urlpatterns = [
+    path("materials/<uuid:item_id>/delete/", views.delete_language_content,
+         {"kind": "materials"}, name="delete_language_material"),
+    path("assignments/<uuid:item_id>/delete/", views.delete_language_content,
+         {"kind": "assignments"}, name="delete_language_assignment"),
+    path("assignments/<uuid:assignment_id>/responses/", views.language_assignment_submissions,
+         name="language_assignment_submissions"),
+    path("responses/<uuid:submission_id>/download/", views.download_language_submission,
+         name="download_language_submission"),
+    path("groups/<uuid:group_id>/materials/", content_views.language_group_content,
+         {"kind": "materials"}, name="language_group_material_list"),
+    path("groups/<uuid:group_id>/assignments/", content_views.language_group_content,
+         {"kind": "assignments"}, name="language_group_assignment_list"),
+    path("teacher/materials/", content_views.teacher_language_content,
+         {"kind": "materials"}, name="teacher_language_material_list"),
+    path("teacher/assignments/", content_views.teacher_language_content,
+         {"kind": "assignments"}, name="teacher_language_assignment_list"),
+    path("manage/<uuid:group_id>/content/", content_views.manager_language_group_content,
+         name="manager_language_group_content"),
     path("materials/<uuid:material_id>/download/", views.download_language_material, name="download_language_material"),
     path("assignments/<uuid:assignment_id>/download/<str:attachment>/", views.download_language_assignment, name="download_language_assignment"),
     path("", views.student_language_dashboard, name="student_language_dashboard"),

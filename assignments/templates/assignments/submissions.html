@@ -9,7 +9,7 @@
         <p>{{ assignment.title }}</p>
     </div>
     <div class="page-header-actions">
-        <a class="btn btn-ghost" href="{% url 'teacher_class_detail' assignment.classroom.id %}">بازگشت به کلاس</a>
+        <a class="btn btn-ghost" href="{% if manager_view %}{% url 'manager_class_assignments' assignment.classroom.id %}{% else %}{% url 'teacher_class_detail' assignment.classroom.id %}{% endif %}">بازگشت به کلاس</a>
     </div>
 </div>
 
@@ -38,9 +38,9 @@
                 {% if submission.file %}
                     <a class="btn btn-ghost" href="{% url 'download_submission_file' submission.id %}">دریافت فایل پاسخ</a>
                 {% endif %}
-                <a class="btn btn-primary" href="{% url 'evaluate_submission' submission.id %}">
+                {% if not manager_view %}<a class="btn btn-primary" href="{% url 'evaluate_submission' submission.id %}">
                     {% if submission.evaluation %}ویرایش ارزیابی{% else %}ارزیابی پاسخ{% endif %}
-                </a>
+                </a>{% endif %}
             </div>
         </div>
     {% empty %}

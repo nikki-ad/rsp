@@ -5,7 +5,7 @@ from academic.models import AcademicYear, Classroom
 
 
 def assigned_active_classrooms(teacher):
-    if teacher is None:
+    if teacher is None or teacher.is_language_teacher:
         return Classroom.objects.none()
 
     return (
@@ -101,8 +101,12 @@ class EducationalMaterialCreateForm(AttachmentFormMixin, forms.ModelForm):
         labels = {
             "title": "عنوان",
             "content_type": "نوع محتوا",
-            "content": "متن مطلب",
+            "content": "متن مطلب / توضیحات",
             "file": "فایل",
             "link": "لینک",
             "classrooms": "کلاس‌ها",
+        }
+
+        help_texts = {
+            "content": "برای نوع متن الزامی است؛ برای فایل، عکس، فیلم و لینک می‌توانید توضیح اختیاری بنویسید.",
         }

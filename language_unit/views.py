@@ -12,6 +12,8 @@ from accounts.permissions import is_school_admin
 from activitylog.utils import log_activity
 from notifications import constants as notification_constants
 from notifications.services import create_notification
+from notifications.announcements import announcements_for, ensure_announcement_notifications
+from notifications.models import Notification
 from .forms import (
     LanguageAssignmentForm, LanguageGroupForm, LanguageMaterialForm, LanguageSubmissionForm,
 )
@@ -22,6 +24,14 @@ from academic.models import AcademicYear
 
 def _language_teacher(request):
     return getattr(request.user, "teacher_profile", None)
+
+
+def _teacher_group_or_404(teacher, group_id):
+    if teacher is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied()
+    return get_object_or_404(LanguageGroup, id=group_id, teachers=teacher,
+        is_active=True, academic_year__status=AcademicYear.Status.ACTIVE)
 
 
 @login_required
@@ -65,13 +75,21 @@ def teacher_language_dashboard(request):
     groups = LanguageGroup.objects.filter(
         teachers=teacher, is_active=True, academic_year__status="active"
     ).prefetch_related("students__user")
-    return render(request, "language_unit/teacher_dashboard.html", {"groups": groups})
+    announcements = announcements_for(request.user)
+    ensure_announcement_notifications(request.user, announcements)
+    unread_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(
+        Q(announcement__isnull=True) | Q(announcement__in=announcements)
+    ).count()
+    return render(request, "language_unit/teacher_dashboard.html", {
+        "groups": groups, "announcements": announcements[:1],
+        "unread_notification_count": unread_count,
+    })
 
 
 @login_required
 def language_group_detail(request, group_id):
     teacher = _language_teacher(request)
-    group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
+    group = _teacher_group_or_404(teacher, group_id)
     query = (request.GET.get("q") or "").strip()
     students = group.students.select_related("user")
     if query:
@@ -80,15 +98,13 @@ def language_group_detail(request, group_id):
         )
     return render(request, "language_unit/group_detail.html", {
         "group": group, "students": students, "query": query,
-        "materials": group.materials.filter(teacher=teacher),
-        "assignments": group.assignments.filter(teacher=teacher),
     })
 
 
 @login_required
 def create_language_material(request, group_id):
     teacher = _language_teacher(request)
-    group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
+    group = _teacher_group_or_404(teacher, group_id)
     form = LanguageMaterialForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
@@ -133,7 +149,7 @@ def edit_language_material(request, material_id):
 @login_required
 def create_language_assignment(request, group_id):
     teacher = _language_teacher(request)
-    group = get_object_or_404(LanguageGroup, id=group_id, teachers=teacher, is_active=True)
+    group = _teacher_group_or_404(teacher, group_id)
     form = LanguageAssignmentForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         item = form.save(commit=False)
@@ -194,7 +210,7 @@ def submit_language_assignment(request, assignment_id):
                             notification_type=notification_constants.ASSIGNMENT,
                             title="پاسخ جدید تکلیف زبان",
                             message=f"{student} پاسخ «{assignment.title}» را ارسال کرد.",
-                            url=reverse("language_group_detail", args=[assignment.group_id]))
+                            url=reverse("language_assignment_submissions", args=[assignment.id]))
         messages.success(request, "پاسخ تکلیف زبان ذخیره شد.")
         return redirect("student_language_dashboard")
     return render(request, "dashboard/form.html", {
@@ -289,14 +305,26 @@ def language_group_delete(request, group_id):
     })
 
 
+def _language_content_for_download(request, model, item_id):
+    if is_school_admin(request.user):
+        return get_object_or_404(model, pk=item_id)
+    student = getattr(request.user, "student_profile", None)
+    teacher = _language_teacher(request)
+    filters = {"group__is_active": True, "group__academic_year__status": AcademicYear.Status.ACTIVE}
+    if student:
+        filters["group__students"] = student
+    elif teacher:
+        filters.update(teacher=teacher, group__teachers=teacher)
+    else:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied()
+    return get_object_or_404(model, pk=item_id, **filters)
+
+
 @login_required
 def download_language_material(request, material_id):
     from core.uploads import attachment_response
-    student = getattr(request.user, "student_profile", None)
-    if not student:
-        return HttpResponseForbidden()
-    item = get_object_or_404(LanguageMaterial, pk=material_id, group__students=student,
-                             group__is_active=True, group__academic_year__status=AcademicYear.Status.ACTIVE)
+    item = _language_content_for_download(request, LanguageMaterial, material_id)
     return attachment_response(item.file)
 
 
@@ -304,11 +332,63 @@ def download_language_material(request, material_id):
 def download_language_assignment(request, assignment_id, attachment="file"):
     from core.uploads import attachment_response
     from django.http import Http404
-    student = getattr(request.user, "student_profile", None)
-    if not student:
-        return HttpResponseForbidden()
-    item = get_object_or_404(LanguageAssignment, pk=assignment_id, group__students=student,
-                             group__is_active=True, group__academic_year__status=AcademicYear.Status.ACTIVE)
     if attachment not in {"file", "image", "video"}:
         raise Http404()
+    item = _language_content_for_download(request, LanguageAssignment, assignment_id)
     return attachment_response(getattr(item, attachment))
+
+
+def _owned_language_content(request, model, item_id):
+    teacher = _language_teacher(request)
+    if teacher is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied()
+    return get_object_or_404(model, pk=item_id, teacher=teacher,
+        group__teachers=teacher, group__is_active=True,
+        group__academic_year__status=AcademicYear.Status.ACTIVE)
+
+
+@login_required
+def delete_language_content(request, item_id, kind):
+    model = LanguageMaterial if kind == "materials" else LanguageAssignment
+    item = _owned_language_content(request, model, item_id)
+    back_url = reverse("language_group_material_list" if kind == "materials"
+                       else "language_group_assignment_list", args=[item.group_id])
+    if request.method == "POST":
+        title = item.title
+        item.delete()
+        log_activity(request, action="language_content_deleted",
+                     description=f"محتوای زبان «{title}» حذف شد.")
+        messages.success(request, "محتوای زبان حذف شد.")
+        return redirect(back_url)
+    return render(request, "dashboard/confirm_delete.html", {
+        "object_label": item.title, "back_url": back_url,
+    })
+
+
+@login_required
+def language_assignment_submissions(request, assignment_id):
+    if is_school_admin(request.user):
+        assignment = get_object_or_404(LanguageAssignment, pk=assignment_id)
+    else:
+        assignment = _owned_language_content(request, LanguageAssignment, assignment_id)
+    return render(request, "language_unit/submissions.html", {
+        "assignment": assignment,
+        "submissions": assignment.submissions.select_related("student__user").order_by("-created_at"),
+    })
+
+
+@login_required
+def download_language_submission(request, submission_id):
+    from core.uploads import attachment_response
+    if is_school_admin(request.user):
+        submission = get_object_or_404(LanguageAssignmentSubmission, pk=submission_id)
+    else:
+        teacher = _language_teacher(request)
+        if teacher is None:
+            return HttpResponseForbidden()
+        submission = get_object_or_404(LanguageAssignmentSubmission, pk=submission_id,
+            assignment__teacher=teacher, assignment__group__teachers=teacher,
+            assignment__group__is_active=True,
+            assignment__group__academic_year__status=AcademicYear.Status.ACTIVE)
+    return attachment_response(submission.file)

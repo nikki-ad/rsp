@@ -12,10 +12,11 @@
 <p>{{ item.created_at|jalali_datetime }}</p>
 {% if kind == "materials" %}
 <span class="badge badge-primary">{{ item.get_content_type_display }}</span>
-{% if item.content_type == "text" %}<div>{{ item.content|linebreaksbr }}</div>
-{% elif item.content_type == "file" or item.content_type == "image" or item.content_type == "video" %}<a class="btn btn-secondary" href="{{ item.file.url }}" target="_blank" rel="noopener">دریافت فایل مطلب</a>
+{% if item.content %}<div>{{ item.content|linebreaksbr }}</div>{% endif %}
+{% if item.content_type == "file" or item.content_type == "image" or item.content_type == "video" %}<a class="btn btn-secondary" href="{{ item.file.url }}" target="_blank" rel="noopener">دریافت فایل مطلب</a>
 {% elif item.content_type == "link" and item.link %}<a class="btn btn-secondary" href="{{ item.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
 {% else %}
+<a class="btn btn-primary" href="{% url 'assignment_submissions' item.id %}">مشاهده و دریافت پاسخ‌ها</a>
 <div>{{ item.description|default:""|linebreaksbr }}</div>
 {% if item.image %}<a href="{{ item.image.url }}">دریافت عکس تکلیف</a>{% endif %}{% if item.video %}<a href="{{ item.video.url }}">دریافت فیلم تکلیف</a>{% endif %}
 {% if item.file %}<a class="btn btn-secondary" href="{{ item.file.url }}" target="_blank" rel="noopener">دریافت فایل تکلیف</a>{% endif %}

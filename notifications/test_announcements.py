@@ -70,7 +70,7 @@ class AnnouncementTests(TestCase):
         self.assertEqual(Notification.objects.filter(announcement=announcement).count(), 4)
         for student in self.students:
             self.client.force_login(student)
-            for route in ['student_dashboard', 'notification_list']:
+            for route in ['student_dashboard', 'recipient_announcement_list']:
                 self.assertContains(self.client.get(reverse(route)), announcement.image.url)
         self.client.force_login(self.teacher)
         self.assertContains(self.client.get(reverse('teacher_dashboard')), announcement.title)
@@ -100,7 +100,8 @@ class AnnouncementTests(TestCase):
         announcement.refresh_from_db()
         self.assertNotEqual(announcement.image.name, original)
         self.client.force_login(self.students[0])
-        self.assertContains(self.client.get(reverse('notification_list')), announcement.image.url)
+        self.assertNotContains(self.client.get(reverse('notification_list')), announcement.image.url)
+        self.assertContains(self.client.get(reverse('recipient_announcement_list')), announcement.image.url)
         self.client.force_login(self.manager)
         self.assertEqual(self.client.post(url, self.data(**{'image-clear': 'on'})).status_code, 302)
         announcement.refresh_from_db()
@@ -123,7 +124,8 @@ class AnnouncementTests(TestCase):
         self.assertContains(self.client.get(reverse('announcement_list')), announcement.image.url)
         self.client.force_login(self.teacher)
         self.assertContains(self.client.get(reverse('teacher_dashboard')), announcement.image.url)
-        self.assertContains(self.client.get(reverse('notification_list')), announcement.image.url)
+        self.assertNotContains(self.client.get(reverse('notification_list')), announcement.image.url)
+        self.assertContains(self.client.get(reverse('recipient_announcement_list')), announcement.image.url)
 
     def test_future_and_inactive_announcements_not_sent_or_shown(self):
         future = timezone.localtime(timezone.now() + timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')

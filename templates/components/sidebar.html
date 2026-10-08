@@ -67,6 +67,12 @@
                 <a href="{% url 'report_card_list' %}" class="{% if 'report_card' in url_name %}active{% endif %}">کارنامه‌ها</a>
                 <a href="{% url 'activity_log_list' %}" class="{% if url_name == 'activity_log_list' %}active{% endif %}">گزارش فعالیت</a>
 
+            {% elif user.role == "teacher" and user.teacher_profile.is_language_teacher %}
+                <a href="{% url 'teacher_language_dashboard' %}">داشبورد واحد زبان</a>
+                <div class="menu-title">واحد زبان</div>
+                <a href="{% url 'teacher_language_dashboard' %}">گروه‌های زبان من</a>
+                <a href="{% url 'teacher_language_material_list' %}">مطالب زبان</a>
+                <a href="{% url 'teacher_language_assignment_list' %}">تکالیف زبان</a>
             {% elif user.role == "teacher" %}
                 <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_dashboard' %}active{% endif %}">
                     داشبورد

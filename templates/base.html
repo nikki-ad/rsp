@@ -12,11 +12,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260911-2">
     <link rel="stylesheet" href="{% static 'css/weekly_schedule.css' %}?v=20260911-2">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}?v=20260926-1">
+    <link rel="stylesheet" href="{% static 'css/upload-progress.css' %}?v=20261003-1">
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#ffffff">
     <link rel="apple-touch-icon" href="{% static 'pwa/icon-192.png' %}">
-    <link rel="stylesheet" href="{% static 'css/responsive.css' %}?v=20260926-1">
-    <link rel="stylesheet" href="{% static 'css/upload-progress.css' %}?v=20261003-1">
 </head>
 
 <body>
@@ -42,6 +42,8 @@
 
     <script src="{% static 'js/app.js' %}?v=20260911-2"></script>
     <script src="{% static 'js/rsp-prism.js' %}?v=20260911-2"></script>
+<script src="{% static 'js/content-forms.js' %}?v=20261003-1"></script>
+    <script src="{% static 'js/upload-progress.js' %}?v=20261003-1"></script>
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
@@ -49,8 +51,6 @@
             });
         }
     </script>
-<script src="{% static 'js/content-forms.js' %}?v=20261003-1"></script>
-    <script src="{% static 'js/upload-progress.js' %}?v=20261003-1"></script>
 </body>
 
 </html>

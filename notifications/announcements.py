@@ -53,7 +53,7 @@ def announcements_for(user):
         query |= Q(audience=Announcement.Audience.STUDENTS, targeted=False)
         query |= Q(audience=Announcement.Audience.STUDENTS, targeted=True, classrooms__in=classes)
         query |= Q(audience=Announcement.Audience.CLASSROOM, classroom__in=classes)
-    return active.filter(query).distinct().order_by("-publish_at")
+    return active.filter(query).distinct().order_by("-publish_at", "-created_at", "-id")
 
 
 def _defaults(announcement):

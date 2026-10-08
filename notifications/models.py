@@ -67,6 +67,14 @@ class Notification(BaseModel):
             "-created_at",
         )
 
+    @property
+    def summary_message(self):
+        return {
+            constants.MATERIAL: 'یک مطلب آموزشی جدید ثبت شد. برای مشاهده، به بخش «مطالب آموزشی» مراجعه کنید.',
+            constants.ASSIGNMENT: 'یک تکلیف آموزشی جدید ثبت شد. برای مشاهده، به بخش «تکالیف» مراجعه کنید.',
+            constants.ANNOUNCEMENT: 'یک اطلاعیه جدید ثبت شد. برای مشاهده، به بخش «اطلاعیه‌ها» مراجعه کنید.',
+        }.get(self.notification_type, "")
+
     def __str__(self):
         return f"{self.recipient} - {self.title}"
 

@@ -26,7 +26,7 @@
                 <th>نام</th>
                 <th>نام کاربری</th>
                 <th>کد پرسنلی</th>
-                <th>تخصص</th>
+                <th>تخصص</th><th>واحد آموزشی</th>
                 <th>وضعیت</th>
                 <th></th>
             </tr>
@@ -37,7 +37,7 @@
                     <td>{{ teacher.user.get_full_name|default:teacher.user.username }}</td>
                     <td>{{ teacher.user.username }}</td>
                     <td>{{ teacher.personnel_code|default:"—" }}</td>
-                    <td>{{ teacher.expertise|default:"—" }}</td>
+                    <td>{{ teacher.expertise|default:"—" }}</td><td>{% if teacher.is_language_teacher %}واحد زبان{% else %}مدرسه{% endif %}</td>
                     <td>
                         {% if teacher.user.is_active %}
                             <span class="badge badge-success">فعال</span>

@@ -1,5 +1,5 @@
 from django import forms
-from core.uploads import AttachmentFormMixin, validate_video
+from core.uploads import AttachmentFormMixin, AssignmentContentFormMixin, validate_video
 
 from accounts.models import StudentProfile, TeacherProfile
 from academic.models import AcademicYear
@@ -37,6 +37,10 @@ class LanguageMaterialForm(AttachmentFormMixin, forms.ModelForm):
     class Meta:
         model = LanguageMaterial
         fields = ("title", "content_type", "content", "file", "link")
+        labels = {"content": "متن مطلب / توضیحات"}
+        help_texts = {
+            "content": "برای نوع متن الزامی است؛ برای فایل، عکس، فیلم و لینک می‌توانید توضیح اختیاری بنویسید.",
+        }
 
     def clean(self):
         data = super().clean()
@@ -61,7 +65,7 @@ class LanguageMaterialForm(AttachmentFormMixin, forms.ModelForm):
         return data
 
 
-class LanguageAssignmentForm(AttachmentFormMixin, forms.ModelForm):
+class LanguageAssignmentForm(AssignmentContentFormMixin, forms.ModelForm):
     class Meta:
         model = LanguageAssignment
         fields = ("title", "description", "file", "image", "video")

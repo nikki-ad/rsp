@@ -1,3 +1,4 @@
+from accounts.permissions import school_teacher_only, language_teacher_redirect
 from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -34,6 +35,7 @@ def student_material_list(request):
 
 
 @login_required
+@language_teacher_redirect("teacher_language_dashboard")
 def create_material(request):
 
 
@@ -114,6 +116,7 @@ def download_material(request, material_id):
 
 
 @login_required
+@school_teacher_only
 def edit_material(request, material_id):
     if not hasattr(request.user, "teacher_profile"):
         return HttpResponseForbidden("شما اجازه ویرایش مطلب آموزشی را ندارید.")
@@ -132,6 +135,7 @@ def edit_material(request, material_id):
 
 
 @login_required
+@language_teacher_redirect("teacher_language_material_list")
 def teacher_material_list(request):
     if not hasattr(request.user, "teacher_profile"):
         return HttpResponseForbidden("این بخش مخصوص معلم است.")

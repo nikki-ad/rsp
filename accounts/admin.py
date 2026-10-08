@@ -103,11 +103,13 @@ class StudentProfileAdmin(JalaliAdminMixin, admin.ModelAdmin):
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(BaseAdmin):
+    list_filter = ("is_language_teacher",)
 
     list_display = (
         "user",
         "personnel_code",
         "expertise",
+        "is_language_teacher",
         "created_at",
     )
 

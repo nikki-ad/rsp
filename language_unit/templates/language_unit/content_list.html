@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} | واحد زبان{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ page_title }}</h1><p>از جدیدترین به قدیمی‌ترین</p></div>
+{% if back_url %}<a class="btn btn-ghost" href="{{ back_url }}">بازگشت به گروه</a>
+{% else %}<a class="btn btn-ghost" href="{% url 'teacher_language_dashboard' %}">گروه‌های زبان من</a>{% endif %}</div>
+{% if not manager_view %}
+<section class="dashboard-section">{% if not group %}<h2>انتخاب گروه برای ثبت محتوا</h2>{% endif %}<div class="class-grid">
+{% for group in groups %}<div class="class-card"><strong>{{ group.title }}</strong>
+{% if kind == 'materials' %}<a class="btn btn-primary" href="{% url 'create_language_material' group.id %}">مطلب جدید</a>
+{% else %}<a class="btn btn-primary" href="{% url 'create_language_assignment' group.id %}">تکلیف جدید</a>{% endif %}
+</div>{% empty %}<p>هنوز گروه زبان فعالی به شما اختصاص داده نشده است.</p>{% endfor %}</div></section>
+{% endif %}
+<section class="dashboard-section"><div class="announcement-list">
+{% for item in items %}<div class="list-card"><strong>{{ item.title }}</strong><small>{{ item.group.title }} | معلم: {{ item.teacher }} | {{ item.created_at|jalali_datetime }}</small>
+{% if kind == 'materials' %}<p>{{ item.content|linebreaksbr }}</p>{% include 'language_unit/material_attachment.html' with material=item %}{% if not manager_view %}<a href="{% url 'edit_language_material' item.id %}">ویرایش</a> <a href="{% url 'delete_language_material' item.id %}">حذف</a>{% endif %}
+{% else %}<p>{{ item.description|linebreaksbr }}</p>{% include 'language_unit/assignment_attachments.html' with assignment=item %}<a class="btn btn-primary" href="{% url 'language_assignment_submissions' item.id %}">مشاهده پاسخ‌ها ({{ item.submissions.count }})</a>{% if not manager_view %}<a href="{% url 'edit_language_assignment' item.id %}">ویرایش</a> <a href="{% url 'delete_language_assignment' item.id %}">حذف</a>{% endif %}{% endif %}
+</div>{% empty %}<p>هنوز محتوایی ثبت نشده است.</p>{% endfor %}</div></section>
+{% endblock %}

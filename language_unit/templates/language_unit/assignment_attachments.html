@@ -1,0 +1,3 @@
+{% if assignment.file %}<a href="{% url 'download_language_assignment' assignment.id 'file' %}">دریافت فایل تکلیف</a>{% endif %}
+{% if assignment.image %}<a href="{% url 'download_language_assignment' assignment.id 'image' %}">دریافت عکس تکلیف</a>{% endif %}
+{% if assignment.video %}<a href="{% url 'download_language_assignment' assignment.id 'video' %}">دریافت فیلم تکلیف</a>{% endif %}
