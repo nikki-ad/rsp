@@ -76,7 +76,7 @@ class ContentDescriptionTests(TestCase):
         }).status_code, 302)
         material.refresh_from_db()
         self.assertEqual(material.file.name, original_file)
-        self.assertContains(self.client.get(reverse('language_group_detail', args=[self.group.pk])), 'Updated instructions')
+        self.assertContains(self.client.get(reverse('language_group_material_list', args=[self.group.pk])), 'Updated instructions')
         self.client.force_login(self.suser)
         page = self.client.get(reverse('student_language_dashboard'))
         self.assertContains(page, 'Updated instructions')
