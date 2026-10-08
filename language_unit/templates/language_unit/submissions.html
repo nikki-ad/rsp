@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}پاسخ‌های تکلیف زبان | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>پاسخ‌های تکلیف زبان</h1><p>{{ assignment.title }} — {{ assignment.group.title }}</p></div>
+<a class="btn btn-ghost" href="{% url 'language_group_assignment_list' assignment.group_id %}">بازگشت به تکالیف</a></div>
+<div class="announcement-list">{% for submission in submissions %}<article class="list-card">
+<strong>{{ submission.student }}</strong><small>{{ submission.created_at|jalali_datetime }}</small>
+{% if submission.answer_text %}<div>{{ submission.answer_text|linebreaksbr }}</div>{% endif %}
+{% if submission.file %}<a class="btn btn-primary" href="{% url 'download_language_submission' submission.id %}">دریافت فایل پاسخ</a>{% endif %}
+</article>{% empty %}<div class="empty-state">هنوز پاسخی ارسال نشده است.</div>{% endfor %}</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-from accounts.permissions import school_teacher_only, language_teacher_redirect
+from accounts.permissions import school_teacher_only, language_teacher_redirect, is_school_admin
 from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -217,17 +217,14 @@ def submit_assignment(request, assignment_id):
 @login_required
 @school_teacher_only
 def assignment_submissions(request, assignment_id):
-    teacher, denied = _teacher_or_denied(request)
-    if denied:
-        return denied
-
-
-    assignment = get_object_or_404(
-        Assignment,
-        id=assignment_id,
-        teacher=teacher,
-        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
-    )
+    manager_view = is_school_admin(request.user)
+    filters = {}
+    if not manager_view:
+        teacher, denied = _teacher_or_denied(request)
+        if denied:
+            return denied
+        filters = {"teacher": teacher, "classroom__academic_year__status": AcademicYear.Status.ACTIVE}
+    assignment = get_object_or_404(Assignment, id=assignment_id, **filters)
 
     submissions = assignment.submissions.all()
 
@@ -236,7 +233,8 @@ def assignment_submissions(request, assignment_id):
         "assignments/submissions.html",
         {
             "assignment": assignment,
-            "submissions": submissions,
+            "submissions": submissions.select_related("student__user"),
+            "manager_view": manager_view,
         }
     )
 
@@ -378,28 +376,15 @@ def download_assignment_file(request, assignment_id, attachment="file"):
 @school_teacher_only
 def download_submission_file(request, submission_id):
 
-    teacher, denied = _teacher_or_denied(request)
-    if denied:
-        return denied
-
-
-    submission = get_object_or_404(
-        AssignmentSubmission,
-        id=submission_id,
-        assignment__teacher=teacher,
-        assignment__classroom__academic_year__status=AcademicYear.Status.ACTIVE,
-    )
-
-    if not submission.file:
-        return HttpResponseForbidden(
-            "فایلی برای این پاسخ وجود ندارد."
-        )
-
-    return FileResponse(
-        submission.file.open("rb"),
-        as_attachment=True,
-        filename=submission.file.name.split("/")[-1],
-    )
+    filters = {}
+    if not is_school_admin(request.user):
+        teacher, denied = _teacher_or_denied(request)
+        if denied:
+            return denied
+        filters = {"assignment__teacher": teacher,
+                   "assignment__classroom__academic_year__status": AcademicYear.Status.ACTIVE}
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id, **filters)
+    return attachment_response(submission.file)
 
 
 @login_required

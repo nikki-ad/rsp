@@ -210,7 +210,7 @@ def submit_language_assignment(request, assignment_id):
                             notification_type=notification_constants.ASSIGNMENT,
                             title="پاسخ جدید تکلیف زبان",
                             message=f"{student} پاسخ «{assignment.title}» را ارسال کرد.",
-                            url=reverse("language_group_detail", args=[assignment.group_id]))
+                            url=reverse("language_assignment_submissions", args=[assignment.id]))
         messages.success(request, "پاسخ تکلیف زبان ذخیره شد.")
         return redirect("student_language_dashboard")
     return render(request, "dashboard/form.html", {
@@ -336,3 +336,59 @@ def download_language_assignment(request, assignment_id, attachment="file"):
         raise Http404()
     item = _language_content_for_download(request, LanguageAssignment, assignment_id)
     return attachment_response(getattr(item, attachment))
+
+
+def _owned_language_content(request, model, item_id):
+    teacher = _language_teacher(request)
+    if teacher is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied()
+    return get_object_or_404(model, pk=item_id, teacher=teacher,
+        group__teachers=teacher, group__is_active=True,
+        group__academic_year__status=AcademicYear.Status.ACTIVE)
+
+
+@login_required
+def delete_language_content(request, item_id, kind):
+    model = LanguageMaterial if kind == "materials" else LanguageAssignment
+    item = _owned_language_content(request, model, item_id)
+    back_url = reverse("language_group_material_list" if kind == "materials"
+                       else "language_group_assignment_list", args=[item.group_id])
+    if request.method == "POST":
+        title = item.title
+        item.delete()
+        log_activity(request, action="language_content_deleted",
+                     description=f"محتوای زبان «{title}» حذف شد.")
+        messages.success(request, "محتوای زبان حذف شد.")
+        return redirect(back_url)
+    return render(request, "dashboard/confirm_delete.html", {
+        "object_label": item.title, "back_url": back_url,
+    })
+
+
+@login_required
+def language_assignment_submissions(request, assignment_id):
+    if is_school_admin(request.user):
+        assignment = get_object_or_404(LanguageAssignment, pk=assignment_id)
+    else:
+        assignment = _owned_language_content(request, LanguageAssignment, assignment_id)
+    return render(request, "language_unit/submissions.html", {
+        "assignment": assignment,
+        "submissions": assignment.submissions.select_related("student__user").order_by("-created_at"),
+    })
+
+
+@login_required
+def download_language_submission(request, submission_id):
+    from core.uploads import attachment_response
+    if is_school_admin(request.user):
+        submission = get_object_or_404(LanguageAssignmentSubmission, pk=submission_id)
+    else:
+        teacher = _language_teacher(request)
+        if teacher is None:
+            return HttpResponseForbidden()
+        submission = get_object_or_404(LanguageAssignmentSubmission, pk=submission_id,
+            assignment__teacher=teacher, assignment__group__teachers=teacher,
+            assignment__group__is_active=True,
+            assignment__group__academic_year__status=AcademicYear.Status.ACTIVE)
+    return attachment_response(submission.file)
