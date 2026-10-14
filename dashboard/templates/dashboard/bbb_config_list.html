@@ -37,6 +37,9 @@
                         {% endif %}
                     </td>
                     <td>
+                        <form method="post" action="{% url 'bbb_config_test' item.id %}" style="display:inline">
+                            {% csrf_token %}<button class="btn btn-ghost" type="submit">تست اتصال</button>
+                        </form>
                         <a href="{% url 'bbb_config_edit' item.id %}">ویرایش</a>
                         · <a href="{% url 'bbb_config_delete' item.id %}">حذف</a>
                     </td>

@@ -4,28 +4,33 @@ from django.shortcuts import render
 import requests
 from .models import OnlineClass
 from django.shortcuts import get_object_or_404, redirect
-from .services import create_bbb_meeting, build_bbb_join_url
 from .services import (
     create_bbb_meeting,
     build_bbb_join_url,
     get_bbb_live_attendees,
 )
 from accounts.choices import Role
-from accounts.permissions import school_teacher_only
+from accounts.permissions import is_school_admin
+from django.contrib import messages
 from academic.models import AcademicYear
 
 
 
 
 @login_required
-@school_teacher_only
 def online_class_list(request):
 
     user = request.user
 
     online_classes = OnlineClass.objects.none()
 
-    if hasattr(user, "student_profile"):
+    if is_school_admin(user):
+        online_classes = OnlineClass.objects.filter(
+            is_active=True,
+            academic_year__status=AcademicYear.Status.ACTIVE,
+        ).select_related("academic_year", "bbb_configuration")
+
+    elif hasattr(user, "student_profile"):
 
         online_classes = OnlineClass.objects.filter(
             students=user.student_profile,
@@ -47,18 +52,6 @@ def online_class_list(request):
             "bbb_configuration",
         ).distinct()
 
-    elif user.is_superuser or user.role in [
-        Role.SUPER_ADMIN,
-        Role.SCHOOL_MANAGER,
-    ]:
-        online_classes = OnlineClass.objects.filter(
-            is_active=True,
-            academic_year__status=AcademicYear.Status.ACTIVE,
-        ).select_related(
-            "academic_year",
-            "bbb_configuration",
-        )
-
     return render(
         request,
         "online_classes/online_class_list.html",
@@ -70,7 +63,6 @@ def online_class_list(request):
 
 
 @login_required
-@school_teacher_only
 def join_online_class(request, class_id):
 
     online_class = get_object_or_404(
@@ -83,7 +75,10 @@ def join_online_class(request, class_id):
     user = request.user
 
     # دانش‌آموز
-    if hasattr(user, "student_profile"):
+    if is_school_admin(user):
+        role = "moderator"
+
+    elif hasattr(user, "student_profile"):
 
         if not online_class.students.filter(
             id=user.student_profile.id,
@@ -100,12 +95,6 @@ def join_online_class(request, class_id):
         ).exists():
             return redirect("online_class_list")
 
-        role = "moderator"
-
-    elif user.is_superuser or user.role in [
-        Role.SUPER_ADMIN,
-        Role.SCHOOL_MANAGER,
-    ]:
         role = "moderator"
 
     else:
@@ -129,10 +118,11 @@ def join_online_class(request, class_id):
         if not online_class.bbb_configuration:
             return redirect("online_class_list")
 
-        # اگر جلسه وجود نداشته باشد BBB آن را ایجاد می‌کند.
-        create_bbb_meeting(
-            online_class
-        )
+        try:
+            create_bbb_meeting(online_class)
+        except (requests.RequestException, ValueError):
+            messages.error(request, "اتصال به BBB برقرار نشد. مدیر سامانه تنظیمات سرویس را بررسی کند.")
+            return redirect("online_class_list")
 
         join_url = build_bbb_join_url(
             online_class=online_class,
@@ -147,7 +137,6 @@ def join_online_class(request, class_id):
 
 
 @login_required
-@school_teacher_only
 def live_attendance(request, class_id):
 
     online_class = get_object_or_404(
