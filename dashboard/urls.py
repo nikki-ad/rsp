@@ -115,6 +115,7 @@ urlpatterns = [
         name="online_class_delete",
     ),
     path("bbb/", crud.bbb_config_list, name="bbb_config_list"),
+    path("bbb/<uuid:config_id>/test/", crud.bbb_config_test, name="bbb_config_test"),
     path("bbb/create/", crud.bbb_config_form, name="bbb_config_create"),
     path("bbb/<uuid:config_id>/edit/", crud.bbb_config_form, name="bbb_config_edit"),
     path(

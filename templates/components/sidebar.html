@@ -73,6 +73,7 @@
                 <a href="{% url 'teacher_language_dashboard' %}">گروه‌های زبان من</a>
                 <a href="{% url 'teacher_language_material_list' %}">مطالب زبان</a>
                 <a href="{% url 'teacher_language_assignment_list' %}">تکالیف زبان</a>
+                <a href="{% url 'online_class_list' %}">کلاس آنلاین</a>
             {% elif user.role == "teacher" %}
                 <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_dashboard' %}active{% endif %}">
                     داشبورد
