@@ -44,6 +44,9 @@
                         {% endif %}
                     </td>
                     <td>
+                        {% if item.is_active and item.academic_year.status == 'active' %}
+                        <a class="btn btn-primary" href="{% url 'join_online_class' item.id %}">ورود اپراتور</a>
+                        {% endif %}
                         <a href="{% url 'online_class_edit' item.id %}">ویرایش</a>
                         · <a href="{% url 'online_class_delete' item.id %}">حذف</a>
                     </td>
