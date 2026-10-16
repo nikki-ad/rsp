@@ -142,7 +142,7 @@ def build_bbb_join_url(
 
 
 
-def get_bbb_live_attendees(online_class):
+def get_bbb_live_snapshot(online_class):
 
     configuration = online_class.bbb_configuration
 
@@ -186,15 +186,8 @@ def get_bbb_live_attendees(online_class):
     except ET.ParseError as exc:
         raise ValueError("پاسخ معتبر BBB دریافت نشد.") from exc
     if root.findtext("messageKey") == "notFound":
-        return []
+        return {"session_id": None, "attendees": [], "running": False}
     validate_bbb_response(response.text)
-
-    return_code = root.findtext(
-        "returncode"
-    )
-
-    if return_code != "SUCCESS":
-        return []
 
     attendees = []
 
@@ -210,4 +203,8 @@ def get_bbb_live_attendees(online_class):
             }
         )
 
-    return attendees
+    return {"session_id": root.findtext("internalMeetingID"), "attendees": attendees, "running": True}
+
+
+def get_bbb_live_attendees(online_class):
+    return get_bbb_live_snapshot(online_class)["attendees"]

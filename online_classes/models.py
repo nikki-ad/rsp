@@ -109,3 +109,30 @@ class OnlineClass(BaseModel):
 
     def __str__(self):
         return self.title
+
+class BBBAttendanceEvent(models.Model):
+    """Immutable, deduplicated BBB events; never inferred from a page refresh."""
+    online_class = models.ForeignKey(OnlineClass, on_delete=models.CASCADE, related_name="attendance_events")
+    configuration = models.ForeignKey(BBBConfiguration, on_delete=models.PROTECT)
+    session_id = models.CharField(max_length=256)
+    participant_id = models.CharField(max_length=256, blank=True)
+    external_user_id = models.CharField(max_length=256, blank=True)
+    full_name = models.CharField(max_length=200, blank=True)
+    role = models.CharField(max_length=20, blank=True)
+    event_type = models.CharField(max_length=30)
+    occurred_at = models.DateTimeField()
+    received_at = models.DateTimeField(auto_now_add=True)
+    fingerprint = models.CharField(max_length=64, unique=True)
+
+    class Meta:
+        ordering = ["occurred_at", "id"]
+        indexes = [models.Index(fields=["online_class", "configuration", "session_id"], name="bbb_attendance_session")]
+
+
+class BBBAttendanceHook(models.Model):
+    online_class = models.OneToOneField(OnlineClass, on_delete=models.CASCADE, related_name="attendance_hook")
+    configuration = models.ForeignKey(BBBConfiguration, on_delete=models.CASCADE)
+    callback_url = models.URLField(max_length=500)
+    registered_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_received_at = models.DateTimeField(null=True, blank=True)

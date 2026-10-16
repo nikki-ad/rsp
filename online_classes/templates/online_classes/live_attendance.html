@@ -1,56 +1,69 @@
 {% extends "base.html" %}
-
-{% block title %}حضور زنده | RSP{% endblock %}
-
+{% load static %}
+{% block title %}حضور و غیاب | {{ online_class.title }}{% endblock %}
 {% block content %}
 <div class="page-header">
-    <div>
-        <h1>حضور زنده کلاس</h1>
-        <p>{{ online_class.title }}</p>
-    </div>
+    <div><h1>حضور و غیاب کلاس</h1><p>{{ online_class.title }}</p></div>
     <div class="page-header-actions">
-        <a class="btn btn-secondary" href="{% url 'live_attendance' online_class.id %}">تازه‌سازی</a>
-        <a class="btn btn-ghost" href="{% url 'online_class_list' %}">بازگشت</a>
+        <a class="btn btn-primary" href="{% url 'live_attendance' online_class.id %}">تازه‌سازی وضعیت</a>
+        <button class="btn btn-ghost" type="button" onclick="window.print()">چاپ</button>
+        <a class="btn btn-ghost" href="{% url 'online_class_manage_list' %}">بازگشت به کلاس‌ها</a>
     </div>
 </div>
-
+<div class="info-banner">
+    زمان دریافت: {{ captured_at|jalali_date }} — {{ captured_at|date:"H:i:s" }} (به وقت تهران).
+    این گزارش تا تازه‌سازی بعدی ثابت می‌ماند؛ تغییرات کلاس خودکار روی صفحه اعمال نمی‌شوند.
+</div>
 {% if attendance_error %}
-    <div class="alert-error">{{ attendance_error }}</div>
-    <p>وضعیت حضور دانش‌آموزان در حال حاضر قابل تشخیص نیست. چند لحظه بعد دوباره تلاش کنید.</p>
+<div class="alert-error" role="alert">{{ attendance_error }}</div>
 {% else %}
-    <div class="info-banner">این صفحه وضعیت حضور همین لحظه در کلاس آنلاین را نشان می‌دهد.</div>
-    <form class="filter-bar" method="get">
-        <input type="search" name="q" value="{{ query }}" placeholder="جستجو بر اساس نام یا نام خانوادگی">
-        <button class="btn btn-primary" type="submit">جستجو</button>
+<div class="card" style="margin:16px 0;padding:16px;display:flex;flex-wrap:wrap;gap:24px">
+    <strong>دانش‌آموزان حاضر: {{ student_present }} از {{ student_total }}</strong>
+    <span>دانش‌آموزان خارج از کلاس: {{ student_absent }}</span>
+    <span>معلمان حاضر: {{ teacher_present }}</span>
+    <span>{% if meeting_running %}جلسه در حال اجراست{% else %}جلسه فعالی در BBB پیدا نشد{% endif %}</span>
+</div>
+{% endif %}
+<div class="card" style="padding:16px;margin:16px 0">
+    {% if hook.last_received_at %}
+    <p>ثبت رویدادها برقرار است. آخرین رویداد دریافتی: {{ hook.last_received_at|jalali_datetime }} — {{ hook.last_received_at|date:"H:i:s" }}.</p>
+    {% elif hook.registered_at %}
+    <p>ثبت زمان‌ها فعال شده؛ هنوز رویدادی دریافت نشده است. برای تأیید، یک بار وارد کلاس شوید و خارج شوید، سپس صفحه را تازه‌سازی کنید.</p>
+    {% else %}
+    <p>برای دریافت ساعت دقیق ورود و خروج، ثبت زمان‌ها را فعال کنید. این قابلیت به پشتیبانی سرویس BBB از Webhooks نیاز دارد.</p>
+    {% endif %}
+    <form method="post" action="{% url 'enable_attendance_tracking' online_class.id %}">
+        {% csrf_token %}<button type="submit" class="btn btn-ghost">فعال‌سازی / بررسی ثبت زمان‌ها</button>
     </form>
-
-    <div class="table-wrap">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>دانش‌آموز</th>
-                    <th>وضعیت</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in attendance_rows %}
-                    <tr>
-                        <td>{{ row.student.user.get_full_name }}</td>
-                        <td>
-                            {% if row.is_present %}
-                                <span class="badge badge-success">حاضر</span>
-                            {% else %}
-                                <span class="badge badge-danger">غایب</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="2">دانش‌آموزی برای این کلاس ثبت نشده است.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <small>زمان‌ها فقط از رویداد واقعی BBB ثبت می‌شوند. زمان‌های پیش از فعال‌سازی قابل بازیابی نیستند. ورود و خروج‌های مکرر در جزئیات هر نفر نمایش داده می‌شوند.</small>
+</div>
+{% if not attendance_error %}
+<div class="filter-bar">
+    <input id="attendance-search" type="search" placeholder="جستجوی نام" aria-label="جستجوی نام">
+    <select id="attendance-filter" aria-label="فیلتر وضعیت">
+        <option value="all">همه افراد</option><option value="present">حاضرها</option>
+        <option value="absent">خارج از کلاس</option><option value="student">دانش‌آموزان</option><option value="teacher">معلمان</option>
+    </select>
+</div>
+<div class="table-wrap">
+<table class="data-table" id="attendance-table">
+<thead><tr><th>نام</th><th>نقش</th><th>وضعیت هنگام دریافت</th><th>اولین ورود</th><th>آخرین ورود</th><th>آخرین خروج ثبت‌شده</th><th>جزئیات ورود و خروج</th></tr></thead>
+<tbody>
+{% for row in attendance_rows %}
+<tr data-presence="{% if row.is_present %}present{% else %}absent{% endif %}" data-kind="{% if row.kind == 'دانش‌آموز' %}student{% elif row.kind == 'معلم' %}teacher{% else %}other{% endif %}" data-name="{{ row.name }}">
+    <td>{{ row.name }}</td><td>{{ row.kind }}</td>
+    <td>{% if row.is_present %}<span class="badge badge-success">حاضر</span>{% elif row.history %}<span class="badge badge-muted">خارج از کلاس</span>{% else %}<span class="badge badge-danger">حضور ثبت نشده</span>{% endif %}</td>
+    <td>{% if row.first_join %}<span title="{{ row.first_join|jalali_datetime }}">{{ row.first_join|date:"H:i:s" }}</span>{% else %}ثبت نشده{% endif %}</td>
+    <td>{% if row.last_join %}<span title="{{ row.last_join|jalali_datetime }}">{{ row.last_join|date:"H:i:s" }}</span>{% else %}ثبت نشده{% endif %}</td>
+    <td>{% if row.last_exit %}<span title="{{ row.last_exit|jalali_datetime }}">{{ row.last_exit|date:"H:i:s" }}</span>{% elif row.is_present %}داخل کلاس{% else %}ثبت نشده{% endif %}</td>
+    <td>{% if row.history %}<details><summary>{{ row.history|length }} رویداد</summary>
+        {% for event in row.history %}<div>{{ event.label }} — {{ event.time|jalali_date }} {{ event.time|date:"H:i:s" }}</div>{% endfor %}
+        </details>{% else %}رویدادی دریافت نشده{% endif %}</td>
+</tr>
+{% empty %}<tr><td colspan="7">فردی برای این کلاس ثبت نشده است.</td></tr>{% endfor %}
+</tbody>
+</table>
+</div>
+<script src="{% static 'js/attendance-snapshot.js' %}" defer></script>
 {% endif %}
 {% endblock %}
