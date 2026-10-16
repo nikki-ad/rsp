@@ -1,5 +1,6 @@
 from django import forms
 from core.uploads import AttachmentFormMixin, AssignmentContentFormMixin, validate_video
+from core.feedback_forms import TeacherFeedbackFormMixin
 
 from accounts.models import StudentProfile, TeacherProfile
 from academic.models import AcademicYear
@@ -81,3 +82,9 @@ class LanguageSubmissionForm(forms.ModelForm):
         if not (data.get("answer_text") or "").strip() and not data.get("file"):
             raise forms.ValidationError("حداقل متن پاسخ یا یک فایل ارسال کنید.")
         return data
+
+
+class LanguageFeedbackForm(TeacherFeedbackFormMixin, forms.ModelForm):
+    class Meta:
+        model = LanguageAssignmentSubmission
+        fields = ("feedback_type", "teacher_feedback", "feedback_file")

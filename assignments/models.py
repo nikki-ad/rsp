@@ -51,6 +51,15 @@ class Assignment(BaseModel):
         return self.title
 
 class AssignmentSubmission(BaseModel):
+    feedback_type = models.CharField(max_length=10, default="text",
+        choices=(("text", "متن"), ("file", "فایل"), ("image", "عکس"), ("video", "فیلم")),
+        verbose_name="نوع پاسخ معلم")
+    feedback_file = models.FileField(upload_to="teacher_feedback/", blank=True, verbose_name="پیوست پاسخ معلم")
+
+    @property
+    def has_feedback(self):
+        return bool(self.teacher_feedback or self.feedback_file)
+
 
     assignment = models.ForeignKey(
         Assignment,
