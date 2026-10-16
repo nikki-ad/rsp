@@ -18,6 +18,9 @@ from .services import build_bbb_join_url, build_bbb_meeting_id, create_bbb_meeti
 
 class OnlineClassTests(TestCase):
     def setUp(self):
+        registration = patch('online_classes.views.register_attendance_hook')
+        registration.start()
+        self.addCleanup(registration.stop)
         self.year = AcademicYear.objects.create(title='1405', status='active')
         self.other_year = AcademicYear.objects.create(title='1404')
         grade = Grade.objects.create(code='1', title='اول', order=1)
