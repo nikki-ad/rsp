@@ -1,5 +1,4 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.shortcuts import render
 import requests
 from .models import OnlineClass
@@ -7,12 +6,19 @@ from django.shortcuts import get_object_or_404, redirect
 from .services import (
     create_bbb_meeting,
     build_bbb_join_url,
-    get_bbb_live_attendees,
+    get_bbb_live_snapshot,
 )
-from accounts.choices import Role
 from accounts.permissions import is_school_admin
 from django.contrib import messages
 from academic.models import AcademicYear
+from django.utils import timezone
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+import json
+from .attendance import register_attendance_hook, attendance_rows, valid_callback_signature, store_callback
+from .models import BBBAttendanceHook
 
 
 
@@ -118,6 +124,13 @@ def join_online_class(request, class_id):
         if not online_class.bbb_configuration:
             return redirect("online_class_list")
 
+        # Register before creating the meeting so the first actual join is captured.
+        # Hook support is optional at the provider and must not block class entry.
+        try:
+            register_attendance_hook(online_class)
+        except (requests.RequestException, ValueError):
+            pass
+
         try:
             create_bbb_meeting(online_class)
         except (requests.RequestException, ValueError):
@@ -137,82 +150,63 @@ def join_online_class(request, class_id):
 
 
 @login_required
+@never_cache
 def live_attendance(request, class_id):
-
     online_class = get_object_or_404(
-        OnlineClass,
-        id=class_id,
-        provider="bbb",
-        is_active=True,
-        academic_year__status=AcademicYear.Status.ACTIVE,
+        OnlineClass.objects.select_related("bbb_configuration"), id=class_id, provider="bbb",
+        is_active=True, academic_year__status=AcademicYear.Status.ACTIVE,
     )
-
-    if not (
-        request.user.is_staff
-        or request.user.is_superuser
-        or request.user.role in [
-            Role.SUPER_ADMIN,
-            Role.SCHOOL_MANAGER,
-        ]
-    ):
-        return redirect("online_class_list")
-
+    if not is_school_admin(request.user):
+        return HttpResponseForbidden("حضور و غیاب فقط در دسترس مدیر سامانه است.")
+    error = None
+    snapshot = None
     try:
+        snapshot = get_bbb_live_snapshot(online_class)
+    except (requests.RequestException, ValueError):
+        error = "دریافت وضعیت از BBB ناموفق بود؛ وضعیت افراد نامشخص است. دوباره تازه‌سازی کنید."
+    captured_at = timezone.now()
+    rows = attendance_rows(online_class, snapshot, captured_at) if snapshot else []
+    students = [row for row in rows if row["kind"] == "دانش‌آموز"]
+    teachers = [row for row in rows if row["kind"] == "معلم"]
+    hook = BBBAttendanceHook.objects.filter(online_class=online_class,
+        configuration_id=online_class.bbb_configuration_id).first()
+    return render(request, "online_classes/live_attendance.html", {
+        "online_class": online_class, "attendance_rows": rows, "attendance_error": error,
+        "captured_at": captured_at, "meeting_running": bool(snapshot and snapshot["running"]),
+        "student_total": len(students), "student_present": sum(row["is_present"] for row in students),
+        "student_absent": sum(not row["is_present"] for row in students),
+        "teacher_present": sum(row["is_present"] for row in teachers), "hook": hook,
+    })
 
-        attendees = get_bbb_live_attendees(
-            online_class
-        )
 
-        attendance_error = None
+@login_required
+@require_POST
+def enable_attendance_tracking(request, class_id):
+    if not is_school_admin(request.user):
+        return HttpResponseForbidden()
+    online_class = get_object_or_404(OnlineClass, id=class_id, provider="bbb", is_active=True)
+    try:
+        register_attendance_hook(online_class, force=True)
+    except (requests.RequestException, ValueError):
+        messages.error(request, "ثبت زمان‌ها فعال نشد. ارائه‌دهنده BBB باید قابلیت Webhooks و دسترسی به نشانی سامانه را فعال کند.")
+    else:
+        messages.success(request, "درخواست ثبت ورود و خروج فعال شد. دریافت زمان‌ها با اولین رویداد واقعی کلاس قابل تأیید است؛ زمان‌های گذشته بازیابی نمی‌شوند.")
+    return redirect("live_attendance", class_id=class_id)
 
-    except (
-        requests.RequestException,
-        ValueError,
-    ):
 
-        attendees = []
-        attendance_error = (
-            "در حال حاضر امکان دریافت وضعیت زنده "
-            "از BigBlueButton وجود ندارد."
-        )
-
-    present_user_ids = {
-        attendee["user_id"]
-        for attendee in attendees
-        if attendee.get("user_id")
-    }
-
-    students = (
-        online_class.students
-        .select_related("user")
-        .all()
-    )
-    query = (request.GET.get("q") or "").strip()
-    if query:
-        students = students.filter(
-            Q(user__first_name__icontains=query)
-            | Q(user__last_name__icontains=query)
-        )
-
-    attendance_rows = []
-
-    for student in students:
-
-        attendance_rows.append(
-            {
-                "student": student,
-                "is_present": str(student.user.id) in present_user_ids,
-            }
-        )
-
-    return render(
-        request,
-        "online_classes/live_attendance.html",
-        {
-            "online_class": online_class,
-            "attendance_rows": attendance_rows,
-            "attendees": attendees,
-            "attendance_error": attendance_error,
-            "query": query,
-        },
-    )
+@csrf_exempt
+@require_POST
+def bbb_attendance_callback(request, config_id, class_id):
+    hook = get_object_or_404(BBBAttendanceHook.objects.select_related(
+        "configuration", "online_class"), online_class_id=class_id, configuration_id=config_id,
+        configuration__is_active=True, online_class__bbb_configuration_id=config_id)
+    body = request.body
+    if len(body) > 131072:
+        return HttpResponse(status=413)
+    if not valid_callback_signature(hook, body, request.GET.get("checksum", "")):
+        return HttpResponseForbidden()
+    try:
+        store_callback(hook, json.loads(request.POST.get("event", "")))
+    except (ValueError, TypeError, KeyError, AttributeError, OverflowError, OSError):
+        return HttpResponseBadRequest("Invalid attendance event")
+    return HttpResponse(status=204)
