@@ -7,5 +7,7 @@
 <strong>{{ submission.student }}</strong><small>{{ submission.created_at|jalali_datetime }}</small>
 {% if submission.answer_text %}<div>{{ submission.answer_text|linebreaksbr }}</div>{% endif %}
 {% if submission.file %}<a class="btn btn-primary" href="{% url 'download_language_submission' submission.id %}">دریافت فایل پاسخ</a>{% endif %}
+{% include "components/teacher_feedback.html" with language_feedback=True %}
+{% if not manager_view %}<a class="btn btn-secondary" href="{% url 'language_submission_feedback' submission.id %}">{% if submission.has_feedback %}ویرایش پاسخ معلم{% else %}پاسخ معلم{% endif %}</a>{% endif %}
 </article>{% empty %}<div class="empty-state">هنوز پاسخی ارسال نشده است.</div>{% endfor %}</div>
 {% endblock %}

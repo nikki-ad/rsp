@@ -2,6 +2,8 @@ from django.urls import path
 from . import views, content_views
 
 urlpatterns = [
+    path("responses/<uuid:submission_id>/feedback/", views.language_submission_feedback, name="language_submission_feedback"),
+    path("responses/<uuid:submission_id>/feedback/download/", views.download_language_feedback, name="download_language_feedback"),
     path("materials/<uuid:item_id>/delete/", views.delete_language_content,
          {"kind": "materials"}, name="delete_language_material"),
     path("assignments/<uuid:item_id>/delete/", views.delete_language_content,

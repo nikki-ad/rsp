@@ -4,6 +4,7 @@ from . import views
 
 
 urlpatterns = [
+    path("responses/<uuid:submission_id>/feedback/download/", views.download_teacher_feedback, name="download_teacher_feedback"),
     path("<uuid:assignment_id>/download/<str:attachment>/", views.download_assignment_file, name="download_assignment_attachment"),
     path("teacher/", views.teacher_assignment_list, name="teacher_assignment_list"),
     path("<uuid:assignment_id>/edit/", views.edit_assignment, name="edit_assignment"),

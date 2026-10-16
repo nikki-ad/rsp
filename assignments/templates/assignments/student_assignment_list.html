@@ -14,6 +14,7 @@
         <p>{{ assignment.description|default:""|linebreaksbr }}</p>
         <small>{{ assignment.classroom }} · {{ assignment.created_at|jalali_datetime }}</small><br>
         {% include "assignments/attachments.html" %}
+        {% include "components/teacher_feedback.html" %}
         {% if submission %}
             <span class="badge badge-success">پاسخ ارسال شده</span>
             <a class="btn btn-secondary" href="{% url 'submit_assignment' assignment.id %}">ویرایش پاسخ</a>
