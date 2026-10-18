@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}گزارش نقص تکلیف‌ها | RSP{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/deficiency-report.css' %}?v=20261018-1">
+<div class="page-header"><h1>گزارش نقص تکلیف‌ها</h1><a class="btn btn-secondary" href="{% url 'admin_dashboard' %}">بازگشت به داشبورد</a></div>
+<div class="card">{% include "assignments/deficiency_report_form.html" %}</div>
+<script src="{% static 'js/deficiency-report.js' %}?v=20261018-1" defer></script>
+{% endblock %}

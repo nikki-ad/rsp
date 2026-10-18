@@ -116,6 +116,10 @@
                     رزرو غذا
                 </a>
 
+            {% elif user.role == "operator" %}
+                <a href="{% url 'admin_dashboard' %}" class="{% if url_name == 'admin_dashboard' %}active{% endif %}">داشبورد مدیریت</a>
+                <a href="{% url 'deficiency_report_filter' %}">گزارش نقص تکلیف‌ها</a>
+
             {% elif user.role == "finance" %}
                 <a href="{% url 'cafeteria_pending_receipts' %}" class="{% if url_name == 'cafeteria_pending_receipts' %}active{% endif %}">
                     فیش‌های غذا
