@@ -127,3 +127,5 @@ class AssignmentSubmission(BaseModel):
 
     def __str__(self):
         return f"{self.student} - {self.assignment}"
+
+from .homework_models import HomeworkDeficiency  # noqa: E402,F401

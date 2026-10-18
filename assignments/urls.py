@@ -58,3 +58,7 @@ urlpatterns = [
 
 
 ]
+
+
+from .homework_urls import urlpatterns as homework_patterns
+urlpatterns += homework_patterns

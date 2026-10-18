@@ -83,6 +83,7 @@
                 <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_class_detail' %}active{% endif %}">
                     کلاس‌های من
                 </a>
+                <a href="{% url 'teacher_deficiency_classrooms' %}" class="{% if url_name == 'teacher_deficiency_classrooms' or url_name == 'teacher_deficiency_create' %}active{% endif %}">ثبت نقص تکلیف</a>
                 <a href="{% url 'teacher_assignment_list' %}" class="{% if 'assignment' in url_name %}active{% endif %}">تکالیف</a>
                 <a href="{% url 'teacher_material_list' %}" class="{% if url_name == 'teacher_material_list' or url_name == 'edit_material' or url_name == 'create_material' or url_name == 'create_class_material' %}active{% endif %}">
                     مطالب آموزشی
@@ -100,6 +101,7 @@
                 </a>
 
                 <div class="menu-title">آموزش</div>
+                <a href="{% url 'student_deficiency_list' %}" class="{% if url_name == 'student_deficiency_list' %}active{% endif %}">مشاهده نقص تکلیف</a>
                 <a href="{% url 'student_assignment_list' %}" class="{% if url_name == 'student_assignment_list' %}active{% endif %}">تکالیف</a>
                 <a href="{% url 'student_material_list' %}" class="{% if url_name == 'student_material_list' %}active{% endif %}">مطالب آموزشی</a>
                 <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' %}active{% endif %}">
