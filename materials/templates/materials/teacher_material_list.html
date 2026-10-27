@@ -9,6 +9,7 @@
 {% if material.content %}<p>{{ material.content|linebreaksbr }}</p>{% endif %}
 <p>{% for classroom in material.classrooms.all %}{{ classroom }}{% if not forloop.last %}، {% endif %}{% endfor %}</p>
 <div class="card-actions">
+{% include 'materials/attachments.html' %}
 <a class="btn btn-secondary" href="{% url 'edit_material' material.id %}">ویرایش مطلب</a>
 <a class="btn btn-ghost" href="{% url 'delete_material' material.id %}">حذف مطلب</a>
 </div></div>

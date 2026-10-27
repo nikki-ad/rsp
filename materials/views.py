@@ -95,21 +95,21 @@ def create_material(request):
 @login_required
 def download_material(request, material_id):
 
-    if not hasattr(request.user, "student_profile"):
-        return HttpResponseForbidden(
-            "شما اجازه دریافت این فایل را ندارید."
-        )
-
-    student = request.user.student_profile
-
-    material = get_object_or_404(
-        EducationalMaterial,
-        id=material_id,
-        content_type__in=["file", "image", "video"],
-        classrooms__academic_year__status=AcademicYear.Status.ACTIVE,
-        classrooms__enrollments__student=student,
-        classrooms__enrollments__is_active=True,
-    )
+    teacher = getattr(request.user, "teacher_profile", None)
+    student = getattr(request.user, "student_profile", None)
+    filters = {"content_type__in": ["file", "image", "video"],
+               "classrooms__academic_year__status": AcademicYear.Status.ACTIVE}
+    if teacher:
+        if teacher.is_language_teacher:
+            return HttpResponseForbidden()
+        filters["teacher"] = teacher
+    elif student:
+        filters.update(classrooms__enrollments__student=student,
+                       classrooms__enrollments__is_active=True)
+    else:
+        return HttpResponseForbidden()
+    material = get_object_or_404(EducationalMaterial.objects.filter(**filters).distinct(),
+                                 id=material_id)
 
     return attachment_response(material.file)
 

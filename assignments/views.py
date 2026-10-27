@@ -353,18 +353,20 @@ def delete_assignment(request, assignment_id):
 @login_required
 def download_assignment_file(request, assignment_id, attachment="file"):
 
-    student, forbidden = _student_or_forbidden(request)
-    if forbidden:
-        return forbidden
-
-
-    assignment = get_object_or_404(
-        Assignment,
-        id=assignment_id,
-        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
-        classroom__enrollments__student=student,
-        classroom__enrollments__is_active=True,
-    )
+    filters = {"classroom__academic_year__status": AcademicYear.Status.ACTIVE}
+    teacher = getattr(request.user, "teacher_profile", None)
+    student = getattr(request.user, "student_profile", None)
+    if teacher:
+        if teacher.is_language_teacher:
+            return HttpResponseForbidden()
+        filters["teacher"] = teacher
+    elif student:
+        filters.update(classroom__enrollments__student=student,
+                       classroom__enrollments__is_active=True)
+    else:
+        return HttpResponseForbidden()
+    assignment = get_object_or_404(Assignment.objects.filter(**filters).distinct(),
+                                   id=assignment_id)
 
     if attachment not in {"file", "image", "video"}:
         raise Http404()
