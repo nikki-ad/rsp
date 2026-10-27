@@ -1,0 +1,4 @@
+{% if material.file %}
+<a class="btn btn-secondary" href="{% url 'download_material' material.id %}">{% if material.content_type == 'image' %}دریافت عکس مطلب{% elif material.content_type == 'video' %}دریافت فیلم مطلب{% else %}دریافت فایل مطلب{% endif %}</a>
+{% endif %}
+{% if material.link %}<a class="btn btn-ghost" href="{{ material.link }}" target="_blank" rel="noopener">مشاهده لینک</a>{% endif %}
