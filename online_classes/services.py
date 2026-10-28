@@ -3,6 +3,19 @@ import requests
 from urllib.parse import urlencode
 import xml.etree.ElementTree as ET
 
+def validate_bbb_response(response_text):
+    try:
+        root = ET.fromstring(response_text)
+    except ET.ParseError as exc:
+        raise ValueError("پاسخ معتبر BBB دریافت نشد؛ آدرس API را بررسی کنید.") from exc
+    if root.findtext("returncode") != "SUCCESS":
+        key = root.findtext("messageKey") or "unknown"
+        if key == "checksumError":
+            raise ValueError("کلید محرمانه یا آدرس API سرویس BBB صحیح نیست.")
+        raise ValueError("درخواست BBB ناموفق بود؛ تنظیمات سرویس را بررسی کنید.")
+    return root
+
+
 def test_bbb_connection(configuration):
 
     api_url = configuration.api_url.rstrip("/") + "/"
@@ -25,6 +38,7 @@ def test_bbb_connection(configuration):
 
     response.raise_for_status()
 
+    validate_bbb_response(response.text)
     return response.text
 
 
@@ -37,7 +51,7 @@ def create_bbb_meeting(online_class):
 
     configuration = online_class.bbb_configuration
 
-    if not configuration:
+    if not configuration or not configuration.is_active:
         raise ValueError(
             "برای این کلاس سرویس BigBlueButton انتخاب نشده است."
         )
@@ -74,6 +88,7 @@ def create_bbb_meeting(online_class):
 
     response.raise_for_status()
 
+    validate_bbb_response(response.text)
     return response.text
 
 
@@ -85,7 +100,7 @@ def build_bbb_join_url(
 
     configuration = online_class.bbb_configuration
 
-    if not configuration:
+    if not configuration or not configuration.is_active:
         raise ValueError(
             "برای این کلاس سرویس BigBlueButton انتخاب نشده است."
         )
@@ -110,6 +125,7 @@ def build_bbb_join_url(
             "fullName": full_name,
             "meetingID": meeting_id,
             "password": password,
+            "role": "MODERATOR" if role == "moderator" else "VIEWER",
             "userID": str(user.id),
         }
     )
@@ -130,7 +146,7 @@ def get_bbb_live_attendees(online_class):
 
     configuration = online_class.bbb_configuration
 
-    if not configuration:
+    if not configuration or not configuration.is_active:
         raise ValueError(
             "برای این کلاس سرویس BigBlueButton انتخاب نشده است."
         )
@@ -165,9 +181,13 @@ def get_bbb_live_attendees(online_class):
 
     response.raise_for_status()
 
-    root = ET.fromstring(
-        response.text
-    )
+    try:
+        root = ET.fromstring(response.text)
+    except ET.ParseError as exc:
+        raise ValueError("پاسخ معتبر BBB دریافت نشد.") from exc
+    if root.findtext("messageKey") == "notFound":
+        return []
+    validate_bbb_response(response.text)
 
     return_code = root.findtext(
         "returncode"

@@ -425,6 +425,8 @@ class BBBConfigurationForm(forms.ModelForm):
 
 
 class OnlineClassForm(forms.ModelForm):
+    is_online_class = True
+
     class Meta:
         model = OnlineClass
         fields = (
@@ -432,7 +434,6 @@ class OnlineClassForm(forms.ModelForm):
             "academic_year",
             "provider",
             "bbb_configuration",
-            "bbb_room_id",
             "skyroom_url",
             "students",
             "teachers",
@@ -445,19 +446,21 @@ class OnlineClassForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        year_id = None
-        if self.is_bound:
-            year_id = self.data.get("academic_year")
-        elif self.instance.pk:
-            year_id = self.instance.academic_year_id
-
-        student_qs = StudentProfile.objects.select_related("user")
+        self.fields["bbb_configuration"].queryset = BBBConfiguration.objects.filter(is_active=True)
+        self.fields["bbb_configuration"].help_text = "شناسه اتاق خودکار ساخته می‌شود؛ نیازی به واردکردن شناسه در پنل BBB نیست."
+        year_id = self.data.get("academic_year") if self.is_bound else self.instance.academic_year_id
+        if not self.is_bound and not year_id:
+            year_id = AcademicYear.objects.filter(status=AcademicYear.Status.ACTIVE).values_list("id", flat=True).first()
+            self.initial["academic_year"] = year_id
+        from uuid import UUID
+        try:
+            year_id = UUID(str(year_id)) if year_id else None
+        except ValueError:
+            year_id = None
+        student_qs = StudentProfile.objects.select_related("user").filter(
+            enrollments__academic_year_id=year_id, enrollments__is_active=True,
+        ).distinct() if year_id else StudentProfile.objects.none()
         teacher_qs = TeacherProfile.objects.select_related("user")
-        if year_id:
-            student_qs = student_qs.filter(
-                enrollments__academic_year_id=year_id,
-                enrollments__is_active=True,
-            ).distinct()
         self.fields["students"].queryset = student_qs.order_by(
             "user__last_name",
             "user__first_name",
@@ -466,6 +469,8 @@ class OnlineClassForm(forms.ModelForm):
             "user__last_name",
             "user__first_name",
         )
+
+        self.student_classroom_data = online_class_people(year_id)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -481,3 +486,17 @@ class OnlineClassForm(forms.ModelForm):
                 "برای کلاس اسکای‌روم وارد کردن لینک الزامی است.",
             )
         return cleaned_data
+
+
+def online_class_people(year_id):
+    """Only active enrollments in the selected year; IDs are student profile IDs."""
+    classrooms = Classroom.objects.filter(academic_year_id=year_id).select_related("grade") if year_id else Classroom.objects.none()
+    enrollments = Enrollment.objects.filter(
+        academic_year_id=year_id, is_active=True,
+    ).select_related("student__user").order_by("student__user__last_name", "student__user__first_name") if year_id else Enrollment.objects.none()
+    groups = {str(room.id): {"id": str(room.id), "name": str(room), "students": []} for room in classrooms}
+    for enrollment in enrollments:
+        group = groups.get(str(enrollment.classroom_id))
+        if group is not None:
+            group["students"].append({"id": str(enrollment.student_id), "name": str(enrollment.student)})
+    return list(groups.values())

@@ -38,6 +38,8 @@ def _routine_reports_for_active_year():
 
 @login_required
 def admin_dashboard(request):
+    if request.user.role == Role.OPERATOR and not is_school_admin(request.user):
+        return render(request, "dashboard/operator_dashboard.html")
     if not is_school_admin(request.user):
         return render(request, "dashboard/access_denied.html", status=403)
 

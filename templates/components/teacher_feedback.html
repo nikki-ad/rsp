@@ -1,0 +1,7 @@
+{% if submission.has_feedback or submission.evaluation %}
+<details class="list-card" style="margin-block:12px;overflow-wrap:anywhere;min-width:0">
+<summary style="cursor:pointer;font-weight:600">پاسخ معلم {% if submission.evaluation %}· {{ submission.get_evaluation_display }}{% endif %}</summary>
+{% if submission.teacher_feedback %}<p style="white-space:normal">{{ submission.teacher_feedback|linebreaksbr }}</p>{% endif %}
+{% if submission.feedback_file %}<a class="btn btn-ghost" href="{% if language_feedback %}{% url 'download_language_feedback' submission.id %}{% else %}{% url 'download_teacher_feedback' submission.id %}{% endif %}">دریافت {{ submission.get_feedback_type_display }} پاسخ معلم</a>{% endif %}
+</details>
+{% endif %}

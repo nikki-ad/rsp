@@ -73,6 +73,7 @@
                 <a href="{% url 'teacher_language_dashboard' %}">گروه‌های زبان من</a>
                 <a href="{% url 'teacher_language_material_list' %}">مطالب زبان</a>
                 <a href="{% url 'teacher_language_assignment_list' %}">تکالیف زبان</a>
+                <a href="{% url 'online_class_list' %}">کلاس آنلاین</a>
             {% elif user.role == "teacher" %}
                 <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_dashboard' %}active{% endif %}">
                     داشبورد
@@ -82,6 +83,7 @@
                 <a href="{% url 'teacher_dashboard' %}" class="{% if url_name == 'teacher_class_detail' %}active{% endif %}">
                     کلاس‌های من
                 </a>
+                <a href="{% url 'teacher_deficiency_classrooms' %}" class="{% if url_name == 'teacher_deficiency_classrooms' or url_name == 'teacher_deficiency_create' %}active{% endif %}">ثبت نقص تکلیف</a>
                 <a href="{% url 'teacher_assignment_list' %}" class="{% if 'assignment' in url_name %}active{% endif %}">تکالیف</a>
                 <a href="{% url 'teacher_material_list' %}" class="{% if url_name == 'teacher_material_list' or url_name == 'edit_material' or url_name == 'create_material' or url_name == 'create_class_material' %}active{% endif %}">
                     مطالب آموزشی
@@ -99,6 +101,7 @@
                 </a>
 
                 <div class="menu-title">آموزش</div>
+                <a href="{% url 'student_deficiency_list' %}" class="{% if url_name == 'student_deficiency_list' %}active{% endif %}">مشاهده نقص تکلیف</a>
                 <a href="{% url 'student_assignment_list' %}" class="{% if url_name == 'student_assignment_list' %}active{% endif %}">تکالیف</a>
                 <a href="{% url 'student_material_list' %}" class="{% if url_name == 'student_material_list' %}active{% endif %}">مطالب آموزشی</a>
                 <a href="{% url 'online_class_list' %}" class="{% if url_name == 'online_class_list' %}active{% endif %}">
@@ -112,6 +115,10 @@
                 <a href="{% url 'weekly_reservation' %}" class="{% if 'cafeteria' in request.path %}active{% endif %}">
                     رزرو غذا
                 </a>
+
+            {% elif user.role == "operator" %}
+                <a href="{% url 'admin_dashboard' %}" class="{% if url_name == 'admin_dashboard' %}active{% endif %}">داشبورد مدیریت</a>
+                <a href="{% url 'deficiency_report_filter' %}">گزارش نقص تکلیف‌ها</a>
 
             {% elif user.role == "finance" %}
                 <a href="{% url 'cafeteria_pending_receipts' %}" class="{% if url_name == 'cafeteria_pending_receipts' %}active{% endif %}">

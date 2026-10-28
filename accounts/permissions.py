@@ -64,7 +64,7 @@ def language_teacher_redirect(target):
 
 
 def post_login_redirect_name(user):
-    if is_school_admin(user):
+    if is_school_admin(user) or user.role == Role.OPERATOR:
         return "admin_dashboard"
 
     if user.role == Role.FINANCE:

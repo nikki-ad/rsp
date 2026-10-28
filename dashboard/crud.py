@@ -35,6 +35,7 @@ from .forms import (
     EnrollmentManageForm,
     GradeForm,
     OnlineClassForm,
+    online_class_people,
     ReportCardForm,
     ReportCardPeriodForm,
     CafeteriaMenuFormSet,
@@ -815,6 +816,23 @@ def bbb_config_list(request):
 
 
 @manager_required
+def bbb_config_test(request, config_id):
+    from online_classes.services import test_bbb_connection
+    import requests
+    if request.method != "POST":
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(["POST"])
+    config = get_object_or_404(BBBConfiguration, id=config_id)
+    try:
+        test_bbb_connection(config)
+    except (requests.RequestException, ValueError):
+        messages.error(request, "تست ناموفق: آدرس API، کلید محرمانه و دسترسی شبکه سرور را بررسی کنید.")
+    else:
+        messages.success(request, "اتصال به BBB موفق است؛ آدرس API و کلید محرمانه تأیید شدند.")
+    return redirect("bbb_config_list")
+
+
+@manager_required
 def bbb_config_form(request, config_id=None):
     instance = get_object_or_404(BBBConfiguration, id=config_id) if config_id else None
     if request.method == "POST":
@@ -872,6 +890,11 @@ def load_year_people(request):
         return JsonResponse({"students": [], "teachers": []}, status=403)
 
     year_id = request.GET.get("academic_year")
+    from uuid import UUID
+    try:
+        year_id = UUID(year_id) if year_id else None
+    except ValueError:
+        return JsonResponse({"classrooms": [], "students": [], "teachers": []}, status=400)
     students = StudentProfile.objects.select_related("user")
     if year_id:
         students = students.filter(
@@ -887,6 +910,7 @@ def load_year_people(request):
 
     return JsonResponse(
         {
+            "classrooms": online_class_people(year_id),
             "students": [
                 {"id": str(item.id), "name": str(item)}
                 for item in students

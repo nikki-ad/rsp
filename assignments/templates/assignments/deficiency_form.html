@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ثبت نقص تکلیف — {{ classroom }} | RSP{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/homework-deficiency.css' %}">
+<div class="page-header"><div><h1>ثبت نقص تکلیف</h1><p>{{ classroom }}</p></div><a class="btn btn-secondary" href="{% url 'teacher_deficiency_classrooms' %}">انتخاب کلاس دیگر</a></div>
+<form method="post" class="card deficiency-form">
+{% csrf_token %}{{ form.non_field_errors }}
+<div class="deficiency-fields">
+<div class="form-group deficiency-date">
+<label for="{{ form.record_date.id_for_label }}">{{ form.record_date.label }}</label>
+<div class="deficiency-date-input">{{ form.record_date }}<button class="btn btn-secondary" type="button" id="calendar-toggle" aria-expanded="false" aria-controls="deficiency-calendar">تقویم شمسی</button></div>
+{{ form.record_date.errors }}
+<div id="deficiency-calendar" class="deficiency-calendar" hidden data-url="{% url 'deficiency_calendar' %}">
+<div class="calendar-header"><button type="button" data-month-step="-1" aria-label="ماه قبل">→</button><strong id="calendar-title" aria-live="polite"></strong><button type="button" data-month-step="1" aria-label="ماه بعد">←</button></div>
+<div class="calendar-weekdays" aria-hidden="true"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
+<div id="calendar-days" class="calendar-days"></div>
+<button type="button" id="calendar-today">امروز</button><span id="calendar-error" role="status"></span>
+</div>
+<small>تاریخ را از تقویم انتخاب کنید یا به شکل ۱۴۰۵/۰۷/۲۶ بنویسید.</small>
+</div>
+<div class="form-group"><label for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>{{ form.subject }}{{ form.subject.errors }}</div>
+</div>
+<fieldset class="deficiency-students"><legend>انتخاب دانش‌آموزان</legend>
+{{ form.students.errors }}
+{% if form.students.field.queryset.exists %}
+<div class="deficiency-selection"><label><input type="checkbox" id="select-all-students"> انتخاب همه</label><span id="selected-student-count" aria-live="polite"></span></div>
+<div class="deficiency-student-grid">{% for checkbox in form.students %}<label class="deficiency-student">{{ checkbox.tag }}<span>{{ checkbox.choice_label }}</span></label>{% endfor %}</div>
+{% else %}<p>این کلاس دانش‌آموز فعال ندارد.</p>{% endif %}
+</fieldset>
+<div class="card-actions"><button type="submit" class="btn btn-primary" {% if not form.students.field.queryset.exists %}disabled{% endif %}>ثبت نقص تکلیف و ارسال اعلان</button></div>
+</form>
+<script src="{% static 'js/homework-deficiency.js' %}" defer></script>
+{% endblock %}

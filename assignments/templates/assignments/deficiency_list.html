@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}مشاهده نقص تکلیف | RSP{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/homework-deficiency.css' %}">
+<div class="page-header"><div><h1>نقص‌های تکلیف من</h1><p>سوابق از جدید به قدیم نمایش داده می‌شوند.</p></div></div>
+<div class="announcement-list">
+{% for record in page_obj %}
+<article class="list-card deficiency-record"><strong>{{ record.record_date|jalali_date }}</strong><p>در تاریخ {{ record.record_date|jalali_date }} برای شما توسط معلم {{ record.teacher }} در درس <strong>{{ record.subject }}</strong> یک نقص تکلیف ثبت شده است.</p></article>
+{% empty %}<div class="empty-state">هیچ نقص تکلیفی برای شما ثبت نشده است.</div>{% endfor %}
+</div>
+{% if page_obj.has_other_pages %}<nav class="card-actions" aria-label="صفحه‌بندی سوابق">
+{% if page_obj.has_previous %}<a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}">جدیدتر</a>{% endif %}
+<span>صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+{% if page_obj.has_next %}<a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}">قدیمی‌تر</a>{% endif %}
+</nav>{% endif %}
+{% endblock %}
