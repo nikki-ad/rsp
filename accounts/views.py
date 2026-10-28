@@ -18,7 +18,6 @@ from materials.models import EducationalMaterial
 from notifications import constants as notification_constants
 from notifications.models import Announcement, Notification
 from notifications.services import create_notification
-from reports.models import StudentReportCard
 
 from .forms import ProfileForm, StudentSelfProfileForm, TeacherSelfProfileForm
 from .routine_forms import StudentDailyRoutineForm
@@ -233,7 +232,6 @@ def student_dashboard(request):
 
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
     cafeteria_reservation = student.cafeteria_reservations.select_related("week").order_by("-created_at").first()
-    report_cards = StudentReportCard.objects.filter(student=student, is_active=True).select_related("period").order_by("-period__created_at", "-created_at")
     announcements = announcements_for(request.user)
     ensure_announcement_notifications(request.user, announcements)
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(Q(announcement__isnull=True) | Q(announcement__in=announcements)).count()
@@ -249,7 +247,6 @@ def student_dashboard(request):
         "student_submissions": student_submissions,
         "assignment_items": assignment_items,
         "cafeteria_reservation": cafeteria_reservation,
-        "report_cards": report_cards,
         "announcements": announcements[:1],
         "weekly_schedule": weekly_schedule,
         "routine_form": routine_form,

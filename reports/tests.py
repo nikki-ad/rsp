@@ -116,16 +116,40 @@ class ReportCardWorkflowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         response.close()
 
-    def test_student_dashboard_groups_by_period_and_no_other_student_files(self):
+    def test_student_page_groups_by_period_and_no_other_student_files(self):
         self.upload()
         self.upload(student=self.other)
         own = StudentReportCard.objects.get(student=self.student)
         other = StudentReportCard.objects.get(student=self.other)
         self.client.force_login(self.student.user)
-        response = self.client.get(reverse("student_dashboard"))
+        response = self.client.get(reverse("student_report_cards"))
         self.assertContains(response, self.period.title, count=1)
         self.assertContains(response, reverse("download_report_card", args=[own.pk]))
         self.assertNotContains(response, reverse("download_report_card", args=[other.pk]))
+
+    def test_dashboard_has_sidebar_link_without_report_content(self):
+        self.upload()
+        self.client.force_login(self.student.user)
+        response = self.client.get(reverse("student_dashboard"))
+        self.assertContains(response, reverse("student_report_cards"))
+        self.assertNotContains(response, self.period.title)
+        self.assertNotContains(response, 'id="report-cards"')
+
+    def test_report_page_access_and_empty_state(self):
+        url = reverse("student_report_cards")
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.client.logout()
+        self.assertEqual(self.client.get(url).status_code, 302)
+        self.client.force_login(self.student.user)
+        self.assertContains(self.client.get(url), "هنوز کارنامه‌ای ثبت نشده است.")
+
+    def test_report_page_hides_inactive_cards(self):
+        self.upload()
+        StudentReportCard.objects.update(is_active=False)
+        self.client.force_login(self.student.user)
+        response = self.client.get(reverse("student_report_cards"))
+        self.assertNotContains(response, self.period.title)
+        self.assertContains(response, "هنوز کارنامه‌ای ثبت نشده است.")
 
     def test_student_cannot_manage_periods_or_upload(self):
         self.client.force_login(self.student.user)
