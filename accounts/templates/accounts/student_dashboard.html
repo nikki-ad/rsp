@@ -99,7 +99,11 @@
 </div>
 
 <div class="dashboard-section"><h2>📄 کارنامه‌های من</h2><div class="announcement-list">
-{% for report_card in report_cards %}<div class="announcement-card"><strong>{{ report_card.title }}</strong><br><a href="{% url 'download_report_card' report_card.id %}">دانلود کارنامه PDF</a></div>{% empty %}<p>هنوز کارنامه‌ای ثبت نشده است.</p>{% endfor %}
+{% regroup report_cards by period as report_groups %}
+{% for group in report_groups %}<div class="announcement-card">
+<h3>{{ group.grouper.title }}</h3>
+{% for report_card in group.list %}<a class="btn btn-primary" href="{% url 'download_report_card' report_card.id %}">دریافت فایل کارنامه</a>{% endfor %}
+</div>{% empty %}<p>هنوز کارنامه‌ای ثبت نشده است.</p>{% endfor %}
 </div></div>
 
 <div class="dashboard-section"><h2>👩‍🏫 معلم‌های کلاس من</h2><div class="announcement-list">

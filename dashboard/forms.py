@@ -10,7 +10,7 @@ from academic.models import AcademicYear, Classroom, Enrollment, Grade
 from accounts.models import StudentProfile, TeacherProfile
 from notifications.models import Announcement
 from online_classes.models import BBBConfiguration, OnlineClass
-from reports.models import StudentReportCard
+from reports.models import ReportCardPeriod, StudentReportCard
 from accounts.choices import Role
 from cafeteria.models import CafeteriaMenu, CafeteriaPaymentCard, CafeteriaWeek
 
@@ -362,10 +362,57 @@ class AnnouncementForm(forms.ModelForm):
         return data
 
 
+class ReportCardPeriodForm(forms.ModelForm):
+    class Meta:
+        model = ReportCardPeriod
+        fields = ("title", "academic_year")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["academic_year"].required = True
+
+
 class ReportCardForm(forms.ModelForm):
+    student_search = forms.CharField(
+        label="جست‌وجوی دانش‌آموز", required=False,
+        widget=forms.TextInput(attrs={"autocomplete": "off", "placeholder": "نام یا نام خانوادگی را بنویسید و از نتایج انتخاب کنید"}),
+    )
+
     class Meta:
         model = StudentReportCard
-        fields = ("student", "title", "file", "is_active")
+        fields = ("period", "student_search", "student", "file", "is_active")
+        widgets = {
+            "student": forms.HiddenInput,
+            "file": forms.ClearableFileInput(attrs={"accept": ".pdf,.jpg,.jpeg,.png,.webp"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        students = StudentProfile.objects.select_related("user").prefetch_related(
+            "enrollments__classroom__grade", "enrollments__academic_year",
+        ).order_by("user__last_name", "user__first_name")
+        self.student_choices = []
+        for student in students:
+            classes = "، ".join(str(e.classroom) + " (" + str(e.academic_year) + ")" for e in student.enrollments.all() if e.is_active)
+            label = f"{student} — {classes or 'بدون کلاس'} — {student.user.username}"
+            self.student_choices.append({"id": str(student.pk), "label": label})
+        selected = str(self["student"].value() or "")
+        self.initial["student_search"] = next((s["label"] for s in self.student_choices if s["id"] == selected), "")
+        self.fields["student"].error_messages["required"] = "دانش‌آموز را از نتایج جست‌وجو انتخاب کنید."
+
+    def clean(self):
+        data = super().clean()
+        period, student = data.get("period"), data.get("student")
+        if period and student:
+            changing_target = (
+                self.instance._state.adding
+                or self.instance.period_id != period.pk
+                or self.instance.student_id != student.pk
+            )
+            if changing_target and StudentReportCard.objects.filter(period=period, student=student).exclude(pk=self.instance.pk).exists():
+                self.add_error("student_search", "برای این دانش‌آموز در این عنوان، کارنامه ثبت شده است؛ فایل قبلی را ویرایش کنید.")
+            self.instance.title = period.title
+        return data
 
 
 class BBBConfigurationForm(forms.ModelForm):

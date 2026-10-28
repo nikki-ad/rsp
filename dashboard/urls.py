@@ -82,6 +82,10 @@ urlpatterns = [
         crud.announcement_delete,
         name="announcement_delete",
     ),
+    path("report-cards/periods/create/", crud.report_card_period_form, name="report_card_period_create"),
+    path("report-cards/periods/<uuid:period_id>/edit/", crud.report_card_period_form, name="report_card_period_edit"),
+    path("report-cards/periods/<uuid:period_id>/", crud.report_card_period_detail, name="report_card_period_detail"),
+    path("report-cards/periods/<uuid:period_id>/classes/<uuid:classroom_id>/", crud.report_card_period_detail, name="report_card_class_detail"),
     path("report-cards/", crud.report_card_list, name="report_card_list"),
     path("report-cards/create/", crud.report_card_form, name="report_card_create"),
     path(

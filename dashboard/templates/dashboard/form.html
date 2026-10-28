@@ -4,6 +4,10 @@
 {% block title %}{{ page_title }} | RSP{% endblock %}
 
 {% block content %}
+{% if form.student_choices %}
+{{ form.student_choices|json_script:"report-student-choices" }}
+<script src="{% static 'js/report-student-search.js' %}" defer></script>
+{% endif %}
 {% if form.is_language_teacher %}<script src="{% static 'js/teacher-unit.js' %}" defer></script>{% endif %}
 <div class="page-header">
     <div>
@@ -37,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 {% endif %}
 
+{% if form.student_search %}<p><a href="{% url 'report_card_period_create' %}">ساخت عنوان کارنامه جدید</a></p>{% endif %}
 <div class="card form-card{% if wide %} wide{% endif %}">
     <form method="post" enctype="multipart/form-data"{% if upload_progress %} data-upload-progress{% endif %}>
         {% csrf_token %}
