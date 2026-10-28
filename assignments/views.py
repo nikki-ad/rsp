@@ -258,6 +258,7 @@ def evaluate_submission(request, submission_id):
 
         form = AssignmentEvaluationForm(
             request.POST,
+            request.FILES,
             instance=submission,
         )
 
@@ -279,16 +280,15 @@ def evaluate_submission(request, submission_id):
             create_notification(
                 recipient=student_user,
                 notification_type=notification_constants.ASSIGNMENT,
-                title="تکلیف شما ارزیابی شد",
+                title="پاسخ معلم برای تکلیف شما",
                 message=(
-                    f"ارزیابی تکلیف «{submission.assignment.title}» "
-                    f"ثبت شد: {submission.get_evaluation_display()}"
+                    f"معلم برای پاسخ تکلیف «{submission.assignment.title}» بازخورد ثبت کرد."
                 ),
-                url=reverse("student_dashboard"),
+                url=reverse("student_assignment_list"),
             )
 
-            return redirect(
-                "assignment_submissions",
+            return upload_success(
+                request, "assignment_submissions",
                 assignment_id=submission.assignment.id,
             )
 
@@ -298,7 +298,7 @@ def evaluate_submission(request, submission_id):
             instance=submission,
         )
 
-    return render(
+    return render_upload_form(
         request,
         "assignments/evaluate_submission.html",
         {
@@ -421,3 +421,9 @@ def edit_assignment(request, assignment_id):
     return render_upload_form(request, "assignments/create_assignment.html", {
         "form": form, "classroom": assignment.classroom, "editing": True,
     })
+
+
+@login_required
+def download_teacher_feedback(request, submission_id):
+    from core.feedback_access import download_feedback
+    return download_feedback(request, AssignmentSubmission, submission_id, language=False)

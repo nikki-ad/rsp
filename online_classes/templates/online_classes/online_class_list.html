@@ -18,7 +18,7 @@
             <p>سال تحصیلی: {{ online_class.academic_year.title }}</p>
             <div class="card-actions">
                 <a class="btn btn-primary" href="{% url 'join_online_class' online_class.id %}">ورود به کلاس</a>
-                {% if user.is_staff %}
+                {% if user.is_school_admin and online_class.provider == 'bbb' %}
                     <a class="btn btn-ghost" href="{% url 'live_attendance' online_class.id %}">حضور زنده</a>
                 {% endif %}
             </div>

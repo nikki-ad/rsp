@@ -15,7 +15,7 @@ from notifications.services import create_notification
 from notifications.announcements import announcements_for, ensure_announcement_notifications
 from notifications.models import Notification
 from .forms import (
-    LanguageAssignmentForm, LanguageGroupForm, LanguageMaterialForm, LanguageSubmissionForm,
+    LanguageAssignmentForm, LanguageGroupForm, LanguageMaterialForm, LanguageSubmissionForm, LanguageFeedbackForm,
 )
 from .models import LanguageAssignment, LanguageAssignmentSubmission, LanguageGroup, LanguageMaterial
 from accounts.models import StudentProfile
@@ -375,6 +375,7 @@ def language_assignment_submissions(request, assignment_id):
     return render(request, "language_unit/submissions.html", {
         "assignment": assignment,
         "submissions": assignment.submissions.select_related("student__user").order_by("-created_at"),
+        "manager_view": is_school_admin(request.user),
     })
 
 
@@ -392,3 +393,35 @@ def download_language_submission(request, submission_id):
             assignment__group__is_active=True,
             assignment__group__academic_year__status=AcademicYear.Status.ACTIVE)
     return attachment_response(submission.file)
+
+
+@login_required
+def language_submission_feedback(request, submission_id):
+    teacher = _language_teacher(request)
+    if teacher is None:
+        return HttpResponseForbidden()
+    submission = get_object_or_404(LanguageAssignmentSubmission, pk=submission_id,
+        assignment__teacher=teacher, assignment__group__teachers=teacher,
+        assignment__group__is_active=True,
+        assignment__group__academic_year__status=AcademicYear.Status.ACTIVE)
+    form = LanguageFeedbackForm(request.POST if request.method == "POST" else None,
+        request.FILES or None, instance=submission)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        log_activity(request, action="language_assignment_feedback",
+            description=f"بازخورد تکلیف زبان «{submission.assignment.title}» ثبت شد.")
+        create_notification(recipient=submission.student.user,
+            notification_type=notification_constants.ASSIGNMENT,
+            title="پاسخ معلم برای تکلیف زبان",
+            message=f"معلم برای پاسخ تکلیف «{submission.assignment.title}» بازخورد ثبت کرد.",
+            url=reverse("student_language_dashboard") + "#language-assignments")
+        return upload_success(request, "language_assignment_submissions", assignment_id=submission.assignment_id)
+    return render_upload_form(request, "assignments/evaluate_submission.html", {
+        "form": form, "submission": submission, "language_feedback": True,
+    })
+
+
+@login_required
+def download_language_feedback(request, submission_id):
+    from core.feedback_access import download_feedback
+    return download_feedback(request, LanguageAssignmentSubmission, submission_id, language=True)

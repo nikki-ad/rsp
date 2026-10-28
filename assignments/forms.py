@@ -1,4 +1,5 @@
 from django import forms
+from core.feedback_forms import TeacherFeedbackFormMixin
 from core.uploads import AssignmentContentFormMixin
 
 from .models import Assignment, AssignmentSubmission
@@ -37,14 +38,16 @@ class AssignmentSubmissionForm(forms.ModelForm):
 
 
 
-class AssignmentEvaluationForm(forms.ModelForm):
+class AssignmentEvaluationForm(TeacherFeedbackFormMixin, forms.ModelForm):
 
     class Meta:
         model = AssignmentSubmission
 
         fields = [
             "evaluation",
+            "feedback_type",
             "teacher_feedback",
+            "feedback_file",
         ]
 
         labels = {

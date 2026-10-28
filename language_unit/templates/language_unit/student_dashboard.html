@@ -37,6 +37,7 @@
     {% if item.assignment.image %}<a href="{% url 'download_language_assignment' item.assignment.id 'image' %}">دریافت عکس تکلیف</a>{% endif %}
     {% if item.assignment.video %}<a href="{% url 'download_language_assignment' item.assignment.id 'video' %}">دریافت فیلم تکلیف</a>{% endif %}
     {% if item.assignment.file %}<a href="{% url 'download_language_assignment' item.assignment.id 'file' %}">دریافت فایل تکلیف</a><br>{% endif %}
+    {% include "components/teacher_feedback.html" with submission=item.submission language_feedback=True %}
     {% if item.submission %}<span class="badge badge-success">پاسخ ارسال شده</span>{% endif %}
     <a href="{% url 'submit_language_assignment' item.assignment.id %}">{% if item.submission %}ویرایش پاسخ{% else %}ارسال پاسخ{% endif %}</a>
   </div>{% empty %}<p>هنوز تکلیفی ثبت نشده است.</p>{% endfor %}

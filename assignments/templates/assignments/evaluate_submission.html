@@ -1,21 +1,16 @@
 {% extends "base.html" %}
-
-{% block title %}ارزیابی پاسخ | RSP{% endblock %}
-
+{% load static %}
+{% block title %}پاسخ معلم | RSP{% endblock %}
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1>ارزیابی پاسخ تکلیف</h1>
-        <p>{{ submission.assignment.title }} — {{ submission.student }}</p>
-    </div>
-</div>
-
-<div class="card form-card">
-    <form method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        {{ form.as_p }}
-        <button class="btn btn-primary" type="submit">ثبت ارزیابی</button>
-    </form>
-</div>
+<div class="page-header"><div><h1>پاسخ معلم</h1><p>{{ submission.assignment.title }} — {{ submission.student }}</p></div>
+<a class="btn btn-ghost" href="{% if language_feedback %}{% url 'language_assignment_submissions' submission.assignment_id %}{% else %}{% url 'assignment_submissions' submission.assignment_id %}{% endif %}">بازگشت به پاسخ‌ها</a></div>
+<details class="list-card"><summary>مشاهده پاسخ دانش‌آموز</summary>
+<p>{{ submission.answer_text|default:""|linebreaksbr }}</p>
+{% if submission.file %}<a class="btn btn-ghost" href="{% if language_feedback %}{% url 'download_language_submission' submission.id %}{% else %}{% url 'download_submission_file' submission.id %}{% endif %}">دریافت پاسخ دانش‌آموز</a>{% endif %}</details>
+<div class="card form-card"><form method="post" enctype="multipart/form-data" data-upload-progress>
+{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}<div class="form-group" {% if field.name == 'feedback_file' %}data-feedback-upload{% endif %}>{{ field.label_tag }}{{ field }}{% if field.help_text %}<p class="help-text">{{ field.help_text }}</p>{% endif %}{{ field.errors }}</div>{% endfor %}
+<button class="btn btn-primary" type="submit">ثبت پاسخ معلم</button>
+</form></div>
+<script src="{% static 'js/teacher-feedback.js' %}"></script>
 {% endblock %}
