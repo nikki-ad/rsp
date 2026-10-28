@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}کارنامه‌های من | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><h1>کارنامه‌های من</h1></div>
+<div class="dashboard-section" id="report-cards" style="scroll-margin-top: 90px;"><div class="announcement-list">
+{% regroup report_cards by period as report_groups %}
+{% for group in report_groups %}<div class="announcement-card">
+<h3>{{ group.grouper.title }}</h3>
+{% for report_card in group.list %}<a class="btn btn-primary" href="{% url 'download_report_card' report_card.id %}">دریافت فایل کارنامه</a>{% endfor %}
+</div>{% empty %}<p>هنوز کارنامه‌ای ثبت نشده است.</p>{% endfor %}
+</div></div>
+{% endblock %}

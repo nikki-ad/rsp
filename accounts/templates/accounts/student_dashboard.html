@@ -98,14 +98,6 @@
     {% else %}⚪ پرداخت انجام نشده{% endif %}</div>{% endif %}
 </div>
 
-<div class="dashboard-section" id="report-cards" style="scroll-margin-top: 90px;"><h2>📄 کارنامه‌های من</h2><div class="announcement-list">
-{% regroup report_cards by period as report_groups %}
-{% for group in report_groups %}<div class="announcement-card">
-<h3>{{ group.grouper.title }}</h3>
-{% for report_card in group.list %}<a class="btn btn-primary" href="{% url 'download_report_card' report_card.id %}">دریافت فایل کارنامه</a>{% endfor %}
-</div>{% empty %}<p>هنوز کارنامه‌ای ثبت نشده است.</p>{% endfor %}
-</div></div>
-
 <div class="dashboard-section"><h2>👩‍🏫 معلم‌های کلاس من</h2><div class="announcement-list">
 {% for assignment in teachers %}<div class="announcement-card"><strong>{{ assignment.teacher.user.first_name }} {{ assignment.teacher.user.last_name }}</strong><br><a href="{% url 'start_conversation' assignment.teacher.user.id %}">💬 ارسال پیام</a></div>{% empty %}<p>هنوز معلمی ثبت نشده است.</p>{% endfor %}
 </div></div>
