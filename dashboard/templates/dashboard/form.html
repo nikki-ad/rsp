@@ -4,6 +4,10 @@
 {% block title %}{{ page_title }} | RSP{% endblock %}
 
 {% block content %}
+{% if form.student_choices %}
+{{ form.student_choices|json_script:"report-student-choices" }}
+<script src="{% static 'js/report-student-search.js' %}" defer></script>
+{% endif %}
 {% if form.is_language_teacher %}<script src="{% static 'js/teacher-unit.js' %}" defer></script>{% endif %}
 <div class="page-header">
     <div>
@@ -17,7 +21,7 @@
     {% endif %}
 </div>
 
-{% if form.students %}
+{% if form.students and not form.is_online_class %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const list = document.getElementById("id_students");
@@ -37,6 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 {% endif %}
 
+{% if form.student_search %}<p><a href="{% url 'report_card_period_create' %}">ساخت عنوان کارنامه جدید</a></p>{% endif %}
 <div class="card form-card{% if wide %} wide{% endif %}">
     <form method="post" enctype="multipart/form-data"{% if upload_progress %} data-upload-progress{% endif %}>
         {% csrf_token %}
@@ -144,7 +149,12 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
-{% if year_people_endpoint %}
+{% if form.is_online_class %}
+{{ form.student_classroom_data|json_script:"online-class-groups" }}
+<script src="{% static 'js/online-class-students.js' %}" defer></script>
+<div id="online-class-endpoint" data-url="{{ year_people_endpoint }}" hidden></div>
+{% endif %}
+{% if year_people_endpoint and not form.is_online_class %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const yearField = document.getElementById("id_academic_year");

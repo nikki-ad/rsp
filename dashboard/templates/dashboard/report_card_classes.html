@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ period.title }} | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>{{ period.title }}</h1><p>{{ period.academic_year|default:"کارنامه‌های قبلی" }}</p></div><div class="page-header-actions"><a class="btn btn-primary" href="{% url 'report_card_create' %}?period={{ period.id }}">آپلود کارنامه</a><a href="{% url 'report_card_list' %}">بازگشت به عنوان‌ها</a></div></div>
+<div class="announcement-list">{% for classroom in classrooms %}<div class="card"><h2><a href="{% url 'report_card_class_detail' period.id classroom.id %}">{{ classroom }}</a></h2></div>{% empty %}<p>کلاسی برای این سال تحصیلی ثبت نشده است.</p>{% endfor %}
+<div class="card"><a href="{% url 'report_card_period_detail' period.id %}?unassigned=1">کارنامه‌های دانش‌آموزان بدون کلاس در این سال</a></div></div>
+{% endblock %}

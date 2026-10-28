@@ -82,6 +82,10 @@ urlpatterns = [
         crud.announcement_delete,
         name="announcement_delete",
     ),
+    path("report-cards/periods/create/", crud.report_card_period_form, name="report_card_period_create"),
+    path("report-cards/periods/<uuid:period_id>/edit/", crud.report_card_period_form, name="report_card_period_edit"),
+    path("report-cards/periods/<uuid:period_id>/", crud.report_card_period_detail, name="report_card_period_detail"),
+    path("report-cards/periods/<uuid:period_id>/classes/<uuid:classroom_id>/", crud.report_card_period_detail, name="report_card_class_detail"),
     path("report-cards/", crud.report_card_list, name="report_card_list"),
     path("report-cards/create/", crud.report_card_form, name="report_card_create"),
     path(
@@ -115,6 +119,7 @@ urlpatterns = [
         name="online_class_delete",
     ),
     path("bbb/", crud.bbb_config_list, name="bbb_config_list"),
+    path("bbb/<uuid:config_id>/test/", crud.bbb_config_test, name="bbb_config_test"),
     path("bbb/create/", crud.bbb_config_form, name="bbb_config_create"),
     path("bbb/<uuid:config_id>/edit/", crud.bbb_config_form, name="bbb_config_edit"),
     path(

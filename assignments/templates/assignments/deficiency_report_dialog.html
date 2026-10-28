@@ -1,0 +1,12 @@
+{% load static %}
+{% if allowed %}
+<section class="dashboard-section">
+    <a class="btn btn-primary" href="{% url 'deficiency_report_filter' %}" data-deficiency-report-open>دانلود گزارش نقص تکلیف‌ها</a>
+</section>
+<dialog id="deficiency-report-dialog" class="deficiency-report-dialog" aria-labelledby="deficiency-report-title">
+    <div class="deficiency-report-heading"><h2 id="deficiency-report-title">گزارش نقص تکلیف‌ها</h2><button type="button" class="btn btn-ghost" data-deficiency-report-close aria-label="بستن پنجره">×</button></div>
+    {% include "assignments/deficiency_report_form.html" %}
+</dialog>
+<link rel="stylesheet" href="{% static 'css/deficiency-report.css' %}?v=20261018-1">
+<script src="{% static 'js/deficiency-report.js' %}?v=20261018-1" defer></script>
+{% endif %}

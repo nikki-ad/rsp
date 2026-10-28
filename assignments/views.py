@@ -258,6 +258,7 @@ def evaluate_submission(request, submission_id):
 
         form = AssignmentEvaluationForm(
             request.POST,
+            request.FILES,
             instance=submission,
         )
 
@@ -279,16 +280,15 @@ def evaluate_submission(request, submission_id):
             create_notification(
                 recipient=student_user,
                 notification_type=notification_constants.ASSIGNMENT,
-                title="تکلیف شما ارزیابی شد",
+                title="پاسخ معلم برای تکلیف شما",
                 message=(
-                    f"ارزیابی تکلیف «{submission.assignment.title}» "
-                    f"ثبت شد: {submission.get_evaluation_display()}"
+                    f"معلم برای پاسخ تکلیف «{submission.assignment.title}» بازخورد ثبت کرد."
                 ),
-                url=reverse("student_dashboard"),
+                url=reverse("student_assignment_list"),
             )
 
-            return redirect(
-                "assignment_submissions",
+            return upload_success(
+                request, "assignment_submissions",
                 assignment_id=submission.assignment.id,
             )
 
@@ -298,7 +298,7 @@ def evaluate_submission(request, submission_id):
             instance=submission,
         )
 
-    return render(
+    return render_upload_form(
         request,
         "assignments/evaluate_submission.html",
         {
@@ -353,18 +353,20 @@ def delete_assignment(request, assignment_id):
 @login_required
 def download_assignment_file(request, assignment_id, attachment="file"):
 
-    student, forbidden = _student_or_forbidden(request)
-    if forbidden:
-        return forbidden
-
-
-    assignment = get_object_or_404(
-        Assignment,
-        id=assignment_id,
-        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
-        classroom__enrollments__student=student,
-        classroom__enrollments__is_active=True,
-    )
+    filters = {"classroom__academic_year__status": AcademicYear.Status.ACTIVE}
+    teacher = getattr(request.user, "teacher_profile", None)
+    student = getattr(request.user, "student_profile", None)
+    if teacher:
+        if teacher.is_language_teacher:
+            return HttpResponseForbidden()
+        filters["teacher"] = teacher
+    elif student:
+        filters.update(classroom__enrollments__student=student,
+                       classroom__enrollments__is_active=True)
+    else:
+        return HttpResponseForbidden()
+    assignment = get_object_or_404(Assignment.objects.filter(**filters).distinct(),
+                                   id=assignment_id)
 
     if attachment not in {"file", "image", "video"}:
         raise Http404()
@@ -419,3 +421,9 @@ def edit_assignment(request, assignment_id):
     return render_upload_form(request, "assignments/create_assignment.html", {
         "form": form, "classroom": assignment.classroom, "editing": True,
     })
+
+
+@login_required
+def download_teacher_feedback(request, submission_id):
+    from core.feedback_access import download_feedback
+    return download_feedback(request, AssignmentSubmission, submission_id, language=False)

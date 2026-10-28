@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% load homework_reports %}
+{% block title %}داشبورد مدیریت | RSP{% endblock %}
+{% block content %}
+<div class="dashboard-header"><h1>داشبورد مدیریت</h1><p>گزارش‌های در دسترس اپراتور</p></div>
+{% homework_report_dialog %}
+{% endblock %}
