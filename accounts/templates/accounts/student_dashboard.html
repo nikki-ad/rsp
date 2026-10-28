@@ -98,7 +98,7 @@
     {% else %}⚪ پرداخت انجام نشده{% endif %}</div>{% endif %}
 </div>
 
-<div class="dashboard-section"><h2>📄 کارنامه‌های من</h2><div class="announcement-list">
+<div class="dashboard-section" id="report-cards" style="scroll-margin-top: 90px;"><h2>📄 کارنامه‌های من</h2><div class="announcement-list">
 {% regroup report_cards by period as report_groups %}
 {% for group in report_groups %}<div class="announcement-card">
 <h3>{{ group.grouper.title }}</h3>
