@@ -24,7 +24,7 @@ from notifications import constants as notification_constants
 from notifications.models import Announcement
 from notifications.services import create_notification
 from online_classes.models import BBBConfiguration, OnlineClass
-from reports.models import StudentReportCard
+from reports.models import ReportCardPeriod, StudentReportCard
 from cafeteria.models import CafeteriaWeek
 
 from .forms import (
@@ -35,7 +35,9 @@ from .forms import (
     EnrollmentManageForm,
     GradeForm,
     OnlineClassForm,
+    online_class_people,
     ReportCardForm,
+    ReportCardPeriodForm,
     CafeteriaMenuFormSet,
     CafeteriaPaymentCardFormSet,
     CafeteriaWeekForm,
@@ -663,19 +665,43 @@ def announcement_delete(request, announcement_id):
 
 @manager_required
 def report_card_list(request):
-    query = (request.GET.get("q") or "").strip()
-    report_cards = StudentReportCard.objects.select_related("student__user")
-    if query:
-        report_cards = report_cards.filter(
-            Q(title__icontains=query)
-            | Q(student__user__first_name__icontains=query)
-            | Q(student__user__last_name__icontains=query)
-        )
-    return render(
-        request,
-        "dashboard/report_card_list.html",
-        {"report_cards": report_cards, "query": query},
-    )
+    periods = ReportCardPeriod.objects.select_related("academic_year").annotate(total=Count("report_cards"))
+    return render(request, "dashboard/report_card_list.html", {"periods": periods})
+
+
+@manager_required
+def report_card_period_form(request, period_id=None):
+    period = get_object_or_404(ReportCardPeriod, pk=period_id) if period_id else None
+    form = ReportCardPeriodForm(request.POST or None, instance=period)
+    if request.method == "POST" and form.is_valid():
+        obj = form.save(commit=False)
+        if period is None:
+            obj.created_by = request.user
+        obj.save()
+        log_activity(request, action="report_card_period_saved", description=f"عنوان کارنامه «{obj.title}» ذخیره شد.")
+        return redirect("report_card_list")
+    return _form_page(request, form=form, title="ویرایش عنوان کارنامه" if period else "ساخت عنوان کارنامه", back_url=reverse("report_card_list"))
+
+
+@manager_required
+def report_card_period_detail(request, period_id, classroom_id=None):
+    period = get_object_or_404(ReportCardPeriod, pk=period_id)
+    enrollments = Enrollment.objects.filter(academic_year_id=period.academic_year_id, is_active=True)
+    classroom = None
+    if classroom_id:
+        classroom = get_object_or_404(Classroom, pk=classroom_id, academic_year_id=period.academic_year_id)
+        students = StudentProfile.objects.filter(pk__in=enrollments.filter(classroom=classroom).values("student_id"))
+    elif request.GET.get("unassigned") == "1":
+        students = StudentProfile.objects.filter(report_cards__period=period).exclude(pk__in=enrollments.values("student_id")).distinct()
+    else:
+        classrooms = Classroom.objects.filter(academic_year_id=period.academic_year_id).select_related("grade")
+        return render(request, "dashboard/report_card_classes.html", {"period": period, "classrooms": classrooms})
+    cards = StudentReportCard.objects.filter(period=period).select_related("student__user")
+    by_student = {}
+    for card in cards:
+        by_student.setdefault(card.student_id, []).append(card)
+    rows = [{"student": student, "cards": by_student.get(student.pk, [])} for student in students.select_related("user").order_by("user__last_name", "user__first_name")]
+    return render(request, "dashboard/report_card_students.html", {"period": period, "classroom": classroom, "rows": rows})
 
 
 @manager_required
@@ -684,16 +710,19 @@ def report_card_form(request, report_card_id=None):
     if request.method == "POST":
         form = ReportCardForm(request.POST, request.FILES, instance=instance)
         if form.is_valid():
-            report_card = _save_created_by(form, request)
+            report_card = form.save(commit=False)
+            if instance is None:
+                report_card.created_by = request.user
+            report_card.save()
             log_activity(
                 request,
                 action="report_card_saved",
                 description=f"کارنامه «{report_card.title}» برای {report_card.student} ذخیره شد.",
             )
             messages.success(request, "کارنامه ذخیره شد.")
-            return redirect("report_card_list")
+            return redirect(reverse("report_card_create") + "?period=" + str(report_card.period_id))
     else:
-        form = ReportCardForm(instance=instance)
+        form = ReportCardForm(instance=instance, initial=({"period": request.GET.get("period"), "student": request.GET.get("student")} if instance is None else None))
     return _form_page(
         request,
         form=form,
@@ -787,6 +816,23 @@ def bbb_config_list(request):
 
 
 @manager_required
+def bbb_config_test(request, config_id):
+    from online_classes.services import test_bbb_connection
+    import requests
+    if request.method != "POST":
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(["POST"])
+    config = get_object_or_404(BBBConfiguration, id=config_id)
+    try:
+        test_bbb_connection(config)
+    except (requests.RequestException, ValueError):
+        messages.error(request, "تست ناموفق: آدرس API، کلید محرمانه و دسترسی شبکه سرور را بررسی کنید.")
+    else:
+        messages.success(request, "اتصال به BBB موفق است؛ آدرس API و کلید محرمانه تأیید شدند.")
+    return redirect("bbb_config_list")
+
+
+@manager_required
 def bbb_config_form(request, config_id=None):
     instance = get_object_or_404(BBBConfiguration, id=config_id) if config_id else None
     if request.method == "POST":
@@ -844,6 +890,11 @@ def load_year_people(request):
         return JsonResponse({"students": [], "teachers": []}, status=403)
 
     year_id = request.GET.get("academic_year")
+    from uuid import UUID
+    try:
+        year_id = UUID(year_id) if year_id else None
+    except ValueError:
+        return JsonResponse({"classrooms": [], "students": [], "teachers": []}, status=400)
     students = StudentProfile.objects.select_related("user")
     if year_id:
         students = students.filter(
@@ -859,6 +910,7 @@ def load_year_people(request):
 
     return JsonResponse(
         {
+            "classrooms": online_class_people(year_id),
             "students": [
                 {"id": str(item.id), "name": str(item)}
                 for item in students

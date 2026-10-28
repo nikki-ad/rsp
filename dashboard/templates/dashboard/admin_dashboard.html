@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load homework_reports %}
 
 {% block title %}داشبورد مدیریت | RSP{% endblock %}
 
@@ -7,6 +8,8 @@
     <h1>داشبورد مدیریت</h1>
     <p>مدیریت آموزشی، ارتباطی و خدماتی مدرسه از پنل اختصاصی</p>
 </div>
+
+{% homework_report_dialog %}
 
 {% if active_year %}
     <div class="info-banner">

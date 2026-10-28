@@ -1,0 +1,17 @@
+<form method="get" action="{% url 'deficiency_report_download' %}" class="deficiency-report-form" data-calendar-url="{% url 'deficiency_report_calendar' %}">
+    <p>بازه بر اساس تاریخ نقص تکلیف انتخاب‌شده توسط معلم است؛ روز شروع و پایان هر دو در گزارش حساب می‌شوند.</p>
+    {{ form.non_field_errors }}
+    <div class="deficiency-report-dates">
+        {% for field in form %}
+        <div class="deficiency-report-date">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="deficiency-report-date-control">{{ field }}<button type="button" class="btn btn-secondary" data-date-picker aria-expanded="false" aria-label="تقویم شمسی {{ field.label }}">تقویم</button></div>
+            {{ field.errors }}
+            <div class="deficiency-report-calendar" hidden></div>
+        </div>
+        {% endfor %}
+    </div>
+    <p class="deficiency-report-note">هر کلاسِ دارای نقص تکلیف در این بازه، یک شیت جدا در همان فایل اکسل خواهد داشت.</p>
+    <div data-report-status role="status" aria-live="polite"></div>
+    <div class="card-actions"><button class="btn btn-primary" type="submit">دانلود فایل اکسل</button></div>
+</form>

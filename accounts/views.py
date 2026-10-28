@@ -233,7 +233,7 @@ def student_dashboard(request):
 
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).count()
     cafeteria_reservation = student.cafeteria_reservations.select_related("week").order_by("-created_at").first()
-    report_cards = StudentReportCard.objects.filter(student=student, is_active=True).order_by("-created_at")
+    report_cards = StudentReportCard.objects.filter(student=student, is_active=True).select_related("period").order_by("-period__created_at", "-created_at")
     announcements = announcements_for(request.user)
     ensure_announcement_notifications(request.user, announcements)
     unread_notification_count = Notification.objects.filter(recipient=request.user, is_read=False).filter(Q(announcement__isnull=True) | Q(announcement__in=announcements)).count()

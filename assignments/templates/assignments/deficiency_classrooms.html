@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}ثبت نقص تکلیف | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>ثبت نقص تکلیف</h1><p>کلاس مورد نظر را انتخاب کنید.</p></div></div>
+<div class="announcement-list">
+{% for classroom in classrooms %}
+<a class="list-card" href="{% url 'teacher_deficiency_create' classroom.id %}"><h2>{{ classroom }}</h2><span>انتخاب دانش‌آموزان و ثبت نقص تکلیف ←</span></a>
+{% empty %}<div class="empty-state">کلاس فعالی به شما اختصاص داده نشده است.</div>{% endfor %}
+</div>
+{% endblock %}

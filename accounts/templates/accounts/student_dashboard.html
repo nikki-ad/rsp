@@ -99,7 +99,11 @@
 </div>
 
 <div class="dashboard-section"><h2>📄 کارنامه‌های من</h2><div class="announcement-list">
-{% for report_card in report_cards %}<div class="announcement-card"><strong>{{ report_card.title }}</strong><br><a href="{% url 'download_report_card' report_card.id %}">دانلود کارنامه PDF</a></div>{% empty %}<p>هنوز کارنامه‌ای ثبت نشده است.</p>{% endfor %}
+{% regroup report_cards by period as report_groups %}
+{% for group in report_groups %}<div class="announcement-card">
+<h3>{{ group.grouper.title }}</h3>
+{% for report_card in group.list %}<a class="btn btn-primary" href="{% url 'download_report_card' report_card.id %}">دریافت فایل کارنامه</a>{% endfor %}
+</div>{% empty %}<p>هنوز کارنامه‌ای ثبت نشده است.</p>{% endfor %}
 </div></div>
 
 <div class="dashboard-section"><h2>👩‍🏫 معلم‌های کلاس من</h2><div class="announcement-list">
@@ -112,6 +116,6 @@
 </div></div>
 
 <div class="dashboard-section" id="assignments"><div class="page-header"><div><h2>آخرین تکلیف من</h2></div><a class="btn btn-ghost" href="{% url 'student_assignment_list' %}">مشاهده همه</a></div><div class="announcement-list">
-{% for item in assignment_items %}{% with assignment=item.assignment submission=item.submission %}<div class="announcement-card"><strong>{{ assignment.title }}</strong><p class="content-author">معلم: {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</p><p>{{ assignment.description|default:""|linebreaksbr }}{% include "assignments/attachments.html" %}</p>{% if assignment.id in submitted_assignment_ids %}<span>✅ پاسخ ارسال شده</span><br><a href="{% url 'submit_assignment' assignment.id %}">ویرایش پاسخ</a>{% else %}<a href="{% url 'submit_assignment' assignment.id %}">ارسال پاسخ</a>{% endif %}</div>{% endwith %}{% empty %}<p>هنوز تکلیفی ثبت نشده است.</p>{% endfor %}
+{% for item in assignment_items %}{% with assignment=item.assignment submission=item.submission %}<div class="announcement-card"><strong>{{ assignment.title }}</strong><p class="content-author">معلم: {{ assignment.teacher.user.get_full_name|default:assignment.teacher.user.username }}</p><p>{{ assignment.description|default:""|linebreaksbr }}{% include "assignments/attachments.html" %}</p>{% if assignment.id in submitted_assignment_ids %}<span>✅ پاسخ ارسال شده</span><br><a href="{% url 'submit_assignment' assignment.id %}">ویرایش پاسخ</a>{% else %}<a href="{% url 'submit_assignment' assignment.id %}">ارسال پاسخ</a>{% endif %}{% include "components/teacher_feedback.html" %}</div>{% endwith %}{% empty %}<p>هنوز تکلیفی ثبت نشده است.</p>{% endfor %}
 </div></div>
 {% endblock %}
