@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}واحد زبان معلم | RSP{% endblock %}
 {% block content %}
+<a class="btn btn-primary" href="{% url 'language_online_list' %}">کلاس‌های آنلاین</a>
 <div class="dashboard-header"><h1>🌐 واحد زبان</h1><p>مدیریت گروه‌ها، مطالب و تکالیف زبان</p></div>
 <div class="page-header-actions"><a class="btn btn-primary" href="{% url 'teacher_language_material_list' %}">مطالب زبان</a><a class="btn btn-primary" href="{% url 'teacher_language_assignment_list' %}">تکالیف زبان</a></div>
 <section class="dashboard-section"><h2>گروه‌های زبان من</h2><div class="class-grid">

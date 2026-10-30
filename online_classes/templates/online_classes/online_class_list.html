@@ -3,9 +3,10 @@
 {% block title %}کلاس‌های آنلاین | RSP{% endblock %}
 
 {% block content %}
+<a class="btn btn-primary" href="{% if language %}{% url 'online_class_list' %}{% else %}{% url 'language_online_list' %}{% endif %}">{% if language %}کلاس‌های آنلاین مدرسه{% else %}کلاس‌های آنلاین واحد زبان{% endif %}</a>
 <div class="page-header">
     <div>
-        <h1>کلاس‌های آنلاین من</h1>
+        <h1>کلاس‌های آنلاین{% if language %} واحد زبان{% endif %} من</h1>
         <p>ورود به جلسات فعال و مشاهده حضور</p>
     </div>
 </div>

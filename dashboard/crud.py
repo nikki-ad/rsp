@@ -748,8 +748,8 @@ def report_card_delete(request, report_card_id):
 
 
 @manager_required
-def online_class_manage_list(request):
-    online_classes = OnlineClass.objects.select_related(
+def online_class_manage_list(request, language=False):
+    online_classes = OnlineClass.objects.filter(is_language=language).select_related(
         "academic_year",
         "bbb_configuration",
     ).annotate(
@@ -759,17 +759,21 @@ def online_class_manage_list(request):
     return render(
         request,
         "dashboard/online_class_manage_list.html",
-        {"online_classes": online_classes},
+        {"online_classes": online_classes, "language": language},
     )
 
 
 @manager_required
-def online_class_form(request, class_id=None):
-    instance = get_object_or_404(OnlineClass, id=class_id) if class_id else None
+def online_class_form(request, class_id=None, language=False):
+    from .forms import LanguageOnlineClassForm
+    form_class = LanguageOnlineClassForm if language else OnlineClassForm
+    list_name = "language_online_manage" if language else "online_class_manage_list"
+    instance = get_object_or_404(OnlineClass, id=class_id, is_language=language) if class_id else None
     if request.method == "POST":
-        form = OnlineClassForm(request.POST, instance=instance)
+        form = form_class(request.POST, instance=instance)
         if form.is_valid():
             online_class = form.save(commit=False)
+            online_class.is_language = language
             if not online_class.pk:
                 online_class.created_by = request.user
             online_class.save()
@@ -780,32 +784,33 @@ def online_class_form(request, class_id=None):
                 description=f"کلاس آنلاین «{online_class.title}» ذخیره شد.",
             )
             messages.success(request, "کلاس آنلاین ذخیره شد.")
-            return redirect("online_class_manage_list")
+            return redirect(list_name)
     else:
-        form = OnlineClassForm(instance=instance)
+        form = form_class(instance=instance)
     return _form_page(
         request,
         form=form,
-        title="ویرایش کلاس آنلاین" if instance else "کلاس آنلاین جدید",
-        back_url=reverse("online_class_manage_list"),
+        title=("ویرایش کلاس آنلاین" if instance else "کلاس آنلاین جدید") + (" واحد زبان" if language else ""),
+        back_url=reverse(list_name),
         wide=True,
-        extra={"year_people_endpoint": reverse("load_year_people")},
+        extra={"year_people_endpoint": reverse("language_online_people") if language else reverse("load_year_people")},
     )
 
 
 @manager_required
-def online_class_delete(request, class_id):
-    online_class = get_object_or_404(OnlineClass, id=class_id)
+def online_class_delete(request, class_id, language=False):
+    list_name = "language_online_manage" if language else "online_class_manage_list"
+    online_class = get_object_or_404(OnlineClass, id=class_id, is_language=language)
     if request.method == "POST":
         title = online_class.title
         online_class.delete()
         log_activity(request, action="online_class_deleted", description=f"کلاس آنلاین «{title}» حذف شد.")
         messages.success(request, "کلاس آنلاین حذف شد.")
-        return redirect("online_class_manage_list")
+        return redirect(list_name)
     return render(
         request,
         "dashboard/confirm_delete.html",
-        {"object_label": online_class.title, "back_url": reverse("online_class_manage_list")},
+        {"object_label": online_class.title, "back_url": reverse(list_name)},
     )
 
 
@@ -921,3 +926,15 @@ def load_year_people(request):
             ],
         }
     )
+
+
+@manager_required
+def language_online_people_view(request):
+    from django.http import JsonResponse
+    from .forms import language_online_people
+    from uuid import UUID
+    try:
+        year = UUID(request.GET.get("academic_year", ""))
+    except (ValueError, TypeError):
+        return JsonResponse({"classrooms": []})
+    return JsonResponse({"classrooms": language_online_people(year)})

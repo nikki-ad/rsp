@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function render(groups, checked) {
         container.replaceChildren();
+        const syncGroups = [];
+        function syncSelection(changed) {
+            container.querySelectorAll('input[name="students"]').forEach(input => {
+                if (input.value === changed.value) input.checked = changed.checked;
+            });
+        }
         groups.forEach(group => {
             const details = document.createElement('details');
             details.style.cssText = 'margin:8px 0;padding:12px;border:1px solid #ddd;border-radius:12px';
@@ -53,10 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             all.addEventListener('click', event => event.stopPropagation());
             all.addEventListener('change', () => {
-                children.forEach(el => { el.checked = all.checked; });
-                sync();
+                const checked = all.checked;
+                children.forEach(el => { el.checked = checked; syncSelection(el); });
+                syncGroups.forEach(update => update());
             });
-            children.forEach(el => el.addEventListener('change', sync));
+            syncGroups.push(sync);
+            children.forEach(el => el.addEventListener('change', () => {
+                syncSelection(el);
+                syncGroups.forEach(update => update());
+            }));
             summary.append(all, title);
             details.append(summary, list);
             container.append(details);

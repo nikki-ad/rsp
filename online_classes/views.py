@@ -18,8 +18,10 @@ from academic.models import AcademicYear
 
 
 @login_required
-def online_class_list(request):
+def online_class_list(request, language=False):
 
+    if language and is_school_admin(request.user):
+        return redirect("language_online_manage")
     user = request.user
 
     online_classes = OnlineClass.objects.none()
@@ -52,11 +54,12 @@ def online_class_list(request):
             "bbb_configuration",
         ).distinct()
 
+    online_classes = online_classes.filter(is_language=language)
     return render(
         request,
         "online_classes/online_class_list.html",
         {
-            "online_classes": online_classes,
+            "online_classes": online_classes, "language": language,
         },
     )
 
