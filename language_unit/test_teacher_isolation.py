@@ -161,9 +161,10 @@ class LanguageTeacherIsolationTests(TestCase):
         for name in ['language_group_detail','create_language_material','create_language_assignment']:
             self.assertEqual(self.client.get(reverse(name,args=[self.other_group.pk])).status_code,403)
 
-    def test_school_online_and_classroom_lookup_are_blocked(self):
+    def test_online_list_is_available_but_school_classroom_lookup_is_blocked(self):
         self.client.force_login(self.user)
-        self.assertEqual(self.client.get(reverse('online_class_list')).status_code,403)
+        self.assertEqual(self.client.get(reverse('online_class_list')).status_code,200)
+        self.assertEqual(self.client.get(reverse('language_online_list')).status_code,200)
         self.assertEqual(self.client.get(reverse('load_classrooms'),{'academic_year':self.year.pk}).status_code,403)
 
     def test_group_dashboard_shows_buttons_instead_of_full_content(self):

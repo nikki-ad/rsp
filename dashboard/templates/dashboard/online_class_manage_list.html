@@ -5,12 +5,13 @@
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>کلاس‌های آنلاین</h1>
+        <h1>کلاس‌های آنلاین{% if language %} واحد زبان{% endif %}</h1>
         <p>اتاق‌های BigBlueButton و اسکای‌روم</p>
     </div>
     <div class="page-header-actions">
+        <a class="btn btn-ghost" href="{% if language %}{% url 'online_class_manage_list' %}{% else %}{% url 'language_online_manage' %}{% endif %}">{% if language %}کلاس‌های آنلاین مدرسه{% else %}کلاس‌های آنلاین واحد زبان{% endif %}</a>
         <a class="btn btn-ghost" href="{% url 'bbb_config_list' %}">سرویس‌های BBB</a>
-        <a class="btn btn-primary" href="{% url 'online_class_create' %}">کلاس جدید</a>
+        <a class="btn btn-primary" href="{% if language %}{% url 'language_online_create' %}{% else %}{% url 'online_class_create' %}{% endif %}">کلاس جدید</a>
     </div>
 </div>
 
@@ -47,8 +48,8 @@
                         {% if item.is_active and item.academic_year.status == 'active' %}
                         <a class="btn btn-primary" href="{% url 'join_online_class' item.id %}">ورود اپراتور</a>
                         {% endif %}
-                        <a href="{% url 'online_class_edit' item.id %}">ویرایش</a>
-                        · <a href="{% url 'online_class_delete' item.id %}">حذف</a>
+                        <a href="{% if language %}{% url 'language_online_edit' item.id %}{% else %}{% url 'online_class_edit' item.id %}{% endif %}">ویرایش</a>
+                        · <a href="{% if language %}{% url 'language_online_delete' item.id %}{% else %}{% url 'online_class_delete' item.id %}{% endif %}">حذف</a>
                     </td>
                 </tr>
             {% endfor %}

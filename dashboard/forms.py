@@ -500,3 +500,27 @@ def online_class_people(year_id):
         if group is not None:
             group["students"].append({"id": str(enrollment.student_id), "name": str(enrollment.student)})
     return list(groups.values())
+
+
+class LanguageOnlineClassForm(OnlineClassForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from language_unit.models import LanguageGroup
+        from uuid import UUID
+        year = self.data.get("academic_year") if self.is_bound else self.initial.get("academic_year", self.instance.academic_year_id)
+        try:
+            year = UUID(str(year))
+        except (ValueError, TypeError):
+            year = None
+        groups = LanguageGroup.objects.filter(academic_year_id=year, is_active=True)
+        self.fields["students"].queryset = StudentProfile.objects.filter(language_groups__in=groups).select_related("user").distinct()
+        self.fields["teachers"].queryset = TeacherProfile.objects.filter(is_language_teacher=True).select_related("user")
+        self.student_classroom_data = language_online_people(year)
+
+
+def language_online_people(year):
+    from language_unit.models import LanguageGroup
+    groups = LanguageGroup.objects.filter(academic_year_id=year, is_active=True).prefetch_related("students__user")
+    return [{"id": str(group.pk), "name": str(group), "students": [
+        {"id": str(student.pk), "name": str(student)} for student in group.students.all()
+    ]} for group in groups]

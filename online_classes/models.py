@@ -40,6 +40,8 @@ class OnlineClass(BaseModel):
         ("skyroom", "Skyroom"),
     )
 
+    is_language = models.BooleanField(default=False, verbose_name="کلاس واحد زبان")
+
     title = models.CharField(
         max_length=200,
         verbose_name="عنوان کلاس آنلاین",

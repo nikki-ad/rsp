@@ -1,7 +1,16 @@
 from django.urls import path
 from . import views, content_views
 
+from dashboard import crud
+from online_classes.views import online_class_list
+
 urlpatterns = [
+    path("online/", online_class_list, {"language": True}, name="language_online_list"),
+    path("online/manage/", crud.online_class_manage_list, {"language": True}, name="language_online_manage"),
+    path("online/create/", crud.online_class_form, {"language": True}, name="language_online_create"),
+    path("online/<uuid:class_id>/edit/", crud.online_class_form, {"language": True}, name="language_online_edit"),
+    path("online/<uuid:class_id>/delete/", crud.online_class_delete, {"language": True}, name="language_online_delete"),
+    path("online/people/", crud.language_online_people_view, name="language_online_people"),
     path("responses/<uuid:submission_id>/feedback/", views.language_submission_feedback, name="language_submission_feedback"),
     path("responses/<uuid:submission_id>/feedback/download/", views.download_language_feedback, name="download_language_feedback"),
     path("materials/<uuid:item_id>/delete/", views.delete_language_content,

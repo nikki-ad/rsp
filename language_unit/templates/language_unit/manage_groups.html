@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}مدیریت واحد زبان | RSP{% endblock %}
 {% block content %}
+<a class="btn btn-primary" href="{% url 'language_online_manage' %}">کلاس‌های آنلاین</a>
 <div class="page-header"><div><h1>مدیریت واحد زبان</h1><p>گروه‌بندی دانش‌آموزان و تخصیص معلمان زبان</p></div>
 <div class="page-header-actions"><a class="btn btn-primary" href="{% url 'language_group_create' %}">گروه زبان جدید</a></div></div>
 <form class="filter-bar" method="get"><input type="search" name="q" value="{{ query }}" placeholder="جستجوی نام گروه یا دانش‌آموز"><button class="btn btn-primary">جستجو</button></form>
