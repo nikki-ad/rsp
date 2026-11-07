@@ -1,0 +1,14 @@
+{% extends "online_exams/base.html" %}{% load static exam_text %}
+{% block exam_content %}
+<h2>{{ exam.title }}</h2><p>{{ exam.subject }} · {{ exam.question_count }} سؤال</p>
+{% if not p.started_at %}<div class="exam-card"><p>مدت آزمون: {{ exam.duration_minutes }} دقیقه. پایان قطعی: {{ exam.closes_at|jalali_datetime }} به وقت تهران.</p><p><strong>اگر دیر شروع کنید، فقط تا پایان بازه فرصت دارید.</strong> زمان از لحظه زدن دکمه شروع محاسبه می‌شود؛ برای دریافت PDF هم زمان ادامه دارد.</p><p>هر دانش‌آموز فقط یک نوبت شرکت دارد. پاسخ سفید جریمه ندارد. {% if exam.negative_marking %}هر سه پاسخ غلط، امتیاز یک پاسخ درست را کم می‌کند و درصد ممکن است منفی شود.{% else %}آزمون نمره منفی ندارد.{% endif %}</p><form method="post">{% csrf_token %}{% if now >= exam.opens_at and now < exam.closes_at %}<button class="exam-button">شروع آزمون</button>{% else %}<p>اکنون خارج از بازه مجاز شرکت هستید.</p>{% endif %}</form></div>
+{% else %}
+<div class="exam-timer" role="timer" aria-label="زمان باقی‌مانده"><span id="exam-timer"></span><span id="save-status" role="status">پاسخ‌ها خودکار ذخیره می‌شوند.</span></div>
+{% if exam.mode == 'pdf' %}<a class="exam-button" href="{% url 'exam_pdf' exam.pk %}">دانلود PDF سؤال‌ها</a>{% endif %}
+<form method="post" action="{% url 'exam_submit' exam.pk %}" id="answer-form" data-save-url="{% url 'exam_answer' exam.pk %}" data-result-url="{% url 'exam_result' exam.pk %}">{% csrf_token %}
+{% for q in questions %}<fieldset class="exam-card" data-question="{{ q.number }}"><legend>سؤال {{ q.number }}</legend>{% if exam.mode == 'typed' %}<div class="exam-question-text">{{ q.text|exam_text }}</div>{% endif %}
+{% if exam.mode == 'typed' %}{% for option in q.options %}<label class="exam-option"><input type="radio" name="q{{ q.number }}" value="{{ forloop.counter }}" {% if q.answer == forloop.counter %}checked{% endif %}> <span>{{ forloop.counter }}. {{ option|exam_text }}</span></label>{% endfor %}{% else %}{% for choice in '1234' %}<label class="exam-option"><input type="radio" name="q{{ q.number }}" value="{{ choice }}" {% if q.answer|stringformat:'s' == choice %}checked{% endif %}> گزینه {{ choice }}</label>{% endfor %}{% endif %}
+<button type="button" data-clear>پاک‌کردن پاسخ</button></fieldset>{% endfor %}<button class="exam-button" id="submit-exam">پایان آزمون و مشاهده نتیجه</button></form>
+{{ config|json_script:'exam-config' }}<script src="{% static 'online_exams/take.js' %}"></script>
+{% endif %}
+{% endblock %}

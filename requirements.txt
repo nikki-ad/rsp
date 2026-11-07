@@ -4,3 +4,5 @@ requests==2.34.2
 gunicorn==23.0.0
 psycopg[binary]==3.3.5
 jdatetime==5.2.0
+latex2mathml==3.81.1
+pypdf==7.0.0

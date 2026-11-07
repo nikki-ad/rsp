@@ -1,0 +1,2 @@
+{% extends "online_exams/base.html" %}
+{% block exam_content %}<h2>۳. کلید آزمون — {{ exam.title }}</h2><form method="post" class="exam-form">{% csrf_token %}{{ form.as_p }}<button class="exam-button">ذخیره کلید و پیش‌نمایش</button></form>{% endblock %}
