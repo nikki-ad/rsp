@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "notifications",
     "online_classes",
     "language_unit",
+    "online_exams",
 ]
 
 MIDDLEWARE = [

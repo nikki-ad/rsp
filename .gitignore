@@ -44,3 +44,6 @@ htmlcov/
 *.swp
 *~
 
+
+# Authenticated exam questions and generated reports
+private_exam_files/
