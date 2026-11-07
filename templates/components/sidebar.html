@@ -127,6 +127,9 @@
                 </a>
             {% endif %}
 
+            <div class="menu-title">آزمون‌ها</div>
+            <a href="{% url 'exam_list' %}" class="{% if 'exam_' in url_name %}active{% endif %}">آزمون آنلاین</a>
+
             <div class="menu-title">حساب کاربری</div>
             <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}active{% endif %}">پروفایل</a>
             <a href="{% url 'conversation_list' %}" class="{% if url_name == 'conversation_list' or url_name == 'chat_view' or url_name == 'user_list_for_messaging' %}active{% endif %}">

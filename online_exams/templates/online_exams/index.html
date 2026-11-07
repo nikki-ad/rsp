@@ -1,0 +1,11 @@
+{% extends "online_exams/base.html" %}
+{% block exam_content %}
+{% if manage %}
+<a class="exam-button" href="{% url 'exam_create' %}">ساخت آزمون جدید</a>
+{% for exam in exams %}<article class="exam-card"><h2>{{ exam.title }}</h2><p>{{ exam.subject }} · {{ exam.question_count }} سؤال · {{ exam.duration_minutes }} دقیقه</p><p>{{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }}</p><a href="{% url 'exam_detail' exam.pk %}">{% if exam.published %}مدیریت و کارنامه‌ها{% else %}ادامه ساخت و پیش‌نمایش{% endif %}</a></article>{% empty %}<p>هنوز آزمونی نساخته‌اید.</p>{% endfor %}
+{% else %}
+{% for p in rows %}<article class="exam-card"><h2>{{ p.exam.title }}</h2><p>{{ p.exam.subject }} · {{ p.exam.duration_minutes }} دقیقه</p><p>{{ p.exam.opens_at|jalali_datetime }} تا {{ p.exam.closes_at|jalali_datetime }} — به وقت تهران</p>
+{% if p.result_deleted %}<span>نتایج این آزمون حذف شده است.</span>{% elif p.submitted_at or p.started_at and now >= p.deadline_at %}<a class="exam-button" href="{% url 'exam_result' p.exam_id %}">مشاهده نتیجه</a>{% elif now >= p.exam.closes_at %}<span>غایب — مهلت آزمون پایان یافته است.</span>{% elif p.started_at %}<a class="exam-button" href="{% url 'exam_take' p.exam_id %}">ادامه آزمون</a>{% elif now < p.exam.opens_at %}<span>هنوز شروع نشده است.</span>{% else %}<a class="exam-button" href="{% url 'exam_take' p.exam_id %}">شرکت در آزمون</a>{% endif %}</article>{% empty %}<p>آزمونی برای شما تعیین نشده است.</p>{% endfor %}
+{% endif %}
+<nav class="exam-actions" aria-label="صفحه‌بندی">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">قبلی</a>{% endif %}<span>{{ page.number }} از {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?page={{ page.next_page_number }}">بعدی</a>{% endif %}</nav>
+{% endblock %}

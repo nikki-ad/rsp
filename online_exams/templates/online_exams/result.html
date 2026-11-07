@@ -1,0 +1,7 @@
+{% extends "online_exams/base.html" %}{% load exam_text %}
+{% block exam_content %}<h2>نتیجه {{ p.exam.title }}</h2>
+{% if p.result_deleted or p.exam.results_deleted %}<p>نتایج این آزمون توسط مدیریت حذف شده است. امکان شرکت مجدد وجود ندارد.</p>{% else %}
+<div class="exam-card"><h3>درصد: {{ p.percentage }}٪</h3><p>درست: {{ p.correct }} · غلط: {{ p.wrong }} · سفید: {{ p.blank }}</p><p>نمره منفی: {{ p.exam.negative_marking|yesno:'دارد,ندارد' }}</p><p>زمان ثبت: {{ p.submitted_at|jalali_datetime }} — به وقت تهران</p></div>
+{% if not show_key %}<p>پاسخ صحیح سؤال‌ها پس از پایان بازه آزمون نمایش داده می‌شود.</p>{% endif %}
+<div class="exam-table-wrap"><table><thead><tr><th>سؤال</th><th>پاسخ شما</th>{% if show_key %}<th>پاسخ صحیح</th>{% endif %}<th>وضعیت</th></tr></thead><tbody>{% for row in rows %}<tr><td>{{ row.question.number }}</td><td>{{ row.answer|default_if_none:'—' }}</td>{% if show_key %}<td>{{ row.question.correct_option }}</td>{% endif %}<td>{{ row.status }}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}{% endblock %}

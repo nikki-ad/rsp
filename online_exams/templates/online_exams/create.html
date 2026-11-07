@@ -1,0 +1,11 @@
+{% extends "online_exams/base.html" %}{% load static %}
+{% block exam_content %}
+<h2>۱. مشخصات و شرکت‌کنندگان</h2><p>تاریخ‌ها شمسی و ساعت‌ها به وقت تهران هستند. پایان بازه، پایان قطعی آزمون است.</p>
+<form method="post" enctype="multipart/form-data" class="exam-form">{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}{% if field.name != 'students' %}<div class="exam-field">{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}</div>{% endif %}{% endfor %}
+<fieldset><legend>انتخاب دانش‌آموزان</legend>{{ form.students.errors }}
+<label>جست‌وجوی نام <input type="search" id="student-search" placeholder="نام دانش‌آموز یا کلاس"></label>
+{% for group in groups %}<div class="exam-group" data-group><div class="exam-group-heading"><input type="checkbox" id="group-{{ forloop.counter }}" data-select-group aria-label="انتخاب کل {{ group.label }}"><details><summary>{{ group.label }} ({{ group.students|length }} نفر)</summary><div class="exam-students">{% for student in group.students %}<label data-student-label><input type="checkbox" name="students" value="{{ student.pk }}" {% if student.pk|stringformat:'s' in selected %}checked{% endif %}> {{ student }}</label>{% empty %}<p>دانش‌آموزی ندارد.</p>{% endfor %}</div></details></div></div>{% empty %}<p>کلاس یا گروه زبان فعالی در محدوده دسترسی شما نیست.</p>{% endfor %}
+<p id="selected-count" aria-live="polite"></p></fieldset><button class="exam-button">ذخیره و مرحله بعد</button></form>
+<script src="{% static 'online_exams/manage.js' %}"></script>
+{% endblock %}
