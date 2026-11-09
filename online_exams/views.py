@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -48,7 +49,8 @@ def _private(response):
 def index(request):
     manage = can_manage(request.user)
     if manage:
-        page = Paginator(managed_exams(request.user), 30).get_page(request.GET.get("page"))
+        page = Paginator(managed_exams(request.user).annotate(has_started=Exists(
+            Participation.objects.filter(exam_id=OuterRef("pk"), started_at__isnull=False))), 30).get_page(request.GET.get("page"))
         exams = page
         rows = None
     else:
@@ -59,7 +61,7 @@ def index(request):
         rows = page
         exams = None
     return render(request, "online_exams/index.html", {"manage": manage, "exams": exams,
-        "rows": rows, "page": page, "now": timezone.now()})
+        "rows": rows, "page": page, "now": timezone.now(), "admin": is_school_admin(request.user)})
 
 
 @login_required
@@ -154,7 +156,8 @@ def detail(request, pk):
     services.finalize_due(exam.pk)
     rows = list(exam.participations.select_related("student__user"))
     return render(request, "online_exams/detail.html", {"exam": exam, "rows": rows,
-        "questions": exam.questions.all(), "now": timezone.now(), "admin": is_school_admin(request.user)})
+        "questions": exam.questions.all(), "now": timezone.now(), "admin": is_school_admin(request.user),
+        "has_started": any(p.started_at for p in rows)})
 
 
 @login_required
@@ -163,7 +166,7 @@ def publish(request, pk):
     exam = _exam(request.user, pk)
     try:
         services.publish(exam.pk, request.user)
-        messages.success(request, "آزمون منتشر شد. سؤال‌ها، کلید و زمان‌ها پس از انتشار ثابت می‌مانند.")
+        messages.success(request, "آزمون منتشر شد. تا پیش از شروع اولین دانش‌آموز، بازگشت به پیش‌نویس برای ویرایش ممکن است.")
     except ValidationError as error:
         _error(request, error)
     return redirect("exam_detail", pk=pk)
@@ -325,3 +328,40 @@ def preview(request):
     except (ValueError, KeyError, TypeError, UnicodeDecodeError):
         return JsonResponse({"error": "متن معتبر نیست."}, status=400)
     return JsonResponse({"html": render_text(text)})
+
+
+@login_required
+@require_POST
+def reopen(request, pk):
+    _exam(request.user, pk)
+    try:
+        services.reopen(pk, request.user)
+    except ValidationError as error:
+        _error(request, error)
+        return redirect("exam_detail", pk=pk)
+    messages.success(request, "آزمون به پیش‌نویس برگشت و تا انتشار دوباره برای دانش‌آموزان نمایش داده نمی‌شود.")
+    return redirect("exam_edit", pk=pk)
+
+
+@login_required
+@never_cache
+def delete_exam(request, pk):
+    exam = _exam(request.user, pk)
+    started = exam.participations.filter(started_at__isnull=False).exists()
+    if started and not is_school_admin(request.user):
+        raise PermissionDenied
+    if request.method == "POST":
+        if request.POST.get("confirm") != str(exam.pk):
+            return HttpResponse("تأیید حذف معتبر نیست.", status=400)
+        try:
+            services.delete_exam(pk, request.user)
+        except ValidationError as error:
+            _error(request, error)
+            return redirect("exam_detail", pk=pk)
+        messages.success(request, "آزمون و پاسخ‌ها و فایل‌های وابسته حذف شدند.")
+        return redirect("exam_list")
+    return render(request, "online_exams/delete_exam.html", {
+        "exam": exam, "started": started, "now": timezone.now(),
+        "participant_count": exam.participations.count(),
+        "started_count": exam.participations.filter(started_at__isnull=False).count(),
+    })

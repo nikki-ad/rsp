@@ -2,9 +2,10 @@ from decimal import Decimal, ROUND_HALF_UP
 from functools import partial
 import logging
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from activitylog.models import ActivityLog
 from .models import Exam, Participation, Question
 
@@ -59,9 +60,13 @@ def _finish(participation, now):
 def ensure_report(participation_id):
     from .reports import write_report
     # Same lock order as purge/finalize: deletion cannot race with generation.
-    exam_id = Participation.objects.values_list("exam_id", flat=True).get(pk=participation_id)
+    exam_id = Participation.objects.filter(pk=participation_id).values_list("exam_id", flat=True).first()
+    if exam_id is None:
+        return
     with transaction.atomic():
-        exam = Exam.objects.select_for_update().get(pk=exam_id)
+        exam = Exam.objects.select_for_update().filter(pk=exam_id).first()
+        if exam is None:
+            return
         participation = Participation.objects.select_for_update().select_related("student__user").get(pk=participation_id)
         participation.exam = exam
         if (not participation.submitted_at or participation.result_deleted or exam.results_deleted or
@@ -72,7 +77,9 @@ def ensure_report(participation_id):
 
 @transaction.atomic
 def start(exam_id, student):
-    exam = Exam.objects.select_for_update().get(pk=exam_id)
+    exam = Exam.objects.select_for_update().filter(pk=exam_id).first()
+    if exam is None:
+        raise ValidationError("آزمون حذف شده است.")
     p = Participation.objects.select_for_update().get(exam=exam, student=student)
     now = timezone.now()
     p.exam = exam
@@ -92,8 +99,12 @@ def start(exam_id, student):
 
 @transaction.atomic
 def record(participation_id, *, number=None, choice=None, submit=False):
-    exam_id = Participation.objects.values_list("exam_id", flat=True).get(pk=participation_id)
-    exam = Exam.objects.select_for_update().get(pk=exam_id)
+    exam_id = Participation.objects.filter(pk=participation_id).values_list("exam_id", flat=True).first()
+    if exam_id is None:
+        raise ValidationError("آزمون حذف شده است.")
+    exam = Exam.objects.select_for_update().filter(pk=exam_id).first()
+    if exam is None:
+        raise ValidationError("آزمون حذف شده است.")
     p = Participation.objects.select_for_update().get(pk=participation_id)
     p.exam = exam
     now = timezone.now()
@@ -126,7 +137,12 @@ def finalize_due(exam_id=None):
         due = due.filter(exam_id=exam_id)
     count = 0
     for pk in due.values_list("pk", flat=True).iterator(chunk_size=100):
-        record(pk)
+        try:
+            record(pk)
+        except ValidationError:
+            if Participation.objects.filter(pk=pk).exists():
+                raise
+            continue
         count += 1
     return count
 
@@ -156,3 +172,46 @@ def purge(exam_id, user, *, full=False):
             p.result_deleted = True
         p.save()
     ActivityLog.objects.create(user=user, action="حذف کامل نتایج آزمون" if full else "حذف فایل‌های کارنامه آزمون", description=exam.title)
+
+
+@transaction.atomic
+def reopen(exam_id, user):
+    """Share the exam lock with student start and publication."""
+    from .access import managed_exams
+    exam = get_object_or_404(managed_exams(user).select_for_update(), pk=exam_id)
+    if exam.participations.filter(started_at__isnull=False).exists():
+        raise ValidationError("دانش‌آموزی آزمون را شروع کرده است؛ ویرایش سؤال‌ها و زمان‌ها ممکن نیست.")
+    if exam.results_deleted or exam.report_files_deleted:
+        raise ValidationError("آزمون دارای نتایج حذف‌شده قابل بازگشت به پیش‌نویس نیست.")
+    if exam.published:
+        exam.published = False
+        exam.save(update_fields=["published", "updated_at"])
+        ActivityLog.objects.create(user=user, action="بازگشت آزمون به پیش‌نویس", description=exam.title)
+    return exam
+
+
+def _delete_exam_files(files):
+    for storage, name in files:
+        try:
+            storage.delete(name)
+        except OSError:
+            logger.exception("Could not remove private file for deleted exam: %s", name)
+
+
+@transaction.atomic
+def delete_exam(exam_id, user):
+    from accounts.permissions import is_school_admin
+    from .access import managed_exams
+    exam = get_object_or_404(managed_exams(user).select_for_update(), pk=exam_id)
+    started = exam.participations.filter(started_at__isnull=False).exists()
+    if started and not is_school_admin(user):
+        raise PermissionDenied
+    if started and timezone.now() < exam.closes_at:
+        raise ValidationError("حذف آزمون دارای پاسخ فقط پس از پایان مهلت آزمون ممکن است.")
+    files = [(p.report.storage, p.report.name) for p in exam.participations.all() if p.report]
+    if exam.question_pdf:
+        files.append((exam.question_pdf.storage, exam.question_pdf.name))
+    title = exam.title
+    exam.delete()
+    ActivityLog.objects.create(user=user, action="حذف آزمون آنلاین", description=title)
+    transaction.on_commit(partial(_delete_exam_files, files), robust=True)

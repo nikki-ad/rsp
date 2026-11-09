@@ -2,7 +2,10 @@
 {% block exam_content %}
 {% if manage %}
 <a class="exam-button" href="{% url 'exam_create' %}">ساخت آزمون جدید</a>
-{% for exam in exams %}<article class="exam-card"><h2>{{ exam.title }}</h2><p>{{ exam.subject }} · {{ exam.question_count }} سؤال · {{ exam.duration_minutes }} دقیقه</p><p>{{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }}</p><a href="{% url 'exam_detail' exam.pk %}">{% if exam.published %}مدیریت و کارنامه‌ها{% else %}ادامه ساخت و پیش‌نمایش{% endif %}</a></article>{% empty %}<p>هنوز آزمونی نساخته‌اید.</p>{% endfor %}
+{% for exam in exams %}<article class="exam-card"><h2>{{ exam.title }}</h2><p>{{ exam.subject }} · {{ exam.question_count }} سؤال · {{ exam.duration_minutes }} دقیقه</p><p>{{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }}</p><a href="{% url 'exam_detail' exam.pk %}">{% if exam.published %}مدیریت و کارنامه‌ها{% else %}ادامه ساخت و پیش‌نمایش{% endif %}</a><div class="exam-actions">
+{% if not exam.published %}<a href="{% url 'exam_edit' exam.pk %}">ویرایش آزمون</a>{% elif not exam.has_started %}<form method="post" action="{% url 'exam_reopen' exam.pk %}">{% csrf_token %}<button class="exam-button">بازگشت به پیش‌نویس و ویرایش</button></form>{% endif %}
+{% if not exam.has_started or admin and now >= exam.closes_at %}<a class="exam-danger" href="{% url 'exam_delete' exam.pk %}">حذف آزمون</a>{% endif %}
+</div></article>{% empty %}<p>هنوز آزمونی نساخته‌اید.</p>{% endfor %}
 {% else %}
 {% for p in rows %}<article class="exam-card"><h2>{{ p.exam.title }}</h2><p>{{ p.exam.subject }} · {{ p.exam.duration_minutes }} دقیقه</p><p>{{ p.exam.opens_at|jalali_datetime }} تا {{ p.exam.closes_at|jalali_datetime }} — به وقت تهران</p>
 {% if p.result_deleted %}<span>نتایج این آزمون حذف شده است.</span>{% elif p.submitted_at or p.started_at and now >= p.deadline_at %}<a class="exam-button" href="{% url 'exam_result' p.exam_id %}">مشاهده نتیجه</a>{% elif now >= p.exam.closes_at %}<span>غایب — مهلت آزمون پایان یافته است.</span>{% elif p.started_at %}<a class="exam-button" href="{% url 'exam_take' p.exam_id %}">ادامه آزمون</a>{% elif now < p.exam.opens_at %}<span>هنوز شروع نشده است.</span>{% else %}<a class="exam-button" href="{% url 'exam_take' p.exam_id %}">شرکت در آزمون</a>{% endif %}</article>{% empty %}<p>آزمونی برای شما تعیین نشده است.</p>{% endfor %}
