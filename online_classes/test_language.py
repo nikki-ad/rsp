@@ -61,11 +61,11 @@ class LanguageOnlineTests(TestCase):
             self.assertContains(self.client.get(reverse('language_online_list')), online.title)
             self.assertEqual(self.client.get(reverse('language_online_create')).status_code, 403)
             self.assertEqual(self.client.get(reverse('language_online_people')).status_code, 403)
-            with patch('online_classes.views.create_bbb_meeting') as create:
+            with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting') as create:
                 self.assertEqual(self.client.get(reverse('join_online_class', args=[online.pk])).status_code, 302)
                 create.assert_called_once()
         self.client.force_login(self.outsider.user)
         self.assertNotContains(self.client.get(reverse('language_online_list')), online.title)
-        with patch('online_classes.views.create_bbb_meeting') as create:
+        with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting') as create:
             self.client.get(reverse('join_online_class', args=[online.pk]))
             create.assert_not_called()

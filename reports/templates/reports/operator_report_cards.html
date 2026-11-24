@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}کارنامه‌های کلاس‌های تحت نظارت | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><h1>کارنامه‌های کلاس‌های تحت نظارت</h1></div>
+<div class="announcement-list">
+    {% for card in page %}
+        <article class="list-card">
+            <h2>{{ card.period.title }}</h2>
+            <p>{{ card.student }} · {{ card.period.academic_year }}</p>
+            <a class="btn btn-secondary" href="{% url 'download_report_card' card.id %}">دریافت کارنامه</a>
+        </article>
+    {% empty %}
+        <p>کارنامه‌ای برای کلاس‌های تحت نظارت ثبت نشده است.</p>
+    {% endfor %}
+</div>
+{% if page.has_other_pages %}
+<nav class="card-actions" aria-label="صفحه‌بندی">
+    {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">قبلی</a>{% endif %}
+    <span>{{ page.number }} از {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a href="?page={{ page.next_page_number }}">بعدی</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

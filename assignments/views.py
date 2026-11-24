@@ -1,4 +1,4 @@
-from accounts.permissions import school_teacher_only, language_teacher_redirect, is_school_admin
+from accounts.permissions import is_operator, school_teacher_only, language_teacher_redirect, is_school_admin
 from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -352,6 +352,13 @@ def delete_assignment(request, assignment_id):
 
 @login_required
 def download_assignment_file(request, assignment_id, attachment="file"):
+    if attachment not in {"file", "image", "video"}:
+        raise Http404()
+    if is_school_admin(request.user) or is_operator(request.user):
+        assignments = Assignment.objects.all()
+        if is_operator(request.user):
+            assignments = assignments.filter(classroom__supervising_operators=request.user)
+        return attachment_response(getattr(get_object_or_404(assignments, pk=assignment_id), attachment))
 
     filters = {"classroom__academic_year__status": AcademicYear.Status.ACTIVE}
     teacher = getattr(request.user, "teacher_profile", None)
@@ -368,8 +375,6 @@ def download_assignment_file(request, assignment_id, attachment="file"):
     assignment = get_object_or_404(Assignment.objects.filter(**filters).distinct(),
                                    id=assignment_id)
 
-    if attachment not in {"file", "image", "video"}:
-        raise Http404()
     return attachment_response(getattr(assignment, attachment))
 
 

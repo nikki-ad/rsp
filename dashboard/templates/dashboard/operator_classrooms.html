@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}کلاس‌های تحت نظارت | RSP{% endblock %}
+{% block content %}
+<div class="page-header"><h1>کلاس‌های تحت نظارت</h1></div>
+<div class="class-grid">
+    {% for room in classrooms %}
+        <article class="class-card">
+            <h2>{{ room }}</h2>
+            <p>{{ room.academic_year }}</p>
+            <div class="card-actions">
+                <a class="btn btn-secondary" href="{% url 'manager_class_materials' room.id %}">مطالب</a>
+                <a class="btn btn-secondary" href="{% url 'manager_class_assignments' room.id %}">تکالیف</a>
+            </div>
+        </article>
+    {% empty %}
+        <p>هنوز کلاسی به شما تخصیص داده نشده است.</p>
+    {% endfor %}
+</div>
+{% endblock %}

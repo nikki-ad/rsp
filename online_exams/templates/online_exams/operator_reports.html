@@ -1,0 +1,17 @@
+{% extends "online_exams/base.html" %}
+{% block exam_content %}
+<a href="{% url 'exam_list' %}">بازگشت به آزمون‌ها</a>
+<h2>{{ exam.title }}</h2>
+<p>{{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }}</p>
+{% if reports and not exam.report_files_deleted %}
+<a class="exam-button" href="{% url 'exam_reports_zip' exam.id %}">دریافت همه کارنامه‌های در دسترس</a>
+{% for participant in reports %}
+<article class="exam-card">
+    <p>{{ participant.student }} · {{ participant.classroom_label }}</p>
+    <a href="{% url 'exam_report' exam.id participant.id %}">دریافت کارنامه</a>
+</article>
+{% endfor %}
+{% else %}
+<p>کارنامه‌ای برای دریافت در دسترس نیست.</p>
+{% endif %}
+{% endblock %}

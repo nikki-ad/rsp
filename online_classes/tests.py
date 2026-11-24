@@ -45,21 +45,21 @@ class OnlineClassTests(TestCase):
             self.client.force_login(self.manager)
             response = self.client.get(reverse('online_class_list'))
             self.assertContains(response, self.online.title)
-            with patch('online_classes.views.create_bbb_meeting'):
+            with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting'):
                 response = self.client.get(reverse('join_online_class', args=[self.online.pk]))
             params = parse_qs(urlsplit(response.url).query)
             self.assertEqual(params['role'], ['MODERATOR'])
         self.manager.role = Role.STUDENT
         self.manager.is_superuser = True
         self.manager.save()
-        with patch('online_classes.views.create_bbb_meeting'):
+        with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting'):
             response = self.client.get(reverse('join_online_class', args=[self.online.pk]))
         self.assertEqual(parse_qs(urlsplit(response.url).query)['role'], ['MODERATOR'])
 
     def test_teacher_moderator_student_viewer_and_signed_roles(self):
         for user, role in ((self.teacher_user, 'MODERATOR'), (self.student_user, 'VIEWER')):
             self.client.force_login(user)
-            with patch('online_classes.views.create_bbb_meeting'):
+            with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting'):
                 response = self.client.get(reverse('join_online_class', args=[self.online.pk]) + '?role=moderator')
             query = urlsplit(response.url).query
             params = parse_qs(query)
@@ -72,14 +72,14 @@ class OnlineClassTests(TestCase):
         self.teacher.save()
         self.client.force_login(self.teacher_user)
         self.assertContains(self.client.get(reverse('online_class_list')), reverse('online_class_list'))
-        with patch('online_classes.views.create_bbb_meeting'):
+        with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting'):
             response = self.client.get(reverse('join_online_class', args=[self.online.pk]))
         self.assertEqual(parse_qs(urlsplit(response.url).query)['role'], ['MODERATOR'])
 
     def test_unassigned_users_cannot_join_or_create_meeting(self):
         for user in (self.second_student.user, CustomUser.objects.create_user(username='outsider', role=Role.TEACHER)):
             self.client.force_login(user)
-            with patch('online_classes.views.create_bbb_meeting') as create:
+            with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting') as create:
                 response = self.client.get(reverse('join_online_class', args=[self.online.pk]))
             create.assert_not_called()
             self.assertRedirects(response, reverse('online_class_list'))
@@ -148,7 +148,7 @@ class OnlineClassTests(TestCase):
 
     def test_failed_create_does_not_redirect_to_bbb(self):
         self.client.force_login(self.student_user)
-        with patch('online_classes.views.create_bbb_meeting', side_effect=ValueError('API failed')):
+        with patch('online_classes.views.register_attendance_hook'), patch('online_classes.views.create_bbb_meeting', side_effect=ValueError('API failed')):
             response = self.client.get(reverse('join_online_class', args=[self.online.pk]))
         self.assertRedirects(response, reverse('online_class_list'))
 
