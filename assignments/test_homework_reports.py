@@ -71,7 +71,7 @@ class DeficiencyReportTests(TestCase):
             self.assertIsNotNone(xml.find("s:autoFilter", NS))
 
     def test_all_requested_roles_and_dashboard_button(self):
-        for user in [self.manager, self.super_admin, self.superuser, self.operator]:
+        for user in [self.manager, self.super_admin, self.superuser]:
             with self.subTest(user=user):
                 self.client.force_login(user)
                 self.assertEqual(self.client.get(self.url, self.query).status_code, 200)
@@ -82,13 +82,13 @@ class DeficiencyReportTests(TestCase):
         self.client.force_login(self.operator)
         self.assertEqual(post_login_redirect_name(self.operator), "admin_dashboard")
         response = self.client.get(reverse("admin_dashboard"))
-        self.assertContains(response, reverse("deficiency_report_filter"))
+        self.assertNotContains(response, reverse("deficiency_report_filter"))
         self.assertNotContains(response, reverse("general_user_create"))
         for route in ["user_list", "routine_report_excel", "student_list"]:
             self.assertEqual(self.client.get(reverse(route)).status_code, 403)
 
     def test_unprivileged_roles_cannot_filter_download_or_view_calendar(self):
-        for user in [self.teacher_user, self.language_user, self.students[0].user, self.finance]:
+        for user in [self.teacher_user, self.language_user, self.students[0].user, self.finance, self.operator]:
             self.client.force_login(user)
             for route in ["deficiency_report_filter", "deficiency_report_download", "deficiency_report_calendar"]:
                 self.assertEqual(self.client.get(reverse(route), self.query).status_code, 403)

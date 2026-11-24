@@ -20,6 +20,21 @@ def is_school_admin(user) -> bool:
     )
 
 
+def is_operator(user):
+    return user.is_authenticated and user.role == Role.OPERATOR and not is_school_admin(user)
+
+
+def supervisor_required(view_func):
+    @login_required
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not (is_school_admin(request.user) or is_operator(request.user)):
+            return HttpResponseForbidden()
+        return view_func(request, *args, **kwargs)
+
+    return wrapped
+
+
 def manager_required(view_func):
     @login_required
     @wraps(view_func)

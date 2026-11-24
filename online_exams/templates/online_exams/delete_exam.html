@@ -1,0 +1,13 @@
+{% extends "online_exams/base.html" %}
+{% block exam_content %}
+<h2>حذف آزمون</h2>
+<p>آزمون: {{ exam.title }}</p>
+<p>شرکت‌کنندگان: {{ participant_count }} · شروع‌کرده‌اند: {{ started_count }}</p>
+{% if started and now < exam.closes_at %}
+<p>این آزمون شروع شده است. حذف آن فقط پس از پایان مهلت آزمون ممکن است.</p>
+{% else %}
+<p>با تأیید، خود آزمون، سؤال‌ها، پاسخ‌ها، نتایج و فایل‌های وابسته برای همیشه حذف می‌شوند. این کار قابل بازگشت نیست.</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="confirm" value="{{ exam.pk }}"><button class="exam-danger">تأیید حذف کامل آزمون</button></form>
+{% endif %}
+<a href="{% url 'exam_detail' exam.pk %}">انصراف و بازگشت</a>
+{% endblock %}

@@ -78,6 +78,10 @@ class Participation(BaseModel):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name="participations")
     student = models.ForeignKey("accounts.StudentProfile", on_delete=models.PROTECT,
                                 related_name="exam_participations")
+    classroom = models.ForeignKey(
+        "academic.Classroom", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="exam_participations",
+    )
     classroom_label = models.CharField(max_length=200, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     deadline_at = models.DateTimeField(null=True, blank=True, db_index=True)

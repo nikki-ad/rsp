@@ -119,7 +119,13 @@
 
             {% elif user.role == "operator" %}
                 <a href="{% url 'admin_dashboard' %}" class="{% if url_name == 'admin_dashboard' %}active{% endif %}">داشبورد مدیریت</a>
-                <a href="{% url 'deficiency_report_filter' %}">گزارش نقص تکلیف‌ها</a>
+                <a href="{% url 'classroom_list' %}">کلاس‌های تحت نظارت</a>
+                <a href="{% url 'manager_assignment_classrooms' %}">تکالیف آموزشی</a>
+                <a href="{% url 'manager_material_classrooms' %}">مطالب آموزشی</a>
+                <a href="{% url 'announcement_create' %}">ثبت اطلاعیه</a>
+                <a href="{% url 'manage_language_groups' %}">نظارت واحد زبان</a>
+                <a href="{% url 'online_class_list' %}">کلاس‌های آنلاین</a>
+                <a href="{% url 'operator_report_cards' %}">کارنامه‌ها</a>
 
             {% elif user.role == "finance" %}
                 <a href="{% url 'cafeteria_pending_receipts' %}" class="{% if url_name == 'cafeteria_pending_receipts' %}active{% endif %}">
@@ -132,9 +138,9 @@
 
             <div class="menu-title">حساب کاربری</div>
             <a href="{% url 'profile' %}" class="{% if url_name == 'profile' %}active{% endif %}">پروفایل</a>
-            <a href="{% url 'conversation_list' %}" class="{% if url_name == 'conversation_list' or url_name == 'chat_view' or url_name == 'user_list_for_messaging' %}active{% endif %}">
+            {% if user.role != "operator" %}<a href="{% url 'conversation_list' %}" class="{% if url_name == 'conversation_list' or url_name == 'chat_view' or url_name == 'user_list_for_messaging' %}active{% endif %}">
                 پیام‌ها
-            </a>
+            </a>{% endif %}
             <a href="{% url 'notification_list' %}" class="{% if url_name == 'notification_list' %}active{% endif %}">
                 اعلان‌ها
                 {% if unread_notification_count %}

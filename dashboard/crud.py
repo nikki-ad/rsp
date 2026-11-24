@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count, Q
-from django.http import JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -17,7 +17,7 @@ from accounts.forms import (
     TeacherEditForm,
 )
 from accounts.models import StudentProfile, TeacherProfile
-from accounts.permissions import manager_required
+from accounts.permissions import is_operator, manager_required, supervisor_required
 from activitylog.models import ActivityLog
 from activitylog.utils import log_activity
 from notifications import constants as notification_constants
@@ -27,6 +27,7 @@ from online_classes.models import BBBConfiguration, OnlineClass
 from reports.models import ReportCardPeriod, StudentReportCard
 from cafeteria.models import CafeteriaWeek
 
+from .content_views import visible_classrooms
 from .forms import (
     AcademicYearForm,
     AnnouncementForm,
@@ -465,8 +466,12 @@ def grade_delete(request, grade_id):
     )
 
 
-@manager_required
+@supervisor_required
 def classroom_list(request):
+    if is_operator(request.user):
+        return render(request, "dashboard/operator_classrooms.html", {
+            "classrooms": visible_classrooms(request.user),
+        })
     classrooms = Classroom.objects.select_related(
         "academic_year", "grade", "daily_report_responsible__user"
     ).annotate(
@@ -617,12 +622,16 @@ def _notify_announcement(announcement):
     sync_announcement(announcement)
 
 
-@manager_required
+@supervisor_required
 def announcement_form(request, announcement_id=None):
+    operator = request.user if is_operator(request.user) else None
+    if operator and announcement_id:
+        return HttpResponseForbidden()
     instance = get_object_or_404(Announcement, id=announcement_id) if announcement_id else None
     is_new = instance is None
+    back_route = "admin_dashboard" if operator else "announcement_list"
     if request.method == "POST":
-        form = AnnouncementForm(request.POST, request.FILES, instance=instance)
+        form = AnnouncementForm(request.POST, request.FILES, instance=instance, operator=operator)
         if form.is_valid():
             announcement = form.save(commit=False)
             announcement.full_clean()
@@ -636,13 +645,13 @@ def announcement_form(request, announcement_id=None):
                 description=f"اطلاعیه «{announcement.title}» ذخیره شد.",
             )
             _notify_announcement(announcement)
-            return upload_success(request, "announcement_list")
+            return upload_success(request, back_route)
     else:
-        form = AnnouncementForm(instance=instance)
+        form = AnnouncementForm(instance=instance, operator=operator)
     return render_upload_form(request, "dashboard/form.html", {
         "form": form,
         "page_title": "ویرایش اطلاعیه" if instance else "اطلاعیه جدید",
-        "back_url": reverse("announcement_list"),
+        "back_url": reverse(back_route),
     })
 
 
@@ -930,7 +939,7 @@ def load_year_people(request):
 
 @manager_required
 def language_online_people_view(request):
-    from django.http import JsonResponse
+    from django.http import HttpResponseForbidden, JsonResponse
     from .forms import language_online_people
     from uuid import UUID
     try:

@@ -17,6 +17,8 @@ from academic.models import AcademicYear, Classroom, Enrollment, Grade, TeacherC
 from accounts.models import StudentProfile, TeacherProfile
 from language_unit.models import LanguageGroup
 from .access import eligible_students
+from core.jalali import jalali_format
+
 from .formatting import render_text
 from .forms import ExamForm
 from .models import Exam, Participation, Question
@@ -212,7 +214,9 @@ class ExamTests(TestCase):
 
     def exam_data(self):
         return {"subject": "ریاضی", "title": "آزمون", "mode": "typed", "question_count": 2,
-            "duration_minutes": 20, "opens_at": "۱۴۰۵/۰۹/۰۱ ۰۸:۰۰", "closes_at": "۱۴۰۵/۰۹/۰۲ ۱۵:۰۰",
+            "duration_minutes": 20,
+            "opens_at": jalali_format(timezone.localtime().replace(hour=8, minute=0), with_time=True),
+            "closes_at": jalali_format(timezone.now() + timedelta(days=1), with_time=True),
             "students": [str(self.student.pk)]}
 
     def test_jalali_form_dates_and_unauthorized_student(self):
@@ -268,7 +272,7 @@ class ExamTests(TestCase):
 
     def test_admin_and_superuser_delete_views_and_other_roles_create(self):
         User = get_user_model()
-        for role in ("operator", "finance", "super_admin", "school_manager"):
+        for role in ("finance", "super_admin", "school_manager"):
             user = User.objects.create_user(username="role-" + role, role=role)
             self.login(user); self.assertEqual(self.client.get(reverse("exam_create")).status_code, 200)
         superuser = User.objects.create_user(username="root", is_superuser=True, role="student")
@@ -325,3 +329,81 @@ class ExamTests(TestCase):
         purge(self.exam.pk, self.admin)
         call_command("finalize_exams")
         self.p.refresh_from_db(); self.assertFalse(self.p.report)
+
+    def test_action_links_and_reopen_edit_publish(self):
+        self.login(self.teacher)
+        self.assertContains(self.client.get(reverse("exam_list")), "حذف آزمون")
+        self.published()
+        self.assertContains(self.client.get(reverse("exam_list")), "بازگشت به پیش‌نویس")
+        url = reverse("exam_reopen", args=[self.exam.pk])
+        self.assertEqual(self.client.get(url).status_code, 405)
+        self.assertRedirects(self.client.post(url), reverse("exam_edit", args=[self.exam.pk]))
+        self.exam.refresh_from_db(); self.assertFalse(self.exam.published)
+        self.login()
+        self.assertEqual(self.client.get(reverse("exam_take", args=[self.exam.pk])).status_code, 404)
+        self.login(self.teacher)
+        data = self.exam_data(); data["question_count"] = 3
+        self.client.post(reverse("exam_edit", args=[self.exam.pk]), data)
+        self.assertEqual(self.exam.questions.count(), 3)
+        self.client.post(reverse("exam_publish", args=[self.exam.pk]))
+        self.exam.refresh_from_db(); self.assertTrue(self.exam.published)
+
+    def test_started_exam_cannot_reopen_or_be_deleted_while_open(self):
+        self.published(); start(self.exam.pk, self.student)
+        record(self.p.pk, number=1, choice=2)
+        self.login(self.admin)
+        self.client.post(reverse("exam_reopen", args=[self.exam.pk]))
+        self.exam.refresh_from_db(); self.p.refresh_from_db()
+        self.assertTrue(self.exam.published); self.assertEqual(self.p.answers, {"1": 2})
+        url = reverse("exam_delete", args=[self.exam.pk])
+        self.assertContains(self.client.get(url), "فقط پس از پایان")
+        self.client.post(url, {"confirm": str(self.exam.pk)})
+        self.assertTrue(Exam.objects.filter(pk=self.exam.pk).exists())
+        self.login(self.teacher)
+        response = self.client.get(reverse("exam_detail", args=[self.exam.pk]))
+        self.assertNotContains(response, 'href="' + url + '"')
+        self.assertNotContains(response, "بازگشت به پیش‌نویس و ویرایش")
+
+    def test_delete_confirmation_cascade_files_and_late_requests(self):
+        self.exam.question_pdf.save("test.pdf", SimpleUploadedFile("test.pdf", b"%PDF-test"))
+        name = self.exam.question_pdf.name; storage = self.exam.question_pdf.storage
+        self.published(); self.login(self.teacher)
+        url = reverse("exam_delete", args=[self.exam.pk])
+        self.assertContains(self.client.get(url), "تأیید حذف کامل آزمون")
+        self.assertTrue(Exam.objects.filter(pk=self.exam.pk).exists())
+        self.assertEqual(self.client.post(url, {"confirm": "bad"}).status_code, 400)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertRedirects(self.client.post(url, {"confirm": str(self.exam.pk)}), reverse("exam_list"))
+        self.assertFalse(Exam.objects.filter(pk=self.exam.pk).exists())
+        self.assertFalse(Question.objects.filter(exam_id=self.exam.pk).exists())
+        self.assertFalse(Participation.objects.filter(pk=self.p.pk).exists())
+        self.assertFalse(storage.exists(name))
+        ensure_report(self.p.pk)
+        with self.assertRaises(ValidationError): start(self.exam.pk, self.student)
+        with self.assertRaises(ValidationError): record(self.p.pk, number=1, choice=1)
+
+    def test_completed_exam_delete_admin_only_and_report_cleanup(self):
+        self.completed()
+        url = reverse("exam_delete", args=[self.exam.pk])
+        self.login(self.teacher)
+        self.assertEqual(self.client.post(url, {"confirm": str(self.exam.pk)}).status_code, 403)
+        name = self.p.report.name; storage = self.p.report.storage
+        self.login(self.admin)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertRedirects(self.client.post(url, {"confirm": str(self.exam.pk)}), reverse("exam_list"))
+        self.assertFalse(Exam.objects.filter(pk=self.exam.pk).exists())
+        self.assertFalse(storage.exists(name))
+
+    def test_action_permissions_and_csrf(self):
+        from django.test import Client
+        for user in (self.other_teacher, self.user):
+            self.login(user)
+            for name in ("exam_delete", "exam_reopen", "exam_edit"):
+                self.assertEqual(self.client.post(reverse(name, args=[self.exam.pk]),
+                    {"confirm": str(self.exam.pk)}).status_code,
+                    403 if user == self.user and name == "exam_edit" else 404)
+        secure = Client(enforce_csrf_checks=True); secure.force_login(self.teacher)
+        for name in ("exam_delete", "exam_reopen"):
+            self.assertEqual(secure.post(reverse(name, args=[self.exam.pk]),
+                {"confirm": str(self.exam.pk)}).status_code, 403)
+        self.assertTrue(Exam.objects.filter(pk=self.exam.pk).exists())

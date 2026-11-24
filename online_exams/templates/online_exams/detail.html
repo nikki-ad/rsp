@@ -2,6 +2,11 @@
 {% block exam_content %}
 <h2>{{ exam.title }}</h2><p>{{ exam.subject }} · {{ exam.question_count }} سؤال · {{ exam.duration_minutes }} دقیقه</p><p>از {{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }} — به وقت تهران</p><p>نمره منفی: {{ exam.negative_marking|yesno:'دارد,ندارد' }} · نمایش فوری کلید: {{ exam.show_key_immediately|yesno:'بله,خیر' }}</p>
 {% if not exam.published %}<div class="exam-actions"><a href="{% url 'exam_edit' exam.pk %}">ویرایش مشخصات و شرکت‌کنندگان</a>{% if exam.mode == 'typed' %}<a href="{% url 'exam_questions' exam.pk %}">ورود و ویرایش سؤال‌ها</a>{% endif %}<a href="{% url 'exam_key' exam.pk %}">ورود و ویرایش کلید</a><form method="post" action="{% url 'exam_publish' exam.pk %}">{% csrf_token %}<button class="exam-button">انتشار آزمون</button></form></div>{% endif %}
+<div class="exam-actions">
+{% if exam.published and not has_started %}<form method="post" action="{% url 'exam_reopen' exam.pk %}">{% csrf_token %}<button class="exam-button">بازگشت به پیش‌نویس و ویرایش</button></form>{% endif %}
+{% if not has_started or admin and now >= exam.closes_at %}<a class="exam-danger" href="{% url 'exam_delete' exam.pk %}">حذف آزمون</a>{% endif %}
+</div>
+{% if has_started %}<p>آزمون شروع شده است؛ سؤال‌ها، کلید و زمان‌ها برای حفظ پاسخ‌های ثبت‌شده قابل ویرایش نیستند.</p>{% endif %}
 {% if exam.mode == 'pdf' %}<a href="{% url 'exam_pdf' exam.pk %}">دریافت فایل سؤال‌ها</a>{% endif %}
 {% if not exam.published %}<details><summary>پیش‌نمایش سؤال‌ها و کلید</summary>{% for q in questions %}<article class="exam-card"><h3>سؤال {{ q.number }}</h3>{{ q.text|exam_text }}{% for option in q.options %}<p>{{ forloop.counter }}. {{ option|exam_text }}</p>{% endfor %}<p>کلید: {{ q.correct_option|default_if_none:'ثبت نشده' }}</p></article>{% endfor %}</details>{% endif %}
 <h3>شرکت‌کنندگان و کارنامه‌ها</h3>

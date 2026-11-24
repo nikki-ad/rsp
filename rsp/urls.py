@@ -15,9 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from .protected_media import MEDIA_DIRECTORIES, protected_media
 
 
 urlpatterns = [
@@ -36,6 +37,16 @@ urlpatterns = [
 
 
 
+]
+
+media_prefix = settings.MEDIA_URL.strip("/")
+protected_directories = "|".join(MEDIA_DIRECTORIES)
+urlpatterns += [
+    re_path(
+        rf"^{media_prefix}/(?P<directory>{protected_directories})/(?P<filename>.+)$",
+        protected_media,
+        name="protected_media",
+    ),
 ]
 
 urlpatterns += static(

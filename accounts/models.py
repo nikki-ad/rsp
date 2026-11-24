@@ -29,6 +29,13 @@ class CustomUser(AbstractUser):
         verbose_name="نقش",
     )
 
+    supervised_classrooms = models.ManyToManyField(
+        "academic.Classroom",
+        blank=True,
+        related_name="supervising_operators",
+        verbose_name="کلاس‌های تحت نظارت اپراتور",
+    )
+
     avatar = models.ImageField(
         upload_to="avatars/%Y/%m/",
         blank=True,

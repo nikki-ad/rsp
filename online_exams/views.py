@@ -7,13 +7,17 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from accounts.permissions import is_school_admin
-from .access import can_manage, managed_exams, participant_groups
+from accounts.permissions import is_operator, is_school_admin
+from .access import (
+    can_manage, managed_exams, participant_groups, supervised_exams,
+    supervised_participations,
+)
 from .forms import ExamForm, KeyForm, QuestionForm
 from .formatting import render_text
 from .models import Exam, Participation, Question
@@ -22,6 +26,14 @@ from . import services
 
 def _exam(user, pk):
     return get_object_or_404(managed_exams(user), pk=pk)
+
+
+def _report_scope(user, pk):
+    if is_operator(user):
+        exam = get_object_or_404(supervised_exams(user), pk=pk, closes_at__lte=timezone.now())
+        return exam, supervised_participations(user).filter(exam=exam)
+    exam = _exam(user, pk)
+    return exam, exam.participations.all()
 
 
 def _participation(user, pk):
@@ -46,9 +58,15 @@ def _private(response):
 @login_required
 @never_cache
 def index(request):
+    operator = is_operator(request.user)
     manage = can_manage(request.user)
-    if manage:
-        page = Paginator(managed_exams(request.user), 30).get_page(request.GET.get("page"))
+    if operator:
+        page = Paginator(supervised_exams(request.user), 30).get_page(request.GET.get("page"))
+        exams = page
+        rows = None
+    elif manage:
+        page = Paginator(managed_exams(request.user).annotate(has_started=Exists(
+            Participation.objects.filter(exam_id=OuterRef("pk"), started_at__isnull=False))), 30).get_page(request.GET.get("page"))
         exams = page
         rows = None
     else:
@@ -58,8 +76,8 @@ def index(request):
                          .select_related("exam").order_by("-exam__created_at"), 30).get_page(request.GET.get("page"))
         rows = page
         exams = None
-    return render(request, "online_exams/index.html", {"manage": manage, "exams": exams,
-        "rows": rows, "page": page, "now": timezone.now()})
+    return render(request, "online_exams/index.html", {"manage": manage, "operator": operator, "exams": exams,
+        "rows": rows, "page": page, "now": timezone.now(), "admin": is_school_admin(request.user)})
 
 
 @login_required
@@ -71,8 +89,40 @@ def create(request, pk=None):
     if existing and existing.published:
         raise PermissionDenied
     groups = participant_groups(request.user)
-    initial = {"students": list(existing.participations.values_list("student_id", flat=True))} if existing else {}
-    form = ExamForm(request.POST or None, request.FILES or None, user=request.user, instance=existing, initial=initial)
+    by_choice = {}
+    by_student = {}
+    for group in groups:
+        for student in group["students"]:
+            student_id = str(student.pk)
+            by_choice[f'{group["key"]}:{student_id}'] = group
+            by_student.setdefault(student_id, []).append(group)
+    selected = set()
+    sources = {}
+    invalid_choices = False
+    data = request.POST.copy() if request.method == "POST" else None
+    if data is not None and "group_students" in data:
+        selected = set(data.getlist("group_students"))
+        for choice in selected:
+            student_id = choice.rpartition(":")[2]
+            if choice not in by_choice or student_id in sources:
+                invalid_choices = True
+                continue
+            sources[student_id] = by_choice[choice]
+        data.setlist("students", list(sources))
+    elif data is None and existing:
+        for participation in existing.participations.all():
+            student_id = str(participation.student_id)
+            groups_for_student = by_student.get(student_id, [])
+            matches = [
+                group for group in groups_for_student
+                if (group["classroom_id"] == participation.classroom_id
+                    and group["label"] == participation.classroom_label)
+            ]
+            if len(matches) == 1:
+                selected.add(f'{matches[0]["key"]}:{student_id}')
+    form = ExamForm(data, request.FILES or None, user=request.user, instance=existing)
+    if invalid_choices:
+        form.add_error("students", "برای هر دانش‌آموز فقط یک کلاس یا گروه معتبر انتخاب کنید.")
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             if existing:
@@ -83,22 +133,26 @@ def create(request, pk=None):
             if not existing:
                 exam.created_by = request.user
             exam.save()
-            labels = {}
-            for group in groups:
-                for student in group["students"]:
-                    labels.setdefault(student.pk, group["label"])
             if existing:
                 exam.participations.all().delete()
-            Participation.objects.bulk_create([Participation(exam=exam, student=student,
-                classroom_label=labels.get(student.pk, ""), created_by=request.user)
-                for student in form.cleaned_data["students"]])
+            participants = []
+            for student in form.cleaned_data["students"]:
+                student_id = str(student.pk)
+                source = sources.get(student_id)
+                matches = by_student.get(student_id, [])
+                if source is None and len(matches) == 1:
+                    source = matches[0]
+                participants.append(Participation(
+                    exam=exam, student=student, created_by=request.user,
+                    classroom_label=source["label"] if source else "",
+                    classroom_id=source["classroom_id"] if source else None,
+                ))
+            Participation.objects.bulk_create(participants)
             exam.questions.filter(number__gt=exam.question_count).delete()
             known = set(exam.questions.values_list("number", flat=True))
             Question.objects.bulk_create([Question(exam=exam, number=i)
                 for i in range(1, exam.question_count + 1) if i not in known])
         return redirect("exam_questions" if exam.mode == "typed" else "exam_key", pk=exam.pk)
-    selected = set(request.POST.getlist("students")) if request.method == "POST" else {
-        str(value) for value in initial.get("students", [])}
     return render(request, "online_exams/create.html", {"form": form, "groups": groups, "selected": selected})
 
 
@@ -150,11 +204,21 @@ def key(request, pk):
 @login_required
 @never_cache
 def detail(request, pk):
+    if is_operator(request.user):
+        exam, participations = _report_scope(request.user, pk)
+        services.finalize_due(exam.pk)
+        reports = participations.filter(
+            submitted_at__isnull=False, result_deleted=False,
+        ).exclude(report="").select_related("student__user")
+        return render(request, "online_exams/operator_reports.html", {
+            "exam": exam, "reports": reports,
+        })
     exam = _exam(request.user, pk)
     services.finalize_due(exam.pk)
     rows = list(exam.participations.select_related("student__user"))
     return render(request, "online_exams/detail.html", {"exam": exam, "rows": rows,
-        "questions": exam.questions.all(), "now": timezone.now(), "admin": is_school_admin(request.user)})
+        "questions": exam.questions.all(), "now": timezone.now(), "admin": is_school_admin(request.user),
+        "has_started": any(p.started_at for p in rows)})
 
 
 @login_required
@@ -163,7 +227,7 @@ def publish(request, pk):
     exam = _exam(request.user, pk)
     try:
         services.publish(exam.pk, request.user)
-        messages.success(request, "آزمون منتشر شد. سؤال‌ها، کلید و زمان‌ها پس از انتشار ثابت می‌مانند.")
+        messages.success(request, "آزمون منتشر شد. تا پیش از شروع اولین دانش‌آموز، بازگشت به پیش‌نویس برای ویرایش ممکن است.")
     except ValidationError as error:
         _error(request, error)
     return redirect("exam_detail", pk=pk)
@@ -260,9 +324,9 @@ def pdf(request, pk):
 @login_required
 @never_cache
 def report(request, pk, participant_id):
-    exam = _exam(request.user, pk)
+    exam, participations = _report_scope(request.user, pk)
     services.finalize_due(exam.pk)
-    p = get_object_or_404(Participation, pk=participant_id, exam=exam, submitted_at__isnull=False,
+    p = get_object_or_404(participations, pk=participant_id, submitted_at__isnull=False,
                           result_deleted=False)
     # Deleting files is persistent: download must never regenerate them.
     if exam.report_files_deleted or not p.report:
@@ -274,13 +338,13 @@ def report(request, pk, participant_id):
 @login_required
 @never_cache
 def reports_zip(request, pk):
-    exam = _exam(request.user, pk)
+    exam, participations = _report_scope(request.user, pk)
     services.finalize_due(exam.pk)
     if exam.report_files_deleted:
         return HttpResponse("فایل‌های کارنامه حذف شده‌اند.", status=404)
     data = BytesIO()
     with ZipFile(data, "w", ZIP_DEFLATED) as archive:
-        for p in exam.participations.filter(submitted_at__isnull=False, result_deleted=False).select_related("student__user"):
+        for p in participations.filter(submitted_at__isnull=False, result_deleted=False):
             if p.report:
                 # UUID avoids duplicate names and unsafe user-supplied archive paths.
                 with p.report.open("rb") as file:
@@ -325,3 +389,40 @@ def preview(request):
     except (ValueError, KeyError, TypeError, UnicodeDecodeError):
         return JsonResponse({"error": "متن معتبر نیست."}, status=400)
     return JsonResponse({"html": render_text(text)})
+
+
+@login_required
+@require_POST
+def reopen(request, pk):
+    _exam(request.user, pk)
+    try:
+        services.reopen(pk, request.user)
+    except ValidationError as error:
+        _error(request, error)
+        return redirect("exam_detail", pk=pk)
+    messages.success(request, "آزمون به پیش‌نویس برگشت و تا انتشار دوباره برای دانش‌آموزان نمایش داده نمی‌شود.")
+    return redirect("exam_edit", pk=pk)
+
+
+@login_required
+@never_cache
+def delete_exam(request, pk):
+    exam = _exam(request.user, pk)
+    started = exam.participations.filter(started_at__isnull=False).exists()
+    if started and not is_school_admin(request.user):
+        raise PermissionDenied
+    if request.method == "POST":
+        if request.POST.get("confirm") != str(exam.pk):
+            return HttpResponse("تأیید حذف معتبر نیست.", status=400)
+        try:
+            services.delete_exam(pk, request.user)
+        except ValidationError as error:
+            _error(request, error)
+            return redirect("exam_detail", pk=pk)
+        messages.success(request, "آزمون و پاسخ‌ها و فایل‌های وابسته حذف شدند.")
+        return redirect("exam_list")
+    return render(request, "online_exams/delete_exam.html", {
+        "exam": exam, "started": started, "now": timezone.now(),
+        "participant_count": exam.participations.count(),
+        "started_count": exam.participations.filter(started_at__isnull=False).count(),
+    })

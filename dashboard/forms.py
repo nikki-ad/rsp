@@ -3,6 +3,7 @@ from core.jalali import JalaliDateField, JalaliDateTimeField
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.forms import inlineformset_factory
 from django.utils import timezone
 
@@ -24,7 +25,7 @@ class GeneralUserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ("username", "first_name", "last_name", "email", "role", "is_active")
+        fields = ("username", "first_name", "last_name", "email", "role", "is_active", "supervised_classrooms")
         labels = {
             "username": "نام کاربری",
             "first_name": "نام",
@@ -42,12 +43,19 @@ class GeneralUserForm(forms.ModelForm):
         self.fields["role"].choices = [
             (value, label) for value, label in Role.choices if value in allowed_roles
         ]
-        if not self.instance.pk:
+        self.fields["supervised_classrooms"].queryset = Classroom.objects.select_related("grade", "academic_year")
+        self.fields["supervised_classrooms"].label_from_instance = (
+            lambda room: f"{room} — {room.academic_year}"
+        )
+        self.fields["supervised_classrooms"].help_text = "این انتخاب فقط برای نقش اپراتور اعمال می‌شود."
+        if self.instance._state.adding:
             self.fields["password1"].required = True
             self.fields["password2"].required = True
 
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data.get("role") != Role.OPERATOR:
+            cleaned_data["supervised_classrooms"] = Classroom.objects.none()
         password1 = cleaned_data.get("password1") or ""
         password2 = cleaned_data.get("password2") or ""
         if password1 or password2:
@@ -66,7 +74,9 @@ class GeneralUserForm(forms.ModelForm):
             user.set_password(self.cleaned_data["password1"])
         user.is_staff = user.role in {Role.SUPER_ADMIN, Role.SCHOOL_MANAGER, Role.FINANCE}
         if commit:
-            user.save()
+            with transaction.atomic():
+                user.save()
+                self.save_m2m()
         return user
 
 
@@ -330,8 +340,9 @@ class AnnouncementForm(forms.ModelForm):
             "teachers": forms.CheckboxSelectMultiple,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, operator=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.operator = operator
         self.fields["audience"].choices = [
             (value, label) for value, label in Announcement.Audience.choices
             if value != Announcement.Audience.CLASSROOM
@@ -344,12 +355,24 @@ class AnnouncementForm(forms.ModelForm):
         ).select_related("user").order_by("user__last_name", "user__first_name")
         self.fields["classrooms"].help_text = "اطلاعیه فقط برای دانش‌آموزان کلاس‌های تیک‌خورده ارسال می‌شود."
         self.fields["teachers"].help_text = "اطلاعیه فقط برای معلمان تیک‌خورده ارسال می‌شود."
+        if operator is not None:
+            self.fields.pop("audience")
+            self.fields.pop("teachers")
+            self.fields["classrooms"].queryset = self.fields["classrooms"].queryset.filter(
+                supervising_operators=operator
+            )
         if not self.is_bound and self.instance.audience == Announcement.Audience.CLASSROOM:
             self.initial["audience"] = Announcement.Audience.STUDENTS
             self.initial["classrooms"] = [self.instance.classroom_id]
 
     def clean(self):
         data = super().clean()
+        if self.operator is not None:
+            if not data.get("classrooms"):
+                self.add_error("classrooms", "حداقل یک کلاس تحت نظارت انتخاب کنید.")
+            self.instance.audience = Announcement.Audience.STUDENTS
+            self.instance.targeted = True
+            return data
         audience = data.get("audience")
         for name, relevant in (("classrooms", Announcement.Audience.STUDENTS), ("teachers", Announcement.Audience.TEACHERS)):
             if audience == relevant:

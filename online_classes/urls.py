@@ -4,6 +4,8 @@ from . import views
 
 
 urlpatterns = [
+    path("<uuid:class_id>/attendance/enable/", views.enable_attendance_tracking, name="enable_attendance_tracking"),
+    path("bbb-events/<uuid:config_id>/<uuid:class_id>/", views.bbb_attendance_callback, name="bbb_attendance_callback"),
     path(
         "",
         views.online_class_list,
