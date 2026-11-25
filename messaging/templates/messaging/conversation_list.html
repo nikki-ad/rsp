@@ -13,7 +13,7 @@
         <p>گفت‌وگوهای شما با معلمان، دانش‌آموزان و مدیریت</p>
     </div>
     <div class="page-header-actions">
-        {% if request.user.is_superuser or request.user.role == "super_admin" or request.user.role == "school_manager" %}
+        {% if request.user.is_superuser or request.user.role == "super_admin" or request.user.role == "school_manager" or can_message_class_students and channel == 'general' %}
             <a class="btn btn-primary" href="{% url 'user_list_for_messaging' %}">گفت‌وگوی جدید</a>
         {% endif %}
     </div>
