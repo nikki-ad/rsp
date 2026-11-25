@@ -17,6 +17,23 @@ from academic.models import AcademicYear, Enrollment
 User = get_user_model()
 
 
+def can_message_class_students(user):
+    return user.role == Role.TEACHER and hasattr(user, "teacher_profile") and not is_language_teacher(user)
+
+
+def class_student_contacts(teacher):
+    enrollments = Enrollment.objects.filter(
+        is_active=True,
+        academic_year__status=AcademicYear.Status.ACTIVE,
+        classroom__academic_year__status=AcademicYear.Status.ACTIVE,
+        classroom__teacher_assignments__teacher=teacher,
+    )
+    return User.objects.filter(
+        is_active=True,
+        student_profile__in=enrollments.values("student_id"),
+    )
+
+
 @login_required
 def conversation_list(request):
 
@@ -63,6 +80,7 @@ def conversation_list(request):
             "conversations": conversations,
             "channel": channel,
             "contacts": contacts,
+            "can_message_class_students": can_message_class_students(request.user),
         }
     )
 
@@ -111,19 +129,9 @@ def start_conversation(request, user_id):
                 ).exists()
 
         # معلم → فقط دانش‌آموز کلاس‌های خودش در سال تحصیلی فعال
-        elif (
-            hasattr(request.user, "teacher_profile")
-            and hasattr(other_user, "student_profile")
-        ):
-
-            teacher = request.user.teacher_profile
-            student = other_user.student_profile
-
-            allowed = Enrollment.objects.filter(
-                student=student,
-                is_active=True,
-                academic_year__status=AcademicYear.Status.ACTIVE,
-                classroom__teacher_assignments__teacher=teacher,
+        elif can_message_class_students(request.user):
+            allowed = class_student_contacts(request.user.teacher_profile).filter(
+                pk=other_user.pk,
             ).exists()
 
     if not allowed:
@@ -258,21 +266,17 @@ def chat_view(request, conversation_id):
 @login_required
 def user_list_for_messaging(request):
 
-    if not (
-        request.user.is_superuser
-        or request.user.role in [
-            Role.SUPER_ADMIN,
-            Role.SCHOOL_MANAGER,
-        ]
-    ):
+    if request.user.is_school_admin:
+        users = User.objects.filter(is_active=True)
+    elif can_message_class_students(request.user):
+        users = class_student_contacts(request.user.teacher_profile)
+    else:
         return HttpResponseForbidden(
             "شما اجازه دسترسی به این صفحه را ندارید."
         )
 
     query = (request.GET.get("q") or "").strip()
-    users = User.objects.filter(
-        is_active=True,
-    ).exclude(
+    users = users.exclude(
         id=request.user.id,
     ).order_by(
         "role",
