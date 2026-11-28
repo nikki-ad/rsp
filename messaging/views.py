@@ -45,7 +45,9 @@ def conversation_list(request):
         Conversation.objects.filter(
             Q(participant_1=request.user)
             | Q(participant_2=request.user)
-        ).filter(channel=channel)
+        ).filter(channel=channel).exclude(
+            Q(participant_1__role=Role.OPERATOR) | Q(participant_2__role=Role.OPERATOR)
+        )
         .annotate(
             unread_count=Count(
                 "messages",
@@ -90,7 +92,7 @@ def conversation_list(request):
 def start_conversation(request, user_id):
 
     other_user = get_object_or_404(
-        User,
+        User.objects.exclude(role=Role.OPERATOR),
         id=user_id,
         is_active=True,
     )
@@ -153,7 +155,7 @@ def start_conversation(request, user_id):
 
 @login_required
 def start_language_conversation(request, user_id):
-    other_user = get_object_or_404(User, id=user_id, is_active=True)
+    other_user = get_object_or_404(User.objects.exclude(role=Role.OPERATOR), id=user_id, is_active=True)
     allowed = request.user.is_school_admin
     if not allowed and hasattr(request.user, "student_profile") and hasattr(other_user, "teacher_profile"):
         allowed = request.user.student_profile.language_groups.filter(
@@ -185,6 +187,8 @@ def chat_view(request, conversation_id):
         return redirect("conversation_list")
 
     other_user = conversation.participant_2 if conversation.participant_1 == request.user else conversation.participant_1
+    if other_user.role == Role.OPERATOR:
+        return HttpResponseForbidden()
     if conversation.channel == Conversation.Channel.GENERAL and (
         (is_language_teacher(request.user) and hasattr(other_user, "student_profile"))
         or (is_language_teacher(other_user) and hasattr(request.user, "student_profile"))
@@ -278,7 +282,7 @@ def user_list_for_messaging(request):
     query = (request.GET.get("q") or "").strip()
     users = users.exclude(
         id=request.user.id,
-    ).order_by(
+    ).exclude(role=Role.OPERATOR).order_by(
         "role",
         "first_name",
         "last_name",

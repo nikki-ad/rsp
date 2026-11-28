@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
-from accounts.permissions import is_school_admin
+from accounts.permissions import is_operator, is_school_admin
 from academic.models import AcademicYear
 from .models import LanguageGroup, LanguageMaterial, LanguageAssignment
 
@@ -42,8 +42,9 @@ def manager_language_group_content(request, group_id):
 
 @login_required
 def language_group_content(request, group_id, kind):
+    operator_view = is_operator(request.user)
     manager_view = is_school_admin(request.user)
-    if manager_view:
+    if manager_view or operator_view:
         group = get_object_or_404(LanguageGroup.objects.select_related("academic_year"), pk=group_id)
         back_url = reverse("manager_language_group_content", args=[group.id])
     else:
@@ -54,11 +55,13 @@ def language_group_content(request, group_id, kind):
         back_url = reverse("language_group_detail", args=[group.id])
     model = LanguageMaterial if kind == "materials" else LanguageAssignment
     items = model.objects.filter(group=group)
-    if not manager_view:
+    if operator_view:
+        back_url = reverse("manage_language_groups")
+    if not (manager_view or operator_view):
         items = items.filter(teacher=teacher)
     items = items.select_related("group", "teacher__user").order_by("-created_at", "-id")
     return render(request, "language_unit/content_list.html", {
         "group": group, "groups": [group], "items": items, "kind": kind,
-        "manager_view": manager_view, "back_url": back_url,
+        "manager_view": manager_view, "operator_view": operator_view, "back_url": back_url,
         "page_title": ("همهٔ مطالب" if kind == "materials" else "همهٔ تکالیف") + " — " + group.title,
     })

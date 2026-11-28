@@ -1,6 +1,16 @@
 {% extends "online_exams/base.html" %}
 {% block exam_content %}
-{% if manage %}
+{% if operator %}
+{% for exam in exams %}
+<article class="exam-card">
+    <h2>{{ exam.title }}</h2>
+    <p>{{ exam.subject }} · {{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }}</p>
+    {% if now >= exam.closes_at %}<a href="{% url 'exam_detail' exam.id %}">مشاهده کارنامه‌ها</a>
+    {% elif now < exam.opens_at %}<span>در انتظار شروع</span>
+    {% else %}<span>در حال برگزاری</span>{% endif %}
+</article>
+{% empty %}<p>هنوز آزمون منتشرشده‌ای برای کلاس‌های تحت نظارت ثبت نشده است.</p>{% endfor %}
+{% elif manage %}
 <a class="exam-button" href="{% url 'exam_create' %}">ساخت آزمون جدید</a>
 {% for exam in exams %}<article class="exam-card"><h2>{{ exam.title }}</h2><p>{{ exam.subject }} · {{ exam.question_count }} سؤال · {{ exam.duration_minutes }} دقیقه</p><p>{{ exam.opens_at|jalali_datetime }} تا {{ exam.closes_at|jalali_datetime }}</p><a href="{% url 'exam_detail' exam.pk %}">{% if exam.published %}مدیریت و کارنامه‌ها{% else %}ادامه ساخت و پیش‌نمایش{% endif %}</a><div class="exam-actions">
 {% if not exam.published %}<a href="{% url 'exam_edit' exam.pk %}">ویرایش آزمون</a>{% elif not exam.has_started %}<form method="post" action="{% url 'exam_reopen' exam.pk %}">{% csrf_token %}<button class="exam-button">بازگشت به پیش‌نویس و ویرایش</button></form>{% endif %}

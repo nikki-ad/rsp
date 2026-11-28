@@ -17,6 +17,8 @@ from academic.models import AcademicYear, Classroom, Enrollment, Grade, TeacherC
 from accounts.models import StudentProfile, TeacherProfile
 from language_unit.models import LanguageGroup
 from .access import eligible_students
+from core.jalali import jalali_format
+
 from .formatting import render_text
 from .forms import ExamForm
 from .models import Exam, Participation, Question
@@ -212,7 +214,9 @@ class ExamTests(TestCase):
 
     def exam_data(self):
         return {"subject": "ریاضی", "title": "آزمون", "mode": "typed", "question_count": 2,
-            "duration_minutes": 20, "opens_at": "۱۴۰۵/۰۹/۰۱ ۰۸:۰۰", "closes_at": "۱۴۰۵/۰۹/۰۲ ۱۵:۰۰",
+            "duration_minutes": 20,
+            "opens_at": jalali_format(timezone.localtime().replace(hour=8, minute=0), with_time=True),
+            "closes_at": jalali_format(timezone.now() + timedelta(days=1), with_time=True),
             "students": [str(self.student.pk)]}
 
     def test_jalali_form_dates_and_unauthorized_student(self):
@@ -268,7 +272,7 @@ class ExamTests(TestCase):
 
     def test_admin_and_superuser_delete_views_and_other_roles_create(self):
         User = get_user_model()
-        for role in ("operator", "finance", "super_admin", "school_manager"):
+        for role in ("finance", "super_admin", "school_manager"):
             user = User.objects.create_user(username="role-" + role, role=role)
             self.login(user); self.assertEqual(self.client.get(reverse("exam_create")).status_code, 200)
         superuser = User.objects.create_user(username="root", is_superuser=True, role="student")

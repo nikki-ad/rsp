@@ -7,7 +7,6 @@ from django.shortcuts import render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
 
-from accounts.choices import Role
 from accounts.permissions import is_school_admin
 from core.jalali import jalali_format
 from dashboard.deficiency_xlsx import build_deficiency_report_xlsx
@@ -16,7 +15,7 @@ from .homework_report_forms import HomeworkDeficiencyReportForm
 
 
 def deficiency_report_allowed(user):
-    return user.is_authenticated and (is_school_admin(user) or user.role == Role.OPERATOR)
+    return is_school_admin(user)
 
 
 def report_manager_required(view):

@@ -1,12 +1,12 @@
 from accounts.choices import Role
 from accounts.models import StudentProfile
 from accounts.permissions import is_school_admin, is_language_teacher
-from academic.models import Classroom, Enrollment
+from academic.models import Classroom
 from language_unit.models import LanguageGroup
-from .models import Exam
+from .models import Exam, Participation
 
 
-MANAGEMENT_ROLES = {Role.TEACHER, Role.OPERATOR, Role.FINANCE,
+MANAGEMENT_ROLES = {Role.TEACHER, Role.FINANCE,
                     Role.SCHOOL_MANAGER, Role.SUPER_ADMIN}
 
 
@@ -20,6 +20,16 @@ def managed_exams(user):
     return Exam.objects.all() if is_school_admin(user) else Exam.objects.filter(created_by=user)
 
 
+def supervised_participations(user):
+    return Participation.objects.filter(classroom__supervising_operators=user)
+
+
+def supervised_exams(user):
+    return Exam.objects.filter(
+        published=True, pk__in=supervised_participations(user).values("exam_id"),
+    )
+
+
 def participant_groups(user):
     classrooms = Classroom.objects.filter(academic_year__status="active")
     languages = LanguageGroup.objects.filter(is_active=True, academic_year__status="active")
@@ -31,9 +41,9 @@ def participant_groups(user):
     groups = []
     for classroom in classrooms.select_related("grade").prefetch_related("enrollments__student__user").distinct():
         students = [e.student for e in classroom.enrollments.all() if e.is_active]
-        groups.append({"label": str(classroom), "students": students})
+        groups.append({"label": str(classroom), "students": students, "classroom_id": classroom.pk, "key": str(classroom.pk)})
     for group in languages.prefetch_related("students__user").distinct():
-        groups.append({"label": "زبان: " + group.title, "students": list(group.students.all())})
+        groups.append({"label": "زبان: " + group.title, "students": list(group.students.all()), "classroom_id": None, "key": str(group.pk)})
     for group in groups:
         group["students"].sort(key=lambda s: (s.user.last_name, s.user.first_name))
     return groups

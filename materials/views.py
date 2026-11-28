@@ -1,4 +1,4 @@
-from accounts.permissions import school_teacher_only, language_teacher_redirect
+from accounts.permissions import is_operator, is_school_admin, school_teacher_only, language_teacher_redirect
 from core.upload_progress import render_upload_form, upload_success
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -94,6 +94,11 @@ def create_material(request):
 
 @login_required
 def download_material(request, material_id):
+    if is_school_admin(request.user) or is_operator(request.user):
+        materials = EducationalMaterial.objects.all()
+        if is_operator(request.user):
+            materials = materials.filter(classrooms__supervising_operators=request.user).distinct()
+        return attachment_response(get_object_or_404(materials, pk=material_id).file)
 
     teacher = getattr(request.user, "teacher_profile", None)
     student = getattr(request.user, "student_profile", None)

@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from uuid import UUID
 
-from accounts.permissions import is_school_admin
+from accounts.permissions import is_operator, is_school_admin
 from activitylog.utils import log_activity
 from notifications import constants as notification_constants
 from notifications.services import create_notification
@@ -222,6 +222,10 @@ def submit_language_assignment(request, assignment_id):
 
 @login_required
 def manage_language_groups(request):
+    if is_operator(request.user):
+        return render(request, "language_unit/operator_groups.html", {
+            "groups": LanguageGroup.objects.select_related("academic_year"),
+        })
     if not is_school_admin(request.user):
         return HttpResponseForbidden("دسترسی مدیریت لازم است.")
     query = (request.GET.get("q") or "").strip()
@@ -306,7 +310,7 @@ def language_group_delete(request, group_id):
 
 
 def _language_content_for_download(request, model, item_id):
-    if is_school_admin(request.user):
+    if is_school_admin(request.user) or is_operator(request.user):
         return get_object_or_404(model, pk=item_id)
     student = getattr(request.user, "student_profile", None)
     teacher = _language_teacher(request)
