@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}آزمون آنلاین | RSP{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'online_exams/exams.css' %}">
+<section class="exams"><div class="exam-heading"><h1>آزمون آنلاین</h1><a href="{% url 'exam_list' %}">فهرست آزمون‌ها</a></div>
+{% block exam_content %}{% endblock %}</section>
+{% endblock %}

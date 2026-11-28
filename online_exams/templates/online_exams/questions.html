@@ -1,0 +1,7 @@
+{% extends "online_exams/base.html" %}{% load static %}
+{% block exam_content %}
+<h2>۲. ورود سؤال‌ها — {{ exam.title }}</h2><nav class="exam-question-nav">{% for q in questions %}<a href="?number={{ q.number }}">{{ q.number }}{% if q.text %} ✓{% endif %}</a>{% endfor %}</nav>
+<p>متن، پررنگ و مورب، و فرمول ریاضی قابل درج است. برای فرمول از دکمه‌ها یا عبارت LaTeX بین <bdi>\( ... \)</bdi> استفاده کنید؛ پیش‌نمایش با دکمه «پیش‌نمایش» نمایش داده می‌شود.</p>
+<form method="post" class="exam-form" data-preview-url="{% url 'exam_preview' %}">{% csrf_token %}<h3>سؤال {{ question.number }}</h3>{{ form.as_p }}<button class="exam-button" name="action" value="next">ذخیره و سؤال بعد</button><button name="action" value="key">ذخیره و ورود کلید</button></form>
+<script src="{% static 'online_exams/editor.js' %}"></script>
+{% endblock %}
